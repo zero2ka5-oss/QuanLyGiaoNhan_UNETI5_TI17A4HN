@@ -1,0 +1,2 @@
+@model NhanVienGiaoHang
+@{ ViewData["Title"] = "Xóa nhân viên"; }<h1>Xóa nhân viên?</h1><p>@Model.HoTen</p><form asp-action="Delete"><input asp-for="MaNhanVien" type="hidden" /><button class="btn btn-danger">Xóa</button> <a asp-action="Index">Hủy</a></form>

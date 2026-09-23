@@ -1,0 +1,2 @@
+@model TaiKhoan
+@{ ViewData["Title"] = "Chi tiết tài khoản"; }<h1>Chi tiết tài khoản</h1><dl class="row"><dt class="col-sm-3">Tên đăng nhập</dt><dd class="col-sm-9">@Model.TenDangNhap</dd><dt class="col-sm-3">Họ tên</dt><dd class="col-sm-9">@Model.HoTen</dd><dt class="col-sm-3">Email</dt><dd class="col-sm-9">@Model.Email</dd><dt class="col-sm-3">Vai trò</dt><dd class="col-sm-9">@Model.VaiTro</dd><dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@Model.TrangThai</dd></dl><a asp-action="Index">Quay lại</a>

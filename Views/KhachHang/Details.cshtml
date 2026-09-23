@@ -1,0 +1,2 @@
+@model KhachHang
+@{ ViewData["Title"] = "Chi tiết khách hàng"; }<h1>@Model.HoTen</h1><dl class="row"><dt class="col-sm-3">Điện thoại</dt><dd class="col-sm-9">@Model.SoDienThoai</dd><dt class="col-sm-3">Email</dt><dd class="col-sm-9">@Model.Email</dd><dt class="col-sm-3">Địa chỉ</dt><dd class="col-sm-9">@Model.DiaChi</dd></dl><a asp-action="Index">Quay lại</a>

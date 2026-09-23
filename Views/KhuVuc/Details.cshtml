@@ -1,0 +1,2 @@
+@model KhuVuc
+@{ ViewData["Title"] = "Chi tiết khu vực"; }<h1>@Model.TenKhuVuc</h1><p>Phí cơ bản: @Model.PhiCoBan.ToString("N0")</p><p>@Model.MoTa</p><a asp-action="Index">Quay lại</a>

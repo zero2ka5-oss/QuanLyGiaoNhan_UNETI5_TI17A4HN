@@ -1,0 +1,2 @@
+@model KhuVuc
+@{ ViewData["Title"] = "Xóa khu vực"; }<h1>Xóa khu vực?</h1><p>@Model.TenKhuVuc</p><form asp-action="Delete"><input asp-for="MaKhuVuc" type="hidden" /><button class="btn btn-danger">Xóa</button> <a asp-action="Index">Hủy</a></form>

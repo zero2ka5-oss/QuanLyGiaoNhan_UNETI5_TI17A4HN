@@ -1,0 +1,2 @@
+@model TaiKhoan
+@{ ViewData["Title"] = "Sửa tài khoản"; }<h1>Sửa tài khoản</h1><form asp-action="Edit"><input asp-for="MaTaiKhoan" type="hidden" /><div asp-validation-summary="ModelOnly" class="text-danger"></div><partial name="_Form" model="Model" /></form>

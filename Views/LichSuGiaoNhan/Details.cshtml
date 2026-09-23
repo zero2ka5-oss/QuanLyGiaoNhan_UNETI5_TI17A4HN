@@ -1,0 +1,2 @@
+@model LichSuGiaoNhan
+@{ ViewData["Title"] = "Chi tiết lịch sử"; }<h1>Lịch sử #@Model.MaLichSu</h1><p>Đơn #@Model.MaDon: @Model.TrangThaiCu → @Model.TrangThaiMoi</p><p>@Model.NoiDung</p><p>Người thực hiện: @Model.NguoiThucHien</p><a asp-action="Index">Quay lại</a>

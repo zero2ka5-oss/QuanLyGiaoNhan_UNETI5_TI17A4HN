@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - QuanLyGiaoNhan_UNETI5_TI17A4HN</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/QuanLyGiaoNhan_UNETI5_TI17A4HN.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">Quản lý giao nhận</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối")
+                        {
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="ThongKe" asp-action="Index">Tổng quan</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="DonGiaoHang" asp-action="Index">Đơn giao hàng</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="PhanCongGiaoHang" asp-action="Index">Phân công</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="TaiKhoan" asp-action="Index">Tài khoản</a></li>
+                        }
+                        else if (Context.Session.GetString("VaiTro") == "Khách hàng")
+                        {
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="DonGiaoHang" asp-action="Index">Đơn của tôi</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="DonGiaoHang" asp-action="Create">Gửi đơn mới</a></li>
+                        }
+                        else if (Context.Session.GetString("VaiTro") == "Nhân viên giao hàng")
+                        {
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="PhanCongGiaoHang" asp-action="Index">Đơn được giao</a></li>
+                        }
+                    </ul>
+                    @if (Context.Session.GetInt32("MaTaiKhoan") is not null)
+                    {
+                        <span class="text-muted me-2">@Context.Session.GetString("HoTen") (@Context.Session.GetString("VaiTro"))</span>
+                        <a class="btn btn-outline-secondary btn-sm" asp-controller="TaiKhoan" asp-action="Logout">Đăng xuất</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary btn-sm" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @if (TempData["Error"] is string error)
+            {
+                <div class="alert alert-warning">@error</div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - Hệ thống quản lý vận chuyển và giao nhận hàng hóa
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

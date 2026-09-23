@@ -1,0 +1,9 @@
+@model PhanCongGiaoHang
+@{ ViewData["Title"] = "Chi tiết phân công"; var isShipper = Context.Session.GetString("VaiTro") == "Nhân viên giao hàng"; }
+<h1>Phân công #@Model.MaPhanCong</h1><dl class="row"><dt class="col-sm-3">Đơn giao</dt><dd class="col-sm-9">#@Model.MaDon - @Model.DonGiaoHang?.TenNguoiNhan</dd><dt class="col-sm-3">Địa chỉ</dt><dd class="col-sm-9">@Model.DonGiaoHang?.DiaChiNhan</dd><dt class="col-sm-3">Nhân viên</dt><dd class="col-sm-9">@Model.NhanVienGiaoHang?.HoTen</dd><dt class="col-sm-3">Phương tiện</dt><dd class="col-sm-9">@Model.PhuongTien?.BienSo</dd><dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@Model.TrangThai</dd></dl>
+@if (isShipper && Model.TrangThai is not ("Hoàn tất" or "Giao thất bại"))
+{
+    var nextStatuses = Model.TrangThai switch { "Đã phân công" => new[] { "Đã nhận hàng" }, "Đã nhận hàng" => new[] { "Đang giao" }, _ => new[] { "Hoàn tất", "Giao thất bại" } };
+    <form asp-action="UpdateStatus" method="post" class="card card-body mb-3"><input type="hidden" name="MaPhanCong" value="@Model.MaPhanCong" /><div class="mb-2"><label class="form-label" for="TrangThai">Cập nhật trạng thái</label><select class="form-select" id="TrangThai" name="TrangThai">@foreach (var status in nextStatuses) {<option value="@status">@status</option>}</select></div><div class="mb-2"><label class="form-label" for="GhiChu">Ghi chú</label><textarea class="form-control" id="GhiChu" name="GhiChu"></textarea></div><button class="btn btn-primary" type="submit">Lưu cập nhật</button></form>
+}
+<a asp-action="Index">Quay lại</a>

@@ -1,0 +1,20 @@
+@model DonGiaoHang
+<input asp-for="NgayTao" type="hidden" />
+@if (Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối")
+{
+    <label asp-for="MaKhachHang"></label><select asp-for="MaKhachHang" class="form-select">@foreach (var x in ViewBag.KhachHangs) {<option value="@x.MaKhachHang">@x.HoTen</option>}</select>
+}
+else
+{
+    <input asp-for="MaKhachHang" type="hidden" />
+}
+<div class="mb-2"><label asp-for="MaLoaiHang" class="form-label"></label><select asp-for="MaLoaiHang" class="form-select">@foreach (var x in ViewBag.LoaiHangs) {<option value="@x.MaLoaiHang">@x.TenLoaiHang</option>}</select></div><div class="mb-2"><label asp-for="MaKhuVuc" class="form-label"></label><select asp-for="MaKhuVuc" class="form-select">@foreach (var x in ViewBag.KhuVucs) {<option value="@x.MaKhuVuc">@x.TenKhuVuc</option>}</select></div><div class="mb-2"><label asp-for="TenNguoiNhan" class="form-label"></label><input asp-for="TenNguoiNhan" class="form-control" /><span asp-validation-for="TenNguoiNhan" class="text-danger"></span></div><div class="mb-2"><label asp-for="SoDienThoaiNguoiNhan" class="form-label"></label><input asp-for="SoDienThoaiNguoiNhan" class="form-control" /><span asp-validation-for="SoDienThoaiNguoiNhan" class="text-danger"></span></div><div class="mb-2"><label asp-for="DiaChiNhan" class="form-label"></label><input asp-for="DiaChiNhan" class="form-control" /><span asp-validation-for="DiaChiNhan" class="text-danger"></span></div><div class="mb-2"><label asp-for="KhoiLuong" class="form-label"></label><input asp-for="KhoiLuong" class="form-control" /><span asp-validation-for="KhoiLuong" class="text-danger"></span></div><div class="mb-2"><label asp-for="NgayGiaoDuKien" class="form-label"></label><input asp-for="NgayGiaoDuKien" type="datetime-local" class="form-control" /><span asp-validation-for="NgayGiaoDuKien" class="text-danger"></span></div>
+@if (Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối")
+{
+    <div class="mb-2"><label asp-for="PhiVanChuyen" class="form-label"></label><input asp-for="PhiVanChuyen" class="form-control" /></div><div class="mb-2"><label asp-for="TrangThai" class="form-label"></label><input asp-for="TrangThai" class="form-control" /></div>
+}
+else
+{
+    <input asp-for="PhiVanChuyen" type="hidden" /><input asp-for="TrangThai" type="hidden" />
+}
+<div class="mb-2"><label asp-for="GhiChu" class="form-label"></label><textarea asp-for="GhiChu" class="form-control"></textarea></div><button class="btn btn-primary mt-2">Lưu</button>
