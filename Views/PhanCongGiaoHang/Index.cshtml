@@ -1,2 +1,74 @@
 @model IEnumerable<PhanCongGiaoHang>
-@{ ViewData["Title"] = "Phân công giao hàng"; var isCoordinator = Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối"; }<div class="d-flex justify-content-between align-items-center mb-3"><h1>Phân công giao hàng</h1>@if (isCoordinator) {<a asp-action="Create" class="btn btn-primary">Phân công mới</a>}</div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Đơn</th><th>Nhân viên</th><th>Phương tiện</th><th>Trạng thái</th><th></th></tr></thead><tbody>@foreach (var x in Model) {<tr><td>#@x.MaDon</td><td>@x.NhanVienGiaoHang?.HoTen</td><td>@x.PhuongTien?.BienSo</td><td>@x.TrangThai</td><td><a asp-action="Details" asp-route-id="@x.MaPhanCong">@(isCoordinator ? "Chi tiết" : "Cập nhật")</a>@if (isCoordinator) {<text> | <a asp-action="Edit" asp-route-id="@x.MaPhanCong">Sửa</a> | <a asp-action="Delete" asp-route-id="@x.MaPhanCong">Xóa</a></text>}</td></tr>}</tbody></table></div>
+@{
+    ViewData["Title"] = "Quản lý phân công";
+    var isCoordinator = Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối";
+    var currentStatus = ViewBag.Status as string;
+}
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success app-alert">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-warning app-alert">@error</div>
+}
+
+<div class="page-heading-row">
+    <div><span class="eyebrow">Điều phối vận hành</span><h2>Quản lý phân công</h2><p>Theo dõi đơn đang được giao và phân bổ nguồn lực an toàn.</p></div>
+    @if (isCoordinator)
+    {
+        <a asp-action="Create" class="button button-primary">+ Phân công mới</a>
+    }
+</div>
+
+<section class="panel assignment-filter-panel">
+    <form method="get" class="assignment-filter-form">
+        <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm mã đơn, người nhận, nhân viên, biển số" />
+        <select name="status" class="form-select">
+            <option value="">Tất cả trạng thái</option>
+            @foreach (var item in new[] { "Đã phân công", "Đã nhận hàng", "Đang giao", "Hoàn tất", "Giao thất bại", "Đã thay đổi", "Đã hủy" })
+            {
+                if (currentStatus == item)
+                {
+                    <option value="@item" selected>@item</option>
+                }
+                else
+                {
+                    <option value="@item">@item</option>
+                }
+            }
+        </select>
+        <button class="button button-secondary" type="submit">Lọc danh sách</button>
+        <a class="button button-ghost" asp-action="Index">Xóa lọc</a>
+    </form>
+</section>
+
+<section class="panel table-shell assignment-table-panel">
+    <div class="panel-header"><div><h3>Danh sách phân công</h3><p>@Model.Count() bản ghi, sắp xếp theo thời gian phân công gần nhất.</p></div></div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Phân công</th><th>Đơn giao</th><th>Nhân viên</th><th>Phương tiện</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6"><div class="empty-state">Chưa có phân công phù hợp với bộ lọc hiện tại.</div></td></tr>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td><span class="table-id">#@item.MaPhanCong</span><span class="table-sub">@item.NgayPhanCong.ToString("dd/MM/yyyy HH:mm")</span></td>
+                        <td><span class="table-id">Đơn #@item.MaDon</span><span class="table-sub">@item.DonGiaoHang?.TenNguoiNhan · @item.DonGiaoHang?.DiaChiNhan</span></td>
+                        <td>@item.NhanVienGiaoHang?.HoTen</td>
+                        <td>@item.PhuongTien?.BienSo</td>
+                        <td><span class="status-badge" data-status="@item.TrangThai">@item.TrangThai</span></td>
+                        <td class="text-end"><a class="row-action" asp-action="Details" asp-route-id="@item.MaPhanCong">Chi tiết</a>@if (isCoordinator && item.TrangThai is not ("Hoàn tất" or "Đã hủy" or "Đã thay đổi")) {<text> · <a class="row-action" asp-action="Reassign" asp-route-id="@item.MaPhanCong">@(item.TrangThai == "Giao thất bại" ? "Giao lại" : "Đổi phân công")</a></text>}</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

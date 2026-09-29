@@ -54,3 +54,9 @@ public class UpdateDeliveryStatusViewModel
     [Required, StringLength(50)] public string TrangThai { get; set; } = string.Empty;
     [StringLength(500), Display(Name = "Ghi chú")] public string? GhiChu { get; set; }
 }
+
+public class PhanCongLichSuViewModel
+{
+    public DonGiaoHang DonGiaoHang { get; set; } = null!;
+    public IReadOnlyList<PhanCongGiaoHang> PhanCongs { get; set; } = [];
+}

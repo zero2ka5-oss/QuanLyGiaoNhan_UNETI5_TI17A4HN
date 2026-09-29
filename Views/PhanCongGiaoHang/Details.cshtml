@@ -1,9 +1,29 @@
 @model PhanCongGiaoHang
-@{ ViewData["Title"] = "Chi tiết phân công"; var isShipper = Context.Session.GetString("VaiTro") == "Nhân viên giao hàng"; }
-<h1>Phân công #@Model.MaPhanCong</h1><dl class="row"><dt class="col-sm-3">Đơn giao</dt><dd class="col-sm-9">#@Model.MaDon - @Model.DonGiaoHang?.TenNguoiNhan</dd><dt class="col-sm-3">Địa chỉ</dt><dd class="col-sm-9">@Model.DonGiaoHang?.DiaChiNhan</dd><dt class="col-sm-3">Nhân viên</dt><dd class="col-sm-9">@Model.NhanVienGiaoHang?.HoTen</dd><dt class="col-sm-3">Phương tiện</dt><dd class="col-sm-9">@Model.PhuongTien?.BienSo</dd><dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@Model.TrangThai</dd></dl>
-@if (isShipper && Model.TrangThai is not ("Hoàn tất" or "Giao thất bại"))
-{
-    var nextStatuses = Model.TrangThai switch { "Đã phân công" => new[] { "Đã nhận hàng" }, "Đã nhận hàng" => new[] { "Đang giao" }, _ => new[] { "Hoàn tất", "Giao thất bại" } };
-    <form asp-action="UpdateStatus" method="post" class="card card-body mb-3"><input type="hidden" name="MaPhanCong" value="@Model.MaPhanCong" /><div class="mb-2"><label class="form-label" for="TrangThai">Cập nhật trạng thái</label><select class="form-select" id="TrangThai" name="TrangThai">@foreach (var status in nextStatuses) {<option value="@status">@status</option>}</select></div><div class="mb-2"><label class="form-label" for="GhiChu">Ghi chú</label><textarea class="form-control" id="GhiChu" name="GhiChu"></textarea></div><button class="btn btn-primary" type="submit">Lưu cập nhật</button></form>
+@{
+    ViewData["Title"] = "Chi tiết phân công";
+    var isCoordinator = Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối";
+    var isShipper = Context.Session.GetString("VaiTro") == "Nhân viên giao hàng";
+    var isClosed = Model.TrangThai is "Hoàn tất" or "Đã hủy" or "Đã thay đổi";
+    var canShipperUpdate = Model.TrangThai is "Đã phân công" or "Đã nhận hàng" or "Đang giao";
+    var canCoordinatorReassign = Model.TrangThai is "Đã phân công" or "Đã nhận hàng" or "Đang giao" or "Giao thất bại";
 }
-<a asp-action="Index">Quay lại</a>
+
+@if (TempData["Success"] is string success) { <div class="alert alert-success app-alert">@success</div> }
+@if (TempData["Error"] is string error) { <div class="alert alert-warning app-alert">@error</div> }
+
+<div class="page-heading-row"><div><span class="eyebrow">Phân công #@Model.MaPhanCong</span><h2>Chi tiết phân công</h2><p>Theo dõi trạng thái đơn, nguồn lực và lịch sử điều phối.</p></div><div class="page-heading-actions"><a class="button button-ghost" asp-action="History" asp-route-maDon="@Model.MaDon">Lịch sử đơn #@Model.MaDon</a><a class="button button-secondary" asp-action="Index">Quay lại</a></div></div>
+
+<div class="assignment-detail-grid">
+    <section class="panel assignment-summary-card"><div class="panel-header"><div><h3>Thông tin hiện tại</h3><p>Cập nhật lần cuối theo bản ghi phân công này.</p></div><span class="status-badge" data-status="@Model.TrangThai">@Model.TrangThai</span></div><dl class="assignment-detail-list"><div><dt>Đơn giao</dt><dd>#@Model.MaDon · @Model.DonGiaoHang?.TenNguoiNhan</dd></div><div><dt>Địa chỉ nhận</dt><dd>@Model.DonGiaoHang?.DiaChiNhan</dd></div><div><dt>Nhân viên</dt><dd>@Model.NhanVienGiaoHang?.HoTen</dd></div><div><dt>Phương tiện</dt><dd>@Model.PhuongTien?.BienSo · @Model.PhuongTien?.LoaiPhuongTien</dd></div><div><dt>Phân công lúc</dt><dd>@Model.NgayPhanCong.ToString("dd/MM/yyyy HH:mm")</dd></div><div><dt>Ghi chú</dt><dd>@(Model.GhiChu ?? "Không có ghi chú")</dd></div></dl></section>
+    <div class="assignment-action-stack">
+    @if (isShipper && canShipperUpdate)
+    {
+        var nextStatuses = Model.TrangThai switch { "Đã phân công" => new[] { "Đã nhận hàng" }, "Đã nhận hàng" => new[] { "Đang giao" }, _ => new[] { "Hoàn tất", "Giao thất bại" } };
+        <section class="panel assignment-action-card"><div class="panel-header"><div><h3>Cập nhật giao hàng</h3><p>Chỉ được chuyển theo đúng thứ tự nghiệp vụ.</p></div></div><form asp-action="UpdateStatus" method="post" class="assignment-action-form"><input type="hidden" name="MaPhanCong" value="@Model.MaPhanCong" /><label class="form-label" for="TrangThai">Trạng thái tiếp theo</label><select class="form-select" id="TrangThai" name="TrangThai">@foreach (var status in nextStatuses) {<option value="@status">@status</option>}</select><label class="form-label" for="GhiChu">Ghi chú</label><textarea class="form-control" id="GhiChu" name="GhiChu" rows="3"></textarea><button class="button button-primary" type="submit">Lưu cập nhật</button></form></section>
+    }
+    @if (isCoordinator && canCoordinatorReassign)
+    {
+        <section class="panel assignment-action-card"><div class="panel-header"><div><h3>Điều phối</h3><p>Thay đổi sẽ tạo bản ghi mới và giữ nguyên lịch sử.</p></div></div><div class="assignment-action-form"><a class="button button-primary button-block" asp-action="Reassign" asp-route-id="@Model.MaPhanCong">@(Model.TrangThai == "Giao thất bại" ? "Xử lý giao lại" : "Đổi nhân viên / phương tiện")</a>@if (!isClosed && Model.TrangThai != "Giao thất bại") {<form asp-action="Cancel" method="post" onsubmit="return confirm('Bạn có chắc muốn hủy phân công này?');"><input type="hidden" name="id" value="@Model.MaPhanCong" /><button class="button button-danger button-block" type="submit">Hủy phân công</button></form>}</div></section>
+    }
+    </div>
+</div>
