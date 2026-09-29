@@ -1,30 +1,51 @@
 @{
-    ViewData["Title"] = "Vận hành giao nhận";
+    ViewData["Title"] = "Trang chủ";
 }
 
-<section class="public-hero">
-    <div class="public-hero-copy">
-        <p class="eyebrow">Một nơi cho mọi hành trình</p>
-        <h1>Giao đúng nhịp.<br /><span>Rõ từng bước.</span></h1>
-        <p>Điều phối đơn hàng, theo dõi trạng thái và kết nối người gửi với đội giao hàng trong một không gian vận hành thống nhất.</p>
-        <div class="public-hero-actions">
-            <a class="button button-primary" asp-controller="TaiKhoan" asp-action="Login">Vào hệ thống <span aria-hidden="true">↗</span></a>
-            <a class="button button-secondary" asp-controller="TaiKhoan" asp-action="Register">Đăng ký người gửi</a>
+<div class="shipgo-home">
+    <section class="public-home-hero">
+        <div class="public-home-hero-inner">
+            <div class="public-home-copy">
+                <span class="public-home-eyebrow">✦ Giao nhanh 1-2 ngày toàn quốc</span>
+                <h1>Giao hàng nhanh -<br /><span>Tra cứu dễ dàng</span></h1>
+                <p>Phủ sóng nhiều tỉnh thành, theo dõi đơn hàng theo thời gian thực và quản lý từng bước giao nhận rõ ràng.</p>
+                <div class="public-tool-panel">
+                    <nav class="public-tool-tabs" aria-label="Tiện ích giao nhận">
+                        <a class="active" asp-controller="Home" asp-action="TraCuu">⌕ Tra cứu vận đơn</a>
+                        <a asp-controller="Home" asp-action="UocTinhCuoc">▣ Ước tính cước</a>
+                        <a asp-controller="Home" asp-action="BuuCuc">⌖ Tìm bưu cục</a>
+                    </nav>
+                    <form class="public-track-form" onsubmit="return false;">
+                        <input aria-label="Mã vận đơn" placeholder="VD: SG260928000001, SG260928000002" />
+                        <button class="public-orange-button" type="submit">Tra cứu</button>
+                    </form>
+                    <small>Nhập tối đa 10 mã, cách nhau bởi dấu phẩy</small>
+                </div>
+            </div>
+            <div class="public-truck-visual" aria-label="Minh họa xe giao hàng">
+                <div class="truck-body"></div><div class="truck-cabin"></div>
+                <div class="truck-wheel truck-wheel-one"></div><div class="truck-wheel truck-wheel-two"></div>
+                <span class="truck-line truck-line-one"></span><span class="truck-line truck-line-two"></span>
+            </div>
         </div>
-        <div class="public-hero-meta" aria-label="Thông tin hệ thống">
-            <div><strong>01</strong><span>Không gian điều phối</span></div>
-            <div><strong>03</strong><span>Vai trò vận hành</span></div>
-            <div><strong>24/7</strong><span>Trạng thái rõ ràng</span></div>
+    </section>
+
+    <section class="public-home-section public-services-section">
+        <div class="public-section-heading"><h2>Dịch vụ của ShipGo</h2><p>Đa dạng lựa chọn cho mọi nhu cầu gửi hàng</p></div>
+        <div class="public-services-grid">
+            <article class="public-service-card"><span class="public-icon-tile">✦</span><h3>Giao Nhanh</h3><p>Giao trong 1-2 ngày giữa các tỉnh thành lớn, ưu tiên xử lý tại bưu cục.</p></article>
+            <article class="public-service-card"><span class="public-icon-tile">◒</span><h3>Giao Tiết Kiệm</h3><p>Chi phí tối ưu cho đơn không gấp, thời gian linh hoạt theo tuyến.</p></article>
+            <article class="public-service-card"><span class="public-icon-tile">↗</span><h3>Hỏa Tốc</h3><p>Giao trong ngày nội thành cho hàng cần xử lý nhanh.</p></article>
+            <article class="public-service-card"><span class="public-icon-tile">□</span><h3>Hàng Cồng Kềnh</h3><p>Tính cước theo khối lượng quy đổi, hỗ trợ đồ nội thất và điện máy.</p></article>
         </div>
-    </div>
-    <div class="public-hero-visual" aria-label="Tổng quan hệ thống giao nhận">
-        <div class="visual-topline"><span>Trung tâm vận hành</span><strong>GiaoNhan</strong></div>
-        <div class="visual-stat"><small>Đơn hàng được theo dõi tập trung</small><strong>Liền mạch</strong></div>
-        <div class="visual-rule"></div>
-        <div class="visual-list">
-            <div><span>Tiếp nhận đơn</span><span>Đã sẵn sàng</span></div>
-            <div><span>Phân công giao hàng</span><span>Đồng bộ</span></div>
-            <div><span>Cập nhật trạng thái</span><span>Minh bạch</span></div>
-        </div>
-    </div>
-</section>
+    </section>
+
+    <section class="public-stat-band" aria-label="Thông tin nổi bật">
+        <div><strong>34+</strong><span>Tỉnh thành kết nối</span></div><div><strong>10</strong><span>Bưu cục mẫu</span></div><div><strong>3+</strong><span>Dịch vụ giao hàng</span></div><div><strong>24/7</strong><span>Theo dõi hành trình</span></div>
+    </section>
+
+    <section class="public-home-section public-shop-section">
+        <div class="public-shop-copy"><h2>Bán hàng online?<br /><span>Gửi hàng cùng ShipGo</span></h2><ul class="public-check-list"><li>Tạo đơn trong 1 phút, phí tham khảo rõ ràng</li><li>In vận đơn có mã vận đơn dễ tra cứu</li><li>Thu hộ COD, đối soát minh bạch</li><li>Theo dõi hành trình từng đơn tập trung</li></ul><a class="public-orange-button public-button-large" asp-controller="TaiKhoan" asp-action="Register">Đăng ký shop miễn phí</a></div>
+        <div class="public-info-grid"><article><span class="public-info-icon">▤</span><h3>Tin tức</h3><p>ShipGo mở rộng mạng lưới bưu cục tại các khu vực mới.</p></article><article><span class="public-info-icon">⚑</span><h3>Khuyến mãi</h3><p>Ưu đãi cước cho shop mới trong tháng đầu tiên.</p></article><article><span class="public-info-icon">♢</span><h3>Bảo hiểm hàng hóa</h3><p>Chính sách bảo vệ hàng hóa theo giá trị khai báo.</p></article><article><span class="public-info-icon">◉</span><h3>Hỗ trợ 24/7</h3><p>Hotline luôn sẵn sàng hỗ trợ shop và người nhận.</p></article></div>
+    </section>
+</div>

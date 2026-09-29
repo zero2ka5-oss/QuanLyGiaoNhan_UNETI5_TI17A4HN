@@ -46,6 +46,14 @@ namespace QuanLyGiaoNhan_UNETI5_TI17A4HN.Controllers
             return View();
         }
 
+        public IActionResult TraCuu() => View();
+
+        public IActionResult UocTinhCuoc() => View();
+
+        public IActionResult BuuCuc() => View();
+
+        public IActionResult TuyenDung() => View();
+
         public IActionResult Privacy()
         {
             return View();

@@ -90,11 +90,21 @@
     {
         <header class="public-header">
             <div class="public-header-inner">
-                <a class="brand-lockup" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark" aria-hidden="true">GN</span>
-                    <span><strong>GiaoNhan</strong><small>Vận hành giao nhận</small></span>
+                <a class="public-brand" asp-controller="Home" asp-action="Index" aria-label="ShipGo - Trang chủ">
+                    <span class="public-brand-mark" aria-hidden="true">SG</span>
+                    <span class="public-brand-name">ShipGo</span>
                 </a>
-                <a class="button button-primary button-small" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
+                <nav class="public-nav-links" aria-label="Điều hướng công khai">
+                    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                    <a asp-controller="Home" asp-action="TraCuu">Tra cứu</a>
+                    <a asp-controller="Home" asp-action="UocTinhCuoc">Ước tính cước</a>
+                    <a asp-controller="Home" asp-action="BuuCuc">Bưu cục</a>
+                    <a asp-controller="Home" asp-action="TuyenDung">Tuyển dụng</a>
+                </nav>
+                <div class="public-header-actions">
+                    <a class="public-work-button" asp-controller="TaiKhoan" asp-action="Login">Việc của tôi</a>
+                    <a class="public-account-button" asp-controller="TaiKhoan" asp-action="Login"><span aria-hidden="true">●</span> Đăng nhập <span aria-hidden="true">⌄</span></a>
+                </div>
             </div>
         </header>
         <main role="main" class="public-content">
@@ -104,7 +114,19 @@
             }
             @RenderBody()
         </main>
-        <footer class="public-footer"><span>GiaoNhan</span><span>Hệ thống quản lý vận chuyển và giao nhận hàng hóa</span></footer>
+        <footer class="public-footer public-footer-rich">
+            <div class="public-footer-brand">
+                <div class="public-footer-logo"><span class="public-brand-mark" aria-hidden="true">SG</span><span>ShipGo</span></div>
+                <p>Công ty TNHH Giao nhận ShipGo (đồ án mô phỏng)</p>
+                <p>⌖ 123 Lê Lợi, Phường Sài Gòn, TP. Hồ Chí Minh</p>
+                <p>☎ Hotline: 1900 1234 · ✉ cskh@shipgo.vn</p>
+            </div>
+            <div><h3>Dịch vụ</h3><a asp-controller="Home" asp-action="UocTinhCuoc">Giao nhanh</a><a asp-controller="Home" asp-action="UocTinhCuoc">Giao tiết kiệm</a><a asp-controller="Home" asp-action="TraCuu">Tra cứu vận đơn</a><a asp-controller="Home" asp-action="BuuCuc">Tìm bưu cục</a></div>
+            <div><h3>Về ShipGo</h3><a asp-controller="Home" asp-action="Index">Giới thiệu</a><a asp-controller="Home" asp-action="TuyenDung">Tuyển dụng</a><a asp-controller="TaiKhoan" asp-action="Login">Liên hệ</a></div>
+            <div><h3>Chính sách</h3><a asp-controller="Home" asp-action="Privacy">Bảo mật</a><a asp-controller="Home" asp-action="Privacy">Bồi thường</a><a asp-controller="Home" asp-action="Privacy">Hàng cấm gửi</a></div>
+            <div><h3>Tải ứng dụng</h3><span class="public-app-button">Apple App Store</span><span class="public-app-button">Google Play</span></div>
+            <div class="public-footer-bottom">© 2026 ShipGo · Mô phỏng hệ thống giao nhận cho mục đích học tập</div>
+        </footer>
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
