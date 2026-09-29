@@ -1,4 +1,40 @@
 @model LoginViewModel
-@{ ViewData["Title"] = "Đăng nhập"; }
-<div class="row justify-content-center"><div class="col-md-5"><h1>Đăng nhập</h1><form asp-action="Login" method="post"><input asp-for="ReturnUrl" type="hidden" /><div asp-validation-summary="ModelOnly" class="text-danger"></div><div class="mb-3"><label asp-for="TenDangNhap" class="form-label"></label><input asp-for="TenDangNhap" class="form-control" /><span asp-validation-for="TenDangNhap" class="text-danger"></span></div><div class="mb-3"><label asp-for="MatKhau" class="form-label"></label><input asp-for="MatKhau" class="form-control" /><span asp-validation-for="MatKhau" class="text-danger"></span></div><button class="btn btn-primary" type="submit">Đăng nhập</button> <a class="btn btn-outline-secondary" asp-action="Register">Đăng ký người gửi</a></form><div class="mt-3 small text-muted"><div>Admin: <code>admin / Admin@123</code></div><div>Khách hàng/người gửi: <code>khachhang01 / Khach@123</code></div><div>Nhân viên giao hàng: <code>shipper01 / Shipper@123</code></div></div></div></div>
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<section class="login-shell">
+    <div class="login-intro">
+        <p class="eyebrow">Chào mừng trở lại</p>
+        <h1>Mọi chuyến giao bắt đầu từ một màn hình rõ ràng.</h1>
+        <p>Đăng nhập để tiếp tục theo dõi đơn hàng, điều phối đội giao hoặc gửi đơn mới.</p>
+    </div>
+    <div class="login-form-panel">
+        <h2>Đăng nhập hệ thống</h2>
+        <p>Sử dụng tài khoản đã được cấp để truy cập không gian làm việc.</p>
+        <form asp-action="Login" method="post">
+            <input asp-for="ReturnUrl" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="mb-3">
+                <label asp-for="TenDangNhap" class="form-label"></label>
+                <input asp-for="TenDangNhap" class="form-control" autocomplete="username" />
+                <span asp-validation-for="TenDangNhap" class="text-danger small"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="MatKhau" class="form-label"></label>
+                <input asp-for="MatKhau" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="MatKhau" class="text-danger small"></span>
+            </div>
+            <button class="button button-primary" type="submit">Đăng nhập <span aria-hidden="true">↗</span></button>
+        </form>
+        <div class="login-demo-note">
+            <strong>Tài khoản mẫu</strong><br />
+            Admin: <code>admin / Admin@123</code><br />
+            Khách hàng: <code>khachhang01 / Khach@123</code><br />
+            Nhân viên giao hàng: <code>shipper01 / Shipper@123</code>
+        </div>
+        <a class="button button-secondary mt-3" asp-action="Register">Đăng ký người gửi</a>
+    </div>
+</section>
+
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

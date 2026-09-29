@@ -1,5 +1,51 @@
 @model CustomerDashboardViewModel
-@{ ViewData["Title"] = "Tổng quan người gửi"; }
-<div class="d-flex justify-content-between align-items-center mb-4"><div><p class="text-muted mb-1">Khu vực khách hàng / người gửi</p><h1>Xin chào, @Model.HoTen</h1></div><a class="btn btn-primary" asp-controller="DonGiaoHang" asp-action="Create">+ Gửi đơn mới</a></div>
-<div class="row g-3 mb-4"><div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted">Tổng đơn</div><div class="display-6">@Model.TongDonHang</div></div></div></div><div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted">Chờ phân công</div><div class="display-6">@Model.DonChoPhanCong</div></div></div></div><div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted">Đang giao</div><div class="display-6">@Model.DonDangGiao</div></div></div></div><div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted">Hoàn tất</div><div class="display-6">@Model.DonHoanTat</div></div></div></div></div>
-<div class="card"><div class="card-body"><div class="d-flex justify-content-between"><h2 class="h5">Đơn gần đây</h2><a asp-controller="DonGiaoHang" asp-action="Index">Xem tất cả</a></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Mã đơn</th><th>Người nhận</th><th>Ngày tạo</th><th>Trạng thái</th><th></th></tr></thead><tbody>@foreach (var order in Model.DonGanDay) {<tr><td>#@order.MaDon</td><td>@order.TenNguoiNhan</td><td>@order.NgayTao.ToString("dd/MM/yyyy HH:mm")</td><td>@order.TrangThai</td><td><a asp-controller="DonGiaoHang" asp-action="Details" asp-route-id="@order.MaDon">Chi tiết</a></td></tr>}</tbody></table></div></div></div>
+@{
+    ViewData["Title"] = "Tổng quan người gửi";
+}
+
+<section class="page-heading">
+    <div class="page-heading-copy">
+        <p class="eyebrow">Không gian người gửi</p>
+        <h2>Xin chào, @Model.HoTen.</h2>
+        <p>Mọi đơn hàng của bạn được gom lại tại đây để dễ theo dõi từ lúc tạo đơn đến khi hoàn tất.</p>
+    </div>
+    <a class="button button-primary" asp-controller="DonGiaoHang" asp-action="Create">Gửi đơn mới <span aria-hidden="true">↗</span></a>
+</section>
+
+<section class="metric-grid" aria-label="Tóm tắt đơn hàng">
+    <article class="metric-card metric-primary"><span class="metric-label">Tổng đơn hàng</span><strong class="metric-value">@Model.TongDonHang</strong><span class="metric-foot">Tất cả đơn đã tạo</span></article>
+    <article class="metric-card"><span class="metric-label">Chờ phân công</span><strong class="metric-value">@Model.DonChoPhanCong</strong><span class="metric-foot">Đang chờ xử lý</span></article>
+    <article class="metric-card"><span class="metric-label">Đang giao</span><strong class="metric-value">@Model.DonDangGiao</strong><span class="metric-foot">Đang trên hành trình</span></article>
+    <article class="metric-card"><span class="metric-label">Hoàn tất</span><strong class="metric-value">@Model.DonHoanTat</strong><span class="metric-foot">Đã giao thành công</span></article>
+</section>
+
+<section class="panel table-shell">
+    <div class="panel-header">
+        <div><h3>Đơn hàng gần đây</h3><p>Năm đơn mới nhất trong tài khoản của bạn</p></div>
+        <a class="panel-link" asp-controller="DonGiaoHang" asp-action="Index">Xem tất cả <span aria-hidden="true">↗</span></a>
+    </div>
+    @if (Model.DonGanDay.Count == 0)
+    {
+        <div class="empty-state">Bạn chưa có đơn giao hàng nào. Hãy bắt đầu bằng một đơn mới.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Mã đơn</th><th>Người nhận</th><th>Ngày tạo</th><th>Trạng thái</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var order in Model.DonGanDay)
+                    {
+                        <tr>
+                            <td><span class="table-id">#@order.MaDon</span></td>
+                            <td>@order.TenNguoiNhan</td>
+                            <td>@order.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="status-badge" data-status="@order.TrangThai">@order.TrangThai</span></td>
+                            <td class="text-end"><a class="row-action" asp-controller="DonGiaoHang" asp-action="Details" asp-route-id="@order.MaDon">Chi tiết <span aria-hidden="true">↗</span></a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

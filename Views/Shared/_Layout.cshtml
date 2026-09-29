@@ -1,72 +1,112 @@
-﻿<!DOCTYPE html>
+@{
+    var role = Context.Session.GetString("VaiTro");
+    var isLoggedIn = Context.Session.GetInt32("MaTaiKhoan") is not null;
+    var isCoordinator = role is "Admin" or "Nhân viên điều phối";
+}
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - QuanLyGiaoNhan_UNETI5_TI17A4HN</title>
+    <title>@ViewData["Title"] | GiaoNhan</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/QuanLyGiaoNhan_UNETI5_TI17A4HN.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">Quản lý giao nhận</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        @if (Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="ThongKe" asp-action="Index">Tổng quan</a></li>
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="DonGiaoHang" asp-action="Index">Đơn giao hàng</a></li>
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="PhanCongGiaoHang" asp-action="Index">Phân công</a></li>
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="TaiKhoan" asp-action="Index">Tài khoản</a></li>
-                        }
-                        else if (Context.Session.GetString("VaiTro") == "Khách hàng")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Tổng quan</a></li>
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="DonGiaoHang" asp-action="Index">Đơn của tôi</a></li>
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="DonGiaoHang" asp-action="Create">Gửi đơn mới</a></li>
-                        }
-                        else if (Context.Session.GetString("VaiTro") == "Nhân viên giao hàng")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Tổng quan</a></li>
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="PhanCongGiaoHang" asp-action="Index">Đơn được giao</a></li>
-                        }
-                    </ul>
-                    @if (Context.Session.GetInt32("MaTaiKhoan") is not null)
-                    {
-                        <span class="text-muted me-2">@Context.Session.GetString("HoTen") (@Context.Session.GetString("VaiTro"))</span>
-                        <a class="btn btn-outline-secondary btn-sm" asp-controller="TaiKhoan" asp-action="Logout">Đăng xuất</a>
-                    }
-                    else
-                    {
-                        <a class="btn btn-primary btn-sm" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
-                    }
+<body class="@(isLoggedIn ? "app-body app-body-auth" : "app-body")">
+    @if (isLoggedIn)
+    {
+        <div class="app-shell">
+            <aside class="app-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="appSidebar" aria-label="Điều hướng chính">
+                <div class="sidebar-inner">
+                    <div class="sidebar-header">
+                        <a class="brand-lockup" asp-controller="Home" asp-action="Index">
+                            <span class="brand-mark" aria-hidden="true">GN</span>
+                            <span><strong>GiaoNhan</strong><small>Vận hành giao nhận</small></span>
+                        </a>
+                        <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" aria-label="Đóng menu"></button>
+                    </div>
+
+                    <div class="workspace-label">Không gian làm việc</div>
+                    <div class="workspace-switcher">
+                        <span class="workspace-avatar" aria-hidden="true">@((Context.Session.GetString("HoTen") ?? "G").Trim().FirstOrDefault())</span>
+                        <span><strong>@Context.Session.GetString("HoTen")</strong><small>@role</small></span>
+                    </div>
+
+                    <nav class="side-nav">
+                        <span class="side-nav-label">Điều hướng</span>
+                        <ul class="nav flex-column">
+                            @if (isCoordinator)
+                            {
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ThongKe" ? "active" : "")" asp-controller="ThongKe" asp-action="Index"><span class="nav-glyph">01</span>Tổng quan</a></li>
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DonGiaoHang" ? "active" : "")" asp-controller="DonGiaoHang" asp-action="Index"><span class="nav-glyph">02</span>Đơn giao hàng</a></li>
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PhanCongGiaoHang" ? "active" : "")" asp-controller="PhanCongGiaoHang" asp-action="Index"><span class="nav-glyph">03</span>Phân công</a></li>
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "TaiKhoan" ? "active" : "")" asp-controller="TaiKhoan" asp-action="Index"><span class="nav-glyph">04</span>Tài khoản</a></li>
+                            }
+                            else if (role == "Khách hàng")
+                            {
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index"><span class="nav-glyph">01</span>Tổng quan</a></li>
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DonGiaoHang" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="DonGiaoHang" asp-action="Index"><span class="nav-glyph">02</span>Đơn của tôi</a></li>
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DonGiaoHang" && ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")" asp-controller="DonGiaoHang" asp-action="Create"><span class="nav-glyph">03</span>Gửi đơn mới</a></li>
+                            }
+                            else if (role == "Nhân viên giao hàng")
+                            {
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index"><span class="nav-glyph">01</span>Tổng quan</a></li>
+                                <li class="nav-item"><a class="side-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PhanCongGiaoHang" ? "active" : "")" asp-controller="PhanCongGiaoHang" asp-action="Index"><span class="nav-glyph">02</span>Đơn được giao</a></li>
+                            }
+                        </ul>
+                    </nav>
+
+                    <div class="sidebar-footer">
+                        <div class="sidebar-footer-copy"><span class="status-dot" aria-hidden="true"></span><span><strong>Hệ thống đang hoạt động</strong><small>Dữ liệu được cập nhật an toàn</small></span></div>
+                        <a class="side-logout" asp-controller="TaiKhoan" asp-action="Logout">Đăng xuất <span aria-hidden="true">↗</span></a>
+                    </div>
                 </div>
+            </aside>
+
+            <div class="app-main">
+                <header class="app-topbar">
+                    <div class="topbar-start">
+                        <button class="sidebar-toggle d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Mở menu"><span></span><span></span></button>
+                        <div><span class="topbar-kicker">Trung tâm vận hành</span><h1>@ViewData["Title"]</h1></div>
+                    </div>
+                    <div class="topbar-actions">
+                        <span class="topbar-date">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("vi-VN"))</span>
+                        <span class="topbar-user"><span class="user-avatar">@((Context.Session.GetString("HoTen") ?? "G").Trim().FirstOrDefault())</span><span class="d-none d-sm-inline">@Context.Session.GetString("HoTen")</span></span>
+                    </div>
+                </header>
+                <main role="main" class="app-content">
+                    @if (TempData["Error"] is string error)
+                    {
+                        <div class="alert alert-warning app-alert">@error</div>
+                    }
+                    @RenderBody()
+                </main>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @if (TempData["Error"] is string error)
+        </div>
+    }
+    else
+    {
+        <header class="public-header">
+            <div class="public-header-inner">
+                <a class="brand-lockup" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark" aria-hidden="true">GN</span>
+                    <span><strong>GiaoNhan</strong><small>Vận hành giao nhận</small></span>
+                </a>
+                <a class="button button-primary button-small" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
+            </div>
+        </header>
+        <main role="main" class="public-content">
+            @if (TempData["Error"] is string publicError)
             {
-                <div class="alert alert-warning">@error</div>
+                <div class="alert alert-warning app-alert">@publicError</div>
             }
             @RenderBody()
         </main>
-    </div>
+        <footer class="public-footer"><span>GiaoNhan</span><span>Hệ thống quản lý vận chuyển và giao nhận hàng hóa</span></footer>
+    }
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Hệ thống quản lý vận chuyển và giao nhận hàng hóa
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

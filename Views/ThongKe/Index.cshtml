@@ -1,3 +1,37 @@
 @model DashboardViewModel
-@{ ViewData["Title"] = "Thống kê"; }
-<h1>Dashboard</h1><div class="row g-3"><div class="col-md-3"><div class="card p-3"><small>Tổng đơn</small><strong>@Model.TongDonHang</strong></div></div><div class="col-md-3"><div class="card p-3"><small>Chờ phân công</small><strong>@Model.DonChoPhanCong</strong></div></div><div class="col-md-3"><div class="card p-3"><small>Đang giao</small><strong>@Model.DonDangGiao</strong></div></div><div class="col-md-3"><div class="card p-3"><small>Hoàn tất</small><strong>@Model.DonHoanTat</strong></div></div></div><p class="mt-3">Tổng phí vận chuyển: <strong>@Model.TongPhiVanChuyen.ToString("N0")</strong></p>
+@{
+    ViewData["Title"] = "Tổng quan điều phối";
+}
+
+<section class="page-heading">
+    <div class="page-heading-copy">
+        <p class="eyebrow">Bức tranh vận hành</p>
+        <h2>Đơn hàng đang ở đâu?</h2>
+        <p>Theo dõi nhịp giao nhận hiện tại để ưu tiên xử lý đúng việc, đúng thời điểm.</p>
+    </div>
+    <a class="button button-primary" asp-controller="DonGiaoHang" asp-action="Index">Mở đơn giao hàng <span aria-hidden="true">↗</span></a>
+</section>
+
+<section class="metric-grid" aria-label="Chỉ số vận hành">
+    <article class="metric-card metric-primary"><span class="metric-label">Tổng đơn hàng</span><strong class="metric-value">@Model.TongDonHang</strong><span class="metric-foot">Tổng trong hệ thống</span></article>
+    <article class="metric-card"><span class="metric-label">Chờ phân công</span><strong class="metric-value">@Model.DonChoPhanCong</strong><span class="metric-foot">Cần điều phối tiếp</span></article>
+    <article class="metric-card"><span class="metric-label">Đang giao</span><strong class="metric-value">@Model.DonDangGiao</strong><span class="metric-foot">Đang trên hành trình</span></article>
+    <article class="metric-card"><span class="metric-label">Hoàn tất</span><strong class="metric-value">@Model.DonHoanTat</strong><span class="metric-foot">Đã giao thành công</span></article>
+</section>
+
+<section class="overview-lower-grid">
+    <article class="panel finance-panel">
+        <div class="panel-header"><div><h3>Phí vận chuyển</h3><p>Tổng giá trị các đơn trong hệ thống</p></div><span class="metric-label">VNĐ</span></div>
+        <div class="finance-value">@Model.TongPhiVanChuyen.ToString("N0")</div>
+        <div class="finance-rule"><span></span></div>
+        <p class="finance-note">Số liệu giúp đội điều phối nắm quy mô dòng đơn và phân bổ nguồn lực.</p>
+    </article>
+    <article class="panel action-panel">
+        <div class="panel-header"><div><h3>Truy cập nhanh</h3><p>Các khu vực thường dùng trong vận hành</p></div></div>
+        <div class="quick-actions">
+            <a asp-controller="DonGiaoHang" asp-action="Index"><span><strong>Đơn giao hàng</strong><small>Kiểm tra và xử lý đơn</small></span><span aria-hidden="true">↗</span></a>
+            <a asp-controller="PhanCongGiaoHang" asp-action="Index"><span><strong>Phân công</strong><small>Ghép đơn với nhân viên giao</small></span><span aria-hidden="true">↗</span></a>
+            <a asp-controller="TaiKhoan" asp-action="Index"><span><strong>Tài khoản</strong><small>Quản lý người dùng hệ thống</small></span><span aria-hidden="true">↗</span></a>
+        </div>
+    </article>
+</section>

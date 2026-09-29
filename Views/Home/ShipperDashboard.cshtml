@@ -1,5 +1,51 @@
 @model ShipperDashboardViewModel
-@{ ViewData["Title"] = "Tổng quan giao hàng"; }
-<div class="mb-4"><p class="text-muted mb-1">Khu vực nhân viên giao hàng</p><h1>Xin chào, @Model.HoTen</h1><p class="lead">Theo dõi các đơn được phân công và cập nhật trạng thái giao hàng.</p></div>
-<div class="row g-3 mb-4"><div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">Tổng phân công</div><div class="display-6">@Model.TongPhanCong</div></div></div></div><div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">Đang giao</div><div class="display-6">@Model.DonDangGiao</div></div></div></div><div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">Hoàn tất</div><div class="display-6">@Model.DonHoanTat</div></div></div></div></div>
-<div class="card"><div class="card-body"><div class="d-flex justify-content-between"><h2 class="h5">Phân công gần đây</h2><a asp-controller="PhanCongGiaoHang" asp-action="Index">Xem tất cả</a></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Đơn</th><th>Người nhận</th><th>Địa chỉ</th><th>Trạng thái</th><th></th></tr></thead><tbody>@foreach (var item in Model.PhanCongGanDay) {<tr><td>#@item.MaDon</td><td>@item.DonGiaoHang?.TenNguoiNhan</td><td>@item.DonGiaoHang?.DiaChiNhan</td><td>@item.TrangThai</td><td><a asp-controller="PhanCongGiaoHang" asp-action="Details" asp-route-id="@item.MaPhanCong">Cập nhật</a></td></tr>}</tbody></table></div></div></div>
+@{
+    ViewData["Title"] = "Tổng quan giao hàng";
+}
+
+<section class="page-heading">
+    <div class="page-heading-copy">
+        <p class="eyebrow">Không gian nhân viên giao hàng</p>
+        <h2>Xin chào, @Model.HoTen.</h2>
+        <p>Nhìn nhanh các đơn được phân công và cập nhật trạng thái khi bạn hoàn thành từng chặng giao hàng.</p>
+    </div>
+    <a class="button button-secondary" asp-controller="PhanCongGiaoHang" asp-action="Index">Mở danh sách giao</a>
+</section>
+
+<section class="metric-grid" aria-label="Tóm tắt phân công">
+    <article class="metric-card metric-primary"><span class="metric-label">Tổng phân công</span><strong class="metric-value">@Model.TongPhanCong</strong><span class="metric-foot">Tất cả đơn được giao</span></article>
+    <article class="metric-card"><span class="metric-label">Đang giao</span><strong class="metric-value">@Model.DonDangGiao</strong><span class="metric-foot">Cần cập nhật trạng thái</span></article>
+    <article class="metric-card"><span class="metric-label">Hoàn tất</span><strong class="metric-value">@Model.DonHoanTat</strong><span class="metric-foot">Đã bàn giao thành công</span></article>
+    <article class="metric-card"><span class="metric-label">Còn cần xử lý</span><strong class="metric-value">@Math.Max(Model.TongPhanCong - Model.DonHoanTat, 0)</strong><span class="metric-foot">Chưa hoàn tất</span></article>
+</section>
+
+<section class="panel table-shell">
+    <div class="panel-header">
+        <div><h3>Phân công gần đây</h3><p>Các đơn cần được theo dõi và cập nhật</p></div>
+        <a class="panel-link" asp-controller="PhanCongGiaoHang" asp-action="Index">Xem tất cả <span aria-hidden="true">↗</span></a>
+    </div>
+    @if (Model.PhanCongGanDay.Count == 0)
+    {
+        <div class="empty-state">Hiện chưa có đơn nào được phân công cho bạn.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Đơn</th><th>Người nhận</th><th>Địa chỉ</th><th>Trạng thái</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.PhanCongGanDay)
+                    {
+                        <tr>
+                            <td><span class="table-id">#@item.MaDon</span><span class="table-sub">Phân công #@item.MaPhanCong</span></td>
+                            <td>@item.DonGiaoHang?.TenNguoiNhan</td>
+                            <td>@item.DonGiaoHang?.DiaChiNhan</td>
+                            <td><span class="status-badge" data-status="@item.TrangThai">@item.TrangThai</span></td>
+                            <td class="text-end"><a class="row-action" asp-controller="PhanCongGiaoHang" asp-action="Details" asp-route-id="@item.MaPhanCong">Cập nhật <span aria-hidden="true">↗</span></a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

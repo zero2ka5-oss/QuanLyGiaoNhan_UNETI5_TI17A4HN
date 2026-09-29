@@ -1,9 +1,30 @@
-﻿@{
-    ViewData["Title"] = "Trang chủ";
+@{
+    ViewData["Title"] = "Vận hành giao nhận";
 }
 
-<div class="p-4 bg-light rounded-3">
-    <h1>Hệ thống quản lý vận chuyển và giao nhận hàng hóa</h1>
-    <p class="lead">Khung ASP.NET Core 10 MVC cho nhóm phát triển 5 module.</p>
-    <a class="btn btn-primary" asp-controller="DonGiaoHang" asp-action="Index">Xem đơn giao hàng</a>
-</div>
+<section class="public-hero">
+    <div class="public-hero-copy">
+        <p class="eyebrow">Một nơi cho mọi hành trình</p>
+        <h1>Giao đúng nhịp.<br /><span>Rõ từng bước.</span></h1>
+        <p>Điều phối đơn hàng, theo dõi trạng thái và kết nối người gửi với đội giao hàng trong một không gian vận hành thống nhất.</p>
+        <div class="public-hero-actions">
+            <a class="button button-primary" asp-controller="TaiKhoan" asp-action="Login">Vào hệ thống <span aria-hidden="true">↗</span></a>
+            <a class="button button-secondary" asp-controller="TaiKhoan" asp-action="Register">Đăng ký người gửi</a>
+        </div>
+        <div class="public-hero-meta" aria-label="Thông tin hệ thống">
+            <div><strong>01</strong><span>Không gian điều phối</span></div>
+            <div><strong>03</strong><span>Vai trò vận hành</span></div>
+            <div><strong>24/7</strong><span>Trạng thái rõ ràng</span></div>
+        </div>
+    </div>
+    <div class="public-hero-visual" aria-label="Tổng quan hệ thống giao nhận">
+        <div class="visual-topline"><span>Trung tâm vận hành</span><strong>GiaoNhan</strong></div>
+        <div class="visual-stat"><small>Đơn hàng được theo dõi tập trung</small><strong>Liền mạch</strong></div>
+        <div class="visual-rule"></div>
+        <div class="visual-list">
+            <div><span>Tiếp nhận đơn</span><span>Đã sẵn sàng</span></div>
+            <div><span>Phân công giao hàng</span><span>Đồng bộ</span></div>
+            <div><span>Cập nhật trạng thái</span><span>Minh bạch</span></div>
+        </div>
+    </div>
+</section>
