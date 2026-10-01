@@ -1,0 +1,20 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: KHUNG (tuần 1) - Lịch sử giao nhận của một đơn dạng danh sách đơn giản (timeline hoàn thiện ở tuần 3). *@
+@model IEnumerable<LichSuGiaoNhan>
+@{ var ds = Model.ToList(); }
+@if (ds.Count == 0)
+{
+    <div class="mo nho">Chưa có lịch sử.</div>
+}
+else
+{
+    <ul class="list-unstyled mb-0">
+        @foreach (var ls in ds)
+        {
+            <li class="mb-2">
+                <b>@ls.TrangThaiMoi.TenHienThi()</b> – @DinhDang.NgayGio(ls.ThoiGian)
+                <div class="nho mo">@ls.NoiDung (@ls.NguoiThucHien)</div>
+            </li>
+        }
+    </ul>
+}

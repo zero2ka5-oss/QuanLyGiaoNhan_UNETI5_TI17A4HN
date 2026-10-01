@@ -1,0 +1,25 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: KHUNG (tuần 1) - Module 5 - Lịch sử giao nhận toàn hệ thống: 50 mốc mới nhất
+                       (bộ lọc, phân trang, thanh tiến trình làm ở tuần 3). *@
+@model List<LichSuGiaoNhan>
+@{ ViewData["Title"] = "Lịch sử giao nhận"; }
+<div class="the-mem">
+    <div class="table-responsive">
+        <table class="table bang mb-0">
+            <thead><tr><th>Thời gian</th><th>Mã đơn</th><th>Trạng thái</th><th>Nội dung</th><th>Người thực hiện</th></tr></thead>
+            <tbody>
+                @foreach (var l in Model)
+                {
+                    <tr>
+                        <td class="text-nowrap">@DinhDang.NgayGio(l.ThoiGian)</td>
+                        <td><a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@l.MaDon">@l.DonGiaoHang?.MaHienThi</a></td>
+                        <td>@(l.TrangThaiCu?.TenHienThi() ?? "—") → <b>@l.TrangThaiMoi.TenHienThi()</b></td>
+                        <td>@l.NoiDung</td>
+                        <td>@l.NguoiThucHien</td>
+                    </tr>
+                }
+                @if (Model.Count == 0) { <tr><td colspan="5" class="text-center mo py-4">Chưa có lịch sử giao nhận</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

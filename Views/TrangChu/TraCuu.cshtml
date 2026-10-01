@@ -1,0 +1,15 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: KHUNG (tuần 1) - Trang tra cứu đơn công khai: form nhập mã đơn + số điện thoại (xử lý ở tuần 3). *@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Tra cứu đơn hàng";
+}
+<div class="container py-5">
+    <h1 class="h3 fw-bold mb-3">Tra cứu hành trình đơn hàng</h1>
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-md-5"><input name="ma" value="@ViewBag.Ma" class="form-control" placeholder="Mã đơn, vd: DH000012" /></div>
+        <div class="col-md-5"><input name="sdt" value="@ViewBag.Sdt" class="form-control" placeholder="Số điện thoại người nhận" /></div>
+        <div class="col-md-2"><button class="btn btn-cam w-100"><i class="bi bi-search"></i> Tra cứu</button></div>
+    </form>
+    <div class="alert alert-warning">Chức năng tra cứu đơn đang được phát triển.</div>
+</div>

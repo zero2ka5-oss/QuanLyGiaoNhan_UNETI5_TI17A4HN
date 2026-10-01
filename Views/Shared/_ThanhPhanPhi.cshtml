@@ -1,0 +1,7 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: KHUNG (tuần 1) - Phí của đơn: tạm hiện tổng phí và tiền thu hộ (chi tiết thành phần phí làm ở tuần 2). *@
+@model DonGiaoHang
+<div class="bang-phi">
+    <div class="dong tong"><span>Phí vận chuyển</span><span>@DinhDang.Tien(Model.PhiVanChuyen)</span></div>
+    <div class="dong"><span>Tiền thu hộ</span><span>@(Model.TienThuHo > 0 ? DinhDang.Tien(Model.TienThuHo) : "Không thu hộ")</span></div>
+</div>

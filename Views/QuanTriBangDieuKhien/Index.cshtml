@@ -1,0 +1,15 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: KHUNG (tuần 1) - Module 5 - Bảng điều khiển: số đơn theo trạng thái
+                       (KPI, biểu đồ, việc cần xử lý, hoạt động gần đây làm ở tuần 5). *@
+@{
+    ViewData["Title"] = "Bảng điều khiển";
+    var so = (Dictionary<TrangThaiDon, int>)ViewBag.SoTheoTrangThai;
+}
+<div class="row g-3">
+    @foreach (var tt in HienThi.TatCaTrangThaiDon)
+    {
+        <div class="col-6 col-md-3">
+            <div class="kpi"><div class="nhan">@tt.TenHienThi()</div><div class="gia-tri">@so.GetValueOrDefault(tt)</div></div>
+        </div>
+    }
+</div>
