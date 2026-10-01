@@ -1,4 +1,14 @@
 @* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: KHUNG (tuần 1) - Cổng khách hàng - Trang bảng giá & ước lượng phí (hoàn thiện ở tuần 2). *@
+   Nội dung thực hiện: Cổng khách hàng - Bảng giá & ước lượng phí ngay trong trang khách hàng. *@
+@model BangGiaVM
 @{ ViewData["Title"] = "Bảng giá & ước lượng phí"; }
-<div class="the-mem p-4 text-center mo">Chức năng bảng giá & ước lượng phí đang được phát triển.</div>
+<div class="kh-dau-trang mb-4">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Biết trước chi phí trước khi gửi hàng</h2>
+        <p class="mb-0">Ước lượng phí theo khu vực, loại hàng, khối lượng rồi tạo đơn ngay với thông tin đó</p>
+    </div>
+    <span class="kh-dau-icon"><i class="bi bi-calculator"></i></span>
+</div>
+<div class="kh-bang-gia">
+    <partial name="_UocLuongPhi" model="Model" />
+</div>

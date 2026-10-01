@@ -1,7 +1,83 @@
 @* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: KHUNG (tuần 1) - Chỗ đặt khối ước lượng phí + bảng giá (hoàn thiện ở tuần 2). *@
+   Nội dung thực hiện: Khối ước lượng phí (nút Ước lượng → kết quả chi tiết) + bảng giá dạng thẻ. Dùng chung cho
+                       trang chủ công khai và trang Bảng giá của khách hàng; xử lý trong site.js (khoiTaoUocLuong). *@
 @model BangGiaVM
-<div class="the-mem p-4 text-center mo">
-    <i class="bi bi-calculator fs-3 d-block mb-2"></i>
-    Chức năng ước lượng phí vận chuyển đang được phát triển.
-</div>
+    @* ---------- Ước lượng phí: nhập thông tin → bấm Ước lượng → xem chi tiết ---------- *@
+    <div class="uoc-luong" id="uocLuong">
+        <form class="ul-nhap" id="formUocLuong" data-khach="@(Model.LaKhachHang ? "1" : "0")" novalidate>
+            <div class="ul-tieu-de"><span class="xt-icon cam"><i class="bi bi-calculator"></i></span><div><b>Ước lượng phí vận chuyển</b><small>Nhập thông tin hàng để xem chi phí chính xác</small></div></div>
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label" for="utKhuVuc">Khu vực giao</label>
+                    <select id="utKhuVuc" class="form-select" required>
+                        <option value="">-- Chọn khu vực giao --</option>
+                        @foreach (var kv in Model.DsKhuVuc) { <option value="@kv.MaKhuVuc">@kv.TenKhuVuc</option> }
+                    </select></div>
+                <div class="col-md-6"><label class="form-label" for="utLoaiHang">Loại hàng</label>
+                    <select id="utLoaiHang" class="form-select">
+                        @foreach (var l in Model.DsLoaiHang) { <option value="@l.MaLoaiHang">@l.TenLoaiHang</option> }
+                    </select></div>
+                <div class="col-md-6"><label class="form-label" for="utKhoiLuong">Khối lượng</label>
+                    <div class="input-group"><input id="utKhoiLuong" type="number" min="0.1" max="@Model.KhoiLuongToiDa.ToString(System.Globalization.CultureInfo.InvariantCulture)" step="0.1" value="1" class="form-control" inputmode="decimal" /><span class="input-group-text">kg</span></div></div>
+                <div class="col-md-6"><label class="form-label" for="utThuHo">Tiền thu hộ <span class="mo fw-normal">(nếu có)</span></label>
+                    <div class="input-group"><input id="utThuHo" type="text" class="form-control" placeholder="0" inputmode="numeric" autocomplete="off" /><span class="input-group-text">đ</span></div></div>
+                <div class="col-12"><label class="form-label">Người trả phí ship</label>
+                    <div class="ul-chon">
+                        <label><input type="radio" name="utNguoiTra" value="NguoiGui" checked /><span><i class="bi bi-person-up"></i> Người gửi trả</span></label>
+                        <label><input type="radio" name="utNguoiTra" value="NguoiNhan" /><span><i class="bi bi-person-down"></i> Người nhận trả</span></label>
+                    </div></div>
+            </div>
+            <div class="ul-loi" id="utLoi" role="alert"></div>
+            <button class="btn btn-cam btn-lg w-100 xt-nut mt-3" id="nutUocLuong"><i class="bi bi-calculator"></i> Ước lượng phí</button>
+        </form>
+
+        <div class="ul-ket-qua" id="utKetQua" aria-live="polite">
+            <div class="ul-cho" id="utCho">
+                <div class="ul-cho-icon"><i class="bi bi-receipt"></i></div>
+                <b>Kết quả ước lượng</b>
+                <small>Chọn khu vực, loại hàng, khối lượng rồi bấm “Ước lượng phí”</small>
+            </div>
+            <div class="ul-chi-tiet d-none" id="utChiTiet">
+                <div class="ul-nhan">Phí vận chuyển</div>
+                <div class="ul-tong" id="utTong">0 đ</div>
+                <div class="ul-tom-tat" id="utTomTat"></div>
+                <div class="ul-dong"><span>Phí cơ bản theo khu vực</span><b id="utCoBan"></b></div>
+                <div class="ul-dong"><span id="utNhanKl">Phụ phí khối lượng</span><b id="utPhuKl"></b></div>
+                <div class="ul-dong"><span id="utNhanLoai">Phụ phí loại hàng</span><b id="utPhuLoai"></b></div>
+                <div class="ul-thu" id="utKhoiThu">
+                    <div class="ul-dong"><span>Người nhận thanh toán khi nhận</span><b id="utNguoiNhan"></b></div>
+                    <div class="ul-dong"><span id="utNhanNguoiGui">Người gửi nhận lại khi đối soát</span><b id="utNguoiGui"></b></div>
+                </div>
+                <a href="#" class="btn btn-light btn-lg w-100 xt-nut-phu mt-3" id="utTaoDon"><i class="bi bi-plus-circle"></i> Tạo đơn với thông tin này</a>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- Bảng giá dạng thẻ ---------- *@
+    <div class="row g-4 mt-1">
+        <div class="col-lg-7">
+            <h3 class="bg-tieu-de"><i class="bi bi-geo-alt text-cam"></i> Phí cơ bản theo khu vực</h3>
+            <div class="bg-khu-vuc">
+                @foreach (var kv in Model.DsKhuVuc)
+                {
+                    <div class="bg-kv">
+                        <span class="bg-kv-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                        <div class="min-w-0 flex-grow-1"><div class="fw-bold">@kv.TenKhuVuc</div><div class="nho mo bg-kv-mo-ta">@kv.MoTa</div></div>
+                        <div class="bg-gia">@DinhDang.Tien(kv.PhiCoBan)</div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <h3 class="bg-tieu-de"><i class="bi bi-tags text-cam"></i> Phụ phí theo loại hàng</h3>
+            <div class="bg-loai">
+                @foreach (var l in Model.DsLoaiHang)
+                {
+                    <div class="bg-loai-dong">
+                        <div class="min-w-0"><div class="fw-semibold">@l.TenLoaiHang</div><div class="nho mo">@l.MoTa</div></div>
+                        <span class="bg-phan-tram @(l.HeSoPhuThu == 0 ? "khong" : "")">@(l.HeSoPhuThu == 0 ? "Miễn phụ thu" : $"+{l.HeSoPhuThu * 100:0.#}%")</span>
+                    </div>
+                }
+                <div class="bg-ghi"><i class="bi bi-box"></i> Hàng trên @DinhDang.KhoiLuong(TinhPhiXuLy.NguongKhoiLuongKg): cộng @DinhDang.Tien(TinhPhiXuLy.DonGiaVuotMoiKg) cho mỗi kg vượt</div>
+            </div>
+        </div>
+    </div>
