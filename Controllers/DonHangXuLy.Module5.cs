@@ -1,14 +1,15 @@
 // Họ và tên: Nguyễn Minh Hướng
 // Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 5 - Khung nghiệp vụ Module 5 trong lớp DonHangXuLy: áp phí vào đơn, ghi lịch sử giao nhận
-//                     (đã chạy); hoàn tất, bảng giá, tra cứu, thống kê theo tháng (khung, hoàn thiện ở các tuần sau).
+// Nội dung thực hiện: Module 5 - Áp phí vào đơn, ghi lịch sử, bảng giá (đã chạy);
+//                     hoàn tất, tra cứu, thống kê theo tháng (khung, hoàn thiện ở tuần 3, 4, 6).
 
+using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
 namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
 
 /*
- * DonHangXuLy (partial – Module 5) — KHUNG (tuần 1)
+ * DonHangXuLy (partial – Module 5)
  * Lớp DonHangXuLy được chia nhiều tệp theo module để mỗi thành viên commit đúng phần việc của mình;
  * khi biên dịch C# gộp lại thành một lớp duy nhất (cùng DbContext db, cùng hàm BayGio, DoiTrangThaiDonAsync...).
  * Các hàm khung trả kết quả tạm để các module khác của nhóm gọi được ngay từ đầu.
@@ -58,6 +59,10 @@ public partial class DonHangXuLy
     public Task<(DonGiaoHang? Don, string? Loi)> TraCuuAsync(string? ma, string? sdt) =>
         Task.FromResult<(DonGiaoHang?, string?)>((null, "Chức năng tra cứu đơn đang được phát triển"));
 
-    public Task<BangGiaVM> BangGiaAsync(bool laKhachHang) =>
-        Task.FromResult(new BangGiaVM([], [], 0, laKhachHang));
+    /// <summary>Dữ liệu khối ước lượng phí + bảng giá: khu vực, loại hàng đang hoạt động và khối lượng tối đa một đơn.</summary>
+    public async Task<BangGiaVM> BangGiaAsync(bool laKhachHang) => new(
+        await db.KhuVucs.AsNoTracking().Where(k => k.TrangThai == TrangThaiHoatDong.HoatDong).OrderBy(k => k.PhiCoBan).ToListAsync(),
+        await db.LoaiHangs.AsNoTracking().Where(l => l.TrangThai == TrangThaiHoatDong.HoatDong).OrderBy(l => l.HeSoPhuThu).ToListAsync(),
+        await db.PhuongTiens.Where(p => p.TrangThai != TrangThaiPhuongTien.NgungHoatDong).MaxAsync(p => (decimal?)p.TaiTrongToiDa) ?? 0,
+        laKhachHang);
 }
