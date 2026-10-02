@@ -24,7 +24,7 @@
 
 <section class="panel assignment-filter-panel">
     <form method="get" class="assignment-filter-form">
-        <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm mã đơn, người nhận, nhân viên, biển số" />
+        <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm mã đơn, người nhận, SĐT, nhân viên, biển số" />
         <select name="status" class="form-select">
             <option value="">Tất cả trạng thái</option>
             @foreach (var item in new[] { "Đã phân công", "Đã nhận hàng", "Đang giao", "Hoàn tất", "Giao thất bại", "Đã thay đổi", "Đã hủy" })
