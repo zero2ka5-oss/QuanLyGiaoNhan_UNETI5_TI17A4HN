@@ -3,6 +3,10 @@
     ViewData["Title"] = "Quản lý phân công";
     var isCoordinator = Context.Session.GetString("VaiTro") is "Admin" or "Nhân viên điều phối";
     var currentStatus = ViewBag.Status as string;
+    int? currentEmployee = ViewBag.MaNhanVien;
+    int? currentArea = ViewBag.MaKhuVuc;
+    var employees = ViewBag.NhanVienGiaoHangs as IEnumerable<NhanVienGiaoHang> ?? [];
+    var areas = ViewBag.KhuVucs as IEnumerable<KhuVuc> ?? [];
 }
 
 @if (TempData["Success"] is string success)
@@ -39,6 +43,23 @@
                 }
             }
         </select>
+        @if (isCoordinator)
+        {
+            <select name="maNhanVien" class="form-select">
+                <option value="">Tất cả nhân viên</option>
+                @foreach (var employee in employees)
+                {
+                    <option value="@employee.MaNhanVien" selected="@(currentEmployee == employee.MaNhanVien)">@employee.HoTen</option>
+                }
+            </select>
+            <select name="maKhuVuc" class="form-select">
+                <option value="">Tất cả khu vực</option>
+                @foreach (var area in areas)
+                {
+                    <option value="@area.MaKhuVuc" selected="@(currentArea == area.MaKhuVuc)">@area.TenKhuVuc</option>
+                }
+            </select>
+        }
         <button class="button button-secondary" type="submit">Lọc danh sách</button>
         <a class="button button-ghost" asp-action="Index">Xóa lọc</a>
     </form>
