@@ -1,0 +1,31 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 4 - Ghi nhận giao không thành công: bắt buộc chọn lý do, mô tả bằng textarea. *@
+@model GiaoThatBaiVM
+@{
+    ViewData["Title"] = "Giao không thành công";
+    ViewData["QuayLai"] = Url.Action("ChiTiet", new { id = Model.MaPhanCong });
+}
+<div class="the-don">
+    <div class="ma mb-1">@Model.Don?.MaHienThi</div>
+    <div class="nho mo mb-3">@Model.Don?.TenNguoiNhan · @Model.Don?.DiaChiNhan</div>
+    <form asp-action="GiaoKhongThanhCong" method="post">
+        <input type="hidden" asp-for="MaPhanCong" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <label class="form-label fw-semibold">Lý do giao không thành công <span class="text-danger">*</span></label>
+        <div class="d-grid gap-2 mb-2">
+            @foreach (var lyDo in Enum.GetValues<LyDoThatBai>())
+            {
+                <label class="border rounded-3 p-3 d-flex align-items-center gap-2" style="cursor:pointer">
+                    <input type="radio" class="form-check-input m-0" name="LyDo" value="@lyDo" checked="@(Model.LyDo == lyDo)" />
+                    <span>@lyDo.TenHienThi()</span>
+                </label>
+            }
+        </div>
+        <span asp-validation-for="LyDo" class="text-danger nho d-block mb-2"></span>
+        <label asp-for="ChiTiet" class="form-label fw-semibold"></label>
+        <textarea asp-for="ChiTiet" rows="3" class="form-control" placeholder="VD: Đã gọi 3 lần không nghe máy, hẹn giao lại sáng mai"></textarea>
+        <span asp-validation-for="ChiTiet" class="text-danger nho"></span>
+        <button class="btn btn-danger w-100 btn-lg mt-3"><i class="bi bi-x-octagon"></i> Xác nhận giao không thành công</button>
+        <a asp-action="ChiTiet" asp-route-id="@Model.MaPhanCong" class="btn btn-light w-100 mt-2">Quay lại</a>
+    </form>
+</div>
