@@ -1,0 +1,39 @@
+//sinh vien Vu Thi Van Anh - MSSV 23103100194
+
+@model KhuVuc
+
+@{
+    ViewData["Title"] = "Xóa khu vực";
+}
+
+<h1>Xóa khu vực?</h1>
+
+<div class="alert alert-warning">
+    Bạn có chắc chắn muốn xóa khu vực
+    <strong>@Model.TenKhuVuc</strong> không?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Phí cơ bản</dt>
+    <dd class="col-sm-9">@Model.PhiCoBan.ToString("N0")</dd>
+
+    <dt class="col-sm-3">Mô tả</dt>
+    <dd class="col-sm-9">
+        @(string.IsNullOrWhiteSpace(Model.MoTa) ? "Không có" : Model.MoTa)
+    </dd>
+
+    <dt class="col-sm-3">Trạng thái</dt>
+    <dd class="col-sm-9">@Model.TrangThai</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input asp-for="MaKhuVuc" type="hidden" />
+
+    <button type="submit" class="btn btn-danger">
+        Xóa
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Hủy
+    </a>
+</form>

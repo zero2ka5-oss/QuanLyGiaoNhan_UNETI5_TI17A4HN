@@ -1,0 +1,37 @@
+//sinh vien Vu Thi Van Anh - MSSV 23103100194
+@model KhuVuc
+
+@{
+    ViewData["Title"] = "Chi tiết khu vực";
+}
+
+<h1>Chi tiết khu vực</h1>
+
+<hr />
+
+<dl class="row">
+    <dt class="col-sm-3">Tên khu vực</dt>
+    <dd class="col-sm-9">@Model.TenKhuVuc</dd>
+
+    <dt class="col-sm-3">Phí cơ bản</dt>
+    <dd class="col-sm-9">@Model.PhiCoBan.ToString("N0")</dd>
+
+    <dt class="col-sm-3">Mô tả</dt>
+    <dd class="col-sm-9">
+        @(string.IsNullOrWhiteSpace(Model.MoTa) ? "Không có" : Model.MoTa)
+    </dd>
+
+    <dt class="col-sm-3">Trạng thái</dt>
+    <dd class="col-sm-9">@Model.TrangThai</dd>
+</dl>
+
+<a asp-action="Edit"
+   asp-route-id="@Model.MaKhuVuc"
+   class="btn btn-warning">
+    Sửa
+</a>
+
+<a asp-action="Index"
+   class="btn btn-secondary">
+    Quay lại
+</a>
