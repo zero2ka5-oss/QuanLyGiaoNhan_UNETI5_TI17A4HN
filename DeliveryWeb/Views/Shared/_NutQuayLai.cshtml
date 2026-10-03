@@ -1,0 +1,26 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Nút quay lại trên thanh tiêu đề (layout Quản trị / Khách hàng), tự hiện ở mọi trang con.
+   Thứ tự chọn trang quay về:
+     1. ViewData["QuayLai"] do View tự đặt;
+     2. Tài khoản của tôi (DangNhap) → trang làm việc theo vai trò;
+     3. Trang Sửa (ChinhSua/{id}) của danh mục có trang Chi tiết → Chi tiết của chính mục đó;
+     4. Mọi trang con khác (ChiTiet, TaoMoi, DoiPhanCong…) → trang danh sách (Index) của chức năng;
+   Trang Index (trang gốc của chức năng) không hiện nút. *@
+@{
+    string? ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    string? action = ViewContext.RouteData.Values["action"]?.ToString();
+    object? id = ViewContext.RouteData.Values["id"];
+    string[] coChiTiet = ["QuanTriDonGiaoHang", "QuanTriKhachHang", "QuanTriKhuVuc", "QuanTriLoaiHang", "QuanTriNhanVien", "QuanTriPhuongTien", "KhachHangDonHang"];
+
+    string? dich = ViewData["QuayLai"] as string;
+    if (dich is null && ctrl == "DangNhap") dich = Url.Action("TrangLamViec", "DangNhap");
+    // Trang tiện ích của khách hàng là trang gốc mở từ menu (không có trang Index)
+    else if (dich is null && action != "Index" && ctrl != "KhachHangTienIch")
+        dich = action == "ChinhSua" && id is not null && coChiTiet.Contains(ctrl)
+            ? Url.Action("ChiTiet", ctrl, new { id })
+            : Url.Action("Index", ctrl);
+}
+@if (dich is not null)
+{
+    <a href="@dich" class="nut-quay-lai" title="Quay lại" aria-label="Quay lại"><i class="bi bi-arrow-left"></i></a>
+}

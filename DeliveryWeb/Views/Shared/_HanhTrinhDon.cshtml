@@ -1,0 +1,21 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Thanh hành trình 5 bước của một đơn (tra cứu, chi tiết đơn của khách hàng và quản trị).
+                       Bước đã qua tích xanh, bước hiện tại màu cam nhấp nháy, giao lỗi / hủy dừng ở bước kế tiếp (dấu đỏ).
+                       Cần Include LichSus khi đơn đã hủy. *@
+@model DonGiaoHang
+@{
+    (string Ten, string Icon)[] buoc = [("Đã tạo đơn", "bi-receipt"), ("Đã phân công", "bi-person-check"), ("Đã lấy hàng", "bi-box-seam"), ("Đang giao", "bi-truck"), ("Đã giao", "bi-house-check")];
+    int bac = HienThi.BacHanhTrinh(Model);
+    bool dung = Model.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.DaHuy;
+    bool xong = Model.TrangThai is TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat;
+}
+<div class="hanh-trinh" style="--tien-do: @((bac * 0.25m).ToString(System.Globalization.CultureInfo.InvariantCulture))">
+    @for (int i = 0; i < buoc.Length; i++)
+    {
+        string lop = dung && i == bac + 1 ? "loi" : i < bac || (i == bac && (xong || dung)) ? "xong" : i == bac ? "hien-tai" : "";
+        <div class="ht-buoc @lop">
+            <span class="ht-cham"><i class="bi @(lop == "loi" ? "bi-x-lg" : lop == "xong" ? "bi-check-lg" : buoc[i].Icon)"></i></span>
+            <span class="ht-ten">@(lop == "loi" ? (Model.TrangThai == TrangThaiDon.DaHuy ? "Đã hủy" : "Chưa giao được") : buoc[i].Ten)</span>
+        </div>
+    }
+</div>

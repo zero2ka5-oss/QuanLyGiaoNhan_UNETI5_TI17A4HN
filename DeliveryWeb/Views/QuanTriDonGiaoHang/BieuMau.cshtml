@@ -1,0 +1,102 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 2 + 5 - [Quản trị / Điều phối] Form tạo / sửa đơn. Phí KHÔNG nhập tay: xem trước bằng AJAX, server tính lại khi lưu.
+                       Loại hàng / khu vực lấy từ CSDL (chỉ mục đang hoạt động). *@
+@model DonGiaoHangFormVM
+@{
+    bool laTao = Model.MaDon == 0;
+    var don = ViewBag.Don as DonGiaoHang;
+    ViewData["Title"] = laTao ? "Tạo đơn giao hàng" : $"Sửa đơn {don?.MaHienThi}";
+    var dsLoai = (List<LoaiHang>)ViewBag.DsLoaiHang;
+    var dsKhuVuc = (List<KhuVuc>)ViewBag.DsKhuVuc;
+}
+<form asp-action="@(laTao ? "TaoMoi" : "ChinhSua")" method="post" oninput="tinhPhiXemTruoc()" onchange="tinhPhiXemTruoc()">
+    <input type="hidden" asp-for="MaDon" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    @if (don?.TrangThai == TrangThaiDon.DaPhanCong)
+    {
+        <div class="alert alert-warning nho"><i class="bi bi-exclamation-triangle"></i> Đơn đã phân công – nếu đổi khối lượng, hệ thống kiểm tra lại tải trọng phương tiện đang được giao.</div>
+    }
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="the-mem p-4 mb-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-person-up text-cam"></i> Khách hàng gửi</h6>
+                @if (laTao)
+                {
+                    <select asp-for="MaKhachHang" asp-items="ViewBag.DsKhachHang" class="form-select"><option value="">-- Chọn khách hàng --</option></select>
+                    <span asp-validation-for="MaKhachHang" class="text-danger nho"></span>
+                }
+                else
+                {
+                    <input type="hidden" asp-for="MaKhachHang" />
+                    <div class="fw-semibold">@(((SelectList)ViewBag.DsKhachHang).FirstOrDefault(x => x.Value == Model.MaKhachHang.ToString())?.Text)</div>
+                }
+            </div>
+            <div class="the-mem p-4 mb-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-person-down text-cam"></i> Người nhận</h6>
+                <div class="row g-3">
+                    <div class="col-md-6"><label asp-for="TenNguoiNhan" class="form-label"></label><input asp-for="TenNguoiNhan" class="form-control" /><span asp-validation-for="TenNguoiNhan" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="SoDienThoaiNguoiNhan" class="form-label"></label><input asp-for="SoDienThoaiNguoiNhan" class="form-control" placeholder="09xxxxxxxx" /><span asp-validation-for="SoDienThoaiNguoiNhan" class="text-danger nho"></span></div>
+                    <div class="col-12"><label asp-for="DiaChiNhan" class="form-label"></label><input asp-for="DiaChiNhan" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" /><span asp-validation-for="DiaChiNhan" class="text-danger nho"></span></div>
+                </div>
+            </div>
+            <div class="the-mem p-4 mb-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-box-seam text-cam"></i> Hàng hóa & khu vực giao</h6>
+                <div class="row g-3">
+                    <div class="col-md-6"><label asp-for="MaLoaiHang" class="form-label"></label>
+                        <select asp-for="MaLoaiHang" class="form-select">
+                            <option value="">-- Chọn loại hàng --</option>
+                            @foreach (var l in dsLoai) { <option value="@l.MaLoaiHang">@l.TenLoaiHang @(l.HeSoPhuThu > 0 ? $"(+{l.HeSoPhuThu * 100:0.#}%)" : "")</option> }
+                        </select>
+                        <span asp-validation-for="MaLoaiHang" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="MaKhuVuc" class="form-label"></label>
+                        <select asp-for="MaKhuVuc" class="form-select">
+                            <option value="0">-- Chọn khu vực giao --</option>
+                            @foreach (var kv in dsKhuVuc) { <option value="@kv.MaKhuVuc">@kv.TenKhuVuc – phí từ @DinhDang.Tien(kv.PhiCoBan)</option> }
+                        </select>
+                        <span asp-validation-for="MaKhuVuc" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="KhoiLuong" class="form-label"></label><input asp-for="KhoiLuong" value="@(Model.KhoiLuong > 0 ? Model.KhoiLuong.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")" placeholder="VD: 2.5" type="number" step="0.01" min="0.01" class="form-control" /><span asp-validation-for="KhoiLuong" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="NgayGiaoDuKien" class="form-label"></label><input asp-for="NgayGiaoDuKien" type="date" class="form-control" min="@((don?.NgayTao ?? DateTime.Today).ToString("yyyy-MM-dd"))" /><span asp-validation-for="NgayGiaoDuKien" class="text-danger nho"></span></div>
+
+                    <div class="col-12"><label asp-for="GhiChu" class="form-label"></label><textarea asp-for="GhiChu" rows="2" class="form-control" placeholder="VD: Gọi trước khi giao, cho xem hàng..."></textarea></div>
+                </div>
+            </div>
+            <div class="the-mem p-4 mb-3">
+                <h6 class="fw-bold mb-1"><i class="bi bi-cash-coin text-cam"></i> Thu hộ & thanh toán</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="TienThuHo" class="form-label"></label>
+                        <div class="input-group">
+                            <input asp-for="TienThuHo" value="@(Model.TienThuHo > 0 ? Model.TienThuHo.ToString("0") : "")" type="number" min="0" step="1000" class="form-control" placeholder="0" />
+                            <span class="input-group-text">đ</span>
+                        </div>
+                        <span asp-validation-for="TienThuHo" class="text-danger nho"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Người trả phí ship</label>
+                        <div class="d-flex gap-2">
+                            @foreach (var n in new[] { NguoiTraPhi.NguoiGui, NguoiTraPhi.NguoiNhan })
+                            {
+                                <label class="lua-chon-phi flex-fill">
+                                    <input type="radio" asp-for="NguoiTraPhi" value="@n" class="form-check-input me-1" />
+                                    <span>@n.TenHienThi()</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="the-mem p-4" style="position: sticky; top: 80px">
+                <h6 class="fw-bold mb-3"><i class="bi bi-calculator text-cam"></i> Phí vận chuyển dự kiến</h6>
+                <div id="khungPhi"><div class="mo nho">Nhập thông tin hàng để xem phí.</div></div>
+                <button class="btn btn-cam btn-lg w-100">@(laTao ? "Tạo đơn" : "Lưu thay đổi")</button>
+                <a asp-action="@(laTao ? "Index" : "ChiTiet")" asp-route-id="@(laTao ? null : Model.MaDon)" class="btn btn-light w-100 mt-2">Hủy</a>
+            </div>
+        </div>
+    </div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>tinhPhiXemTruoc();</script>
+}

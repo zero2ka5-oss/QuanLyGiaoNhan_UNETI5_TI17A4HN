@@ -1,0 +1,12 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Ảnh thu nhỏ của phương tiện; chưa có ảnh thì hiện biểu tượng theo loại xe. ViewData["Lon"] = true → cỡ lớn. *@
+@model PhuongTien
+@{ string lop = ViewData["Lon"] is true ? "anh-xe anh-xe-lon" : "anh-xe"; }
+@if (!string.IsNullOrEmpty(Model.AnhXe))
+{
+    <img src="@Model.AnhXe" alt="@Model.BienSo" class="@lop" loading="lazy" />
+}
+else
+{
+    <span class="@lop"><i class="bi @(Model.LoaiPhuongTien.StartsWith("Xe máy") ? "bi-scooter" : Model.LoaiPhuongTien.Contains("ba gác") ? "bi-cart3" : "bi-truck")"></i></span>
+}

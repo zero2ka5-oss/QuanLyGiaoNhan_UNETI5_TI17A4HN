@@ -1,0 +1,21 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 1 - Form thêm / sửa loại hàng. *@
+@model LoaiHang
+@{ bool laTao = Model.MaLoaiHang == 0; ViewData["Title"] = laTao ? "Thêm loại hàng" : "Sửa loại hàng"; }
+<div class="the-mem p-4" style="max-width: 680px">
+    <form asp-action="@(laTao ? "TaoMoi" : "ChinhSua")" method="post">
+        <input type="hidden" asp-for="MaLoaiHang" />
+        <div class="mb-3"><label asp-for="TenLoaiHang" class="form-label"></label><input asp-for="TenLoaiHang" class="form-control" /><span asp-validation-for="TenLoaiHang" class="text-danger nho"></span></div>
+        <div class="mb-3"><label asp-for="HeSoPhuThu" class="form-label"></label>
+            <input asp-for="HeSoPhuThu" type="number" step="0.01" min="0" class="form-control" />
+            <span asp-validation-for="HeSoPhuThu" class="text-danger nho"></span></div>
+        <div class="mb-3"><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" rows="3" class="form-control"></textarea></div>
+        <div class="mb-3"><label class="form-label">Trạng thái</label>
+            <select asp-for="TrangThai" class="form-select">
+                <option value="HoatDong">Đang hoạt động</option>
+                <option value="NgungHoatDong">Ngừng hoạt động (không chọn được cho đơn mới)</option>
+            </select></div>
+        <div class="d-flex gap-2"><button class="btn btn-cam px-4">Lưu</button><a asp-action="Index" class="btn btn-light">Hủy</a></div>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

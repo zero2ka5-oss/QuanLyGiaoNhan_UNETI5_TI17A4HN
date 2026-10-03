@@ -1,0 +1,87 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 4 - Form phân công / đổi phân công. Liệt kê nhân viên và phương tiện kèm kết quả kiểm tra
+                       khả năng nhận đơn (trạng thái, số đơn đang giữ, tải trọng còn lại). Controller kiểm tra lại khi lưu. *@
+@model PhanCongFormVM
+@{
+    var d = Model.Don!;
+    ViewData["Title"] = (Model.LaDoiPhanCong ? "Đổi phân công đơn " : d.TrangThai == TrangThaiDon.GiaoKhongThanhCong ? "Phân công giao lại đơn " : "Phân công đơn ") + d.MaHienThi;
+    int soLanThatBai = d.PhanCongs.Count(p => p.KetQua == KetQuaGiao.GiaoKhongThanhCong);
+}
+<form asp-action="@(Model.LaDoiPhanCong ? "DoiPhanCong" : "TaoMoi")" method="post">
+    <input type="hidden" asp-for="MaDon" />
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="the-mem p-4 mb-3">
+                <div class="d-flex justify-content-between"><span class="fw-bold fs-5">@d.MaHienThi</span><span class="tt @d.TrangThai.LopBadge()">@d.TrangThai.TenHienThi()</span></div>
+                <hr>
+                <div class="nho mb-2"><span class="mo">Khách hàng:</span> @d.KhachHang?.HoTen</div>
+                <div class="nho mb-2"><span class="mo">Giao đến:</span> <b>@d.KhuVuc?.TenKhuVuc</b><br>@d.DiaChiNhan</div>
+                <div class="nho mb-2"><span class="mo">Người nhận:</span> @d.TenNguoiNhan – @DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</div>
+                <div class="nho mb-2"><span class="mo">Loại hàng:</span> @d.LoaiHang?.TenLoaiHang</div>
+                <div class="fs-5"><span class="mo nho">Khối lượng:</span> <b class="text-cam">@DinhDang.KhoiLuong(d.KhoiLuong)</b></div>
+                <div class="nho"><span class="mo">Giao dự kiến:</span> @DinhDang.Ngay(d.NgayGiaoDuKien)</div>
+            </div>
+            @if (Model.PhanCongHienTai is { } pc)
+            {
+                <div class="the-mem p-3 mb-3 bg-cam-nhat">
+                    <div class="nho mo">Phân công hiện tại</div>
+                    <div class="fw-semibold">@pc.NhanVien?.HoTen · @pc.PhuongTien?.BienSo</div>
+                    <span class="tt @pc.TrangThai.LopBadge()">@pc.TrangThai.TenHienThi()</span>
+                </div>
+            }
+            @if (soLanThatBai > 0)
+            {
+                <div class="alert alert-warning nho"><i class="bi bi-exclamation-triangle"></i> Đơn đã giao không thành công @soLanThatBai lần. Lịch sử các lần trước được giữ nguyên.</div>
+            }
+            <div class="the-mem p-3">
+                <label asp-for="GhiChu" class="form-label">@(Model.LaDoiPhanCong ? "Lý do đổi phân công (bắt buộc)" : "Ghi chú cho nhân viên")</label>
+                <textarea asp-for="GhiChu" rows="3" class="form-control" placeholder="@(Model.LaDoiPhanCong ? "VD: Nhân viên cũ báo ốm" : "VD: Hàng dễ vỡ, gọi trước 30 phút")"></textarea>
+                <button class="btn btn-cam w-100 mt-3 btn-lg"><i class="bi bi-check2-circle"></i> @(Model.LaDoiPhanCong ? "Xác nhận đổi phân công" : "Xác nhận phân công")</button>
+                <a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@d.MaDon" class="btn btn-light w-100 mt-2">Hủy</a>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="the-mem p-4 mb-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-person-badge text-cam"></i> Chọn nhân viên giao hàng</h6>
+                <div class="row g-2">
+                    @foreach (var nv in Model.DsNhanVien)
+                    {
+                        <div class="col-md-6">
+                            <label class="border rounded-3 p-3 d-flex gap-2 h-100 @(nv.DuocChon ? "" : "opacity-50 bg-light")" style="cursor:@(nv.DuocChon ? "pointer" : "not-allowed")">
+                                <input type="radio" class="form-check-input mt-1" name="MaNhanVien" value="@nv.MaNhanVien" disabled="@(!nv.DuocChon)" checked="@(Model.MaNhanVien == nv.MaNhanVien)" />
+                                <span class="flex-grow-1">
+                                    <span class="d-flex justify-content-between"><b>@nv.HoTen</b><span class="tt @nv.TrangThai.LopBadge()">@nv.TrangThai.TenHienThi()</span></span>
+                                    <span class="nho mo d-block">@(nv.KhuVuc ?? "Chưa phân khu vực") @if (nv.CungKhuVuc) { <span class="text-success fw-semibold">· cùng khu vực</span> }</span>
+                                    <span class="nho d-block">Đang giữ @nv.SoDonDangGiu / @DonHangXuLy.SoDonToiDa đơn</span>
+                                    @if (nv.LyDoKhongChon is not null) { <span class="nho text-danger d-block"><i class="bi bi-x-circle"></i> @nv.LyDoKhongChon</span> }
+                                </span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="the-mem p-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-truck-front text-cam"></i> Chọn phương tiện</h6>
+                <div class="row g-2">
+                    @foreach (var pt in Model.DsPhuongTien)
+                    {
+                        decimal conLai = pt.TaiTrong - pt.DangChoKg;
+                        <div class="col-md-6">
+                            <label class="border rounded-3 p-3 d-flex gap-2 h-100 @(pt.DuocChon ? "" : "opacity-50 bg-light")" style="cursor:@(pt.DuocChon ? "pointer" : "not-allowed")">
+                                <input type="radio" class="form-check-input mt-1" name="MaPhuongTien" value="@pt.MaPhuongTien" disabled="@(!pt.DuocChon)" checked="@(Model.MaPhuongTien == pt.MaPhuongTien)" />
+                                <span class="flex-grow-1">
+                                    <span class="d-flex justify-content-between"><b>@pt.BienSo</b><span class="tt @pt.TrangThai.LopBadge()">@pt.TrangThai.TenHienThi()</span></span>
+                                    <span class="nho mo d-block">@pt.Loai · tải trọng @DinhDang.KhoiLuong(pt.TaiTrong)</span>
+                                    <span class="nho d-block">Còn trống @DinhDang.KhoiLuong(Math.Max(0, conLai)) @if (pt.NhanVienDangDung is not null) { <span class="mo">· @pt.NhanVienDangDung đang dùng</span> }</span>
+                                    @if (pt.LyDoKhongChon is not null) { <span class="nho text-danger d-block"><i class="bi bi-x-circle"></i> @pt.LyDoKhongChon</span> }
+                                </span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

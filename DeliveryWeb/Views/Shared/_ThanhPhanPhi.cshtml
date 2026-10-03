@@ -1,0 +1,33 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 5 - Hiển thị rõ các thành phần phí vận chuyển, tiền thu hộ (COD), số tiền thu người nhận
+                       và trạng thái đối soát của đơn. *@
+@model DonGiaoHang
+<div class="bang-phi">
+    <div class="dong"><span>Phí cơ bản (@Model.KhuVuc?.TenKhuVuc)</span><span>@DinhDang.Tien(Model.PhiCoBan)</span></div>
+    <div class="dong"><span>Phụ phí khối lượng (@DinhDang.KhoiLuong(Model.KhoiLuong))</span><span>@DinhDang.Tien(Model.PhuPhiKhoiLuong)</span></div>
+    <div class="dong"><span>Phụ phí loại hàng (@Model.LoaiHang?.TenLoaiHang)</span><span>@DinhDang.Tien(Model.PhuPhiLoaiHang)</span></div>
+    <div class="dong tong"><span>Phí vận chuyển</span><span>@DinhDang.Tien(Model.PhiVanChuyen)</span></div>
+</div>
+<div class="bang-phi mt-3 pt-3 border-top">
+    <div class="dong"><span>Người trả phí ship</span><span>@Model.NguoiTraPhi.TenHienThi()</span></div>
+    <div class="dong"><span>Tiền thu hộ</span><span>@(Model.TienThuHo > 0 ? DinhDang.Tien(Model.TienThuHo) : "Không thu hộ")</span></div>
+    <div class="dong fw-bold"><span>Shipper thu người nhận</span><span class="text-cam">@DinhDang.Tien(Model.TongThuNguoiNhan)</span></div>
+    @if (Model.TienThuHo > 0 || Model.NguoiTraPhi == NguoiTraPhi.NguoiNhan)
+    {
+        <div class="dong"><span>@(Model.TienTraNguoiGui >= 0 ? "Trả người gửi khi đối soát" : "Người gửi thanh toán phí")</span><span class="fw-semibold">@DinhDang.Tien(Math.Abs(Model.TienTraNguoiGui))</span></div>
+        <div class="mt-2">
+            @if (Model.NgayDoiSoat.HasValue)
+            {
+                <span class="tt tt-hoantat"><i class="bi bi-check2-all"></i> Đã đối soát @DinhDang.Ngay(Model.NgayDoiSoat)</span>
+            }
+            else if (Model.TrangThai == TrangThaiDon.GiaoThanhCong)
+            {
+                <span class="tt tt-cho"><i class="bi bi-hourglass-split"></i> Shipper đã thu – chờ đối soát</span>
+            }
+            else if (Model.TrangThai != TrangThaiDon.DaHuy)
+            {
+                <span class="tt tt-huy"><i class="bi bi-clock"></i> Chưa thu tiền</span>
+            }
+        </div>
+    }
+</div>

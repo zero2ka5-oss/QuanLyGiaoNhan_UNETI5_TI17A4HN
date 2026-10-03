@@ -1,0 +1,90 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 4 + 5 - Chi tiết giao dịch ví shipper: thông tin thanh toán, các đơn được đối soát,
+                       chủ quản xác nhận hoặc từ chối (bắt buộc lý do). *@
+@model GiaoDichVi
+@{
+    ViewData["Title"] = "Giao dịch " + Model.MaHienThi;
+    bool nop = Model.Loai == LoaiGiaoDich.NopTienThuHo;
+    bool choXuLy = Model.TrangThai == TrangThaiGiaoDich.ChoXacNhan;
+}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+        <div class="d-flex align-items-center gap-2"><span class="fs-4 fw-bold">@Model.MaHienThi</span><span class="tt @Model.TrangThai.LopBadge() fs-6">@Model.TrangThai.TenHienThi()</span></div>
+        <div class="mo nho">@Model.Loai.TenHienThi() · tạo lúc @DinhDang.NgayGio(Model.NgayTao)</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="the-mem p-4 mb-3">
+            <div class="text-center mb-3">
+                <div class="mo nho">@(nop ? "Shipper nộp về công ty" : "Shipper yêu cầu rút về tài khoản")</div>
+                <div class="fw-bold text-cam" style="font-size:2rem">@DinhDang.Tien(Model.SoTien)</div>
+            </div>
+            <div class="dong-tt"><span>Nhân viên</span><span>@Model.NhanVien?.HoTen (NV@(Model.MaNhanVien.ToString("D3")))</span></div>
+            <div class="dong-tt"><span>Phương thức</span><span>@Model.PhuongThuc</span></div>
+            <div class="dong-tt"><span>@(nop ? "Mã giao dịch / biên nhận" : "Tài khoản nhận")</span><span>@(Model.ThongTinThanhToan ?? "—")</span></div>
+            @if (!string.IsNullOrEmpty(Model.GhiChu)) { <div class="dong-tt"><span>Ghi chú</span><span class="@(Model.TrangThai == TrangThaiGiaoDich.TuChoi ? "text-danger" : "")">@Model.GhiChu</span></div> }
+            <div class="dong-tt"><span>Người xử lý</span><span>@(Model.NguoiXuLy ?? "—")</span></div>
+            <div class="dong-tt"><span>Thời gian xử lý</span><span>@DinhDang.NgayGio(Model.NgayXuLy)</span></div>
+        </div>
+
+        @if (choXuLy && !Context.Session.LaQuanTri())
+        {
+            <div class="alert alert-info nho"><i class="bi bi-hourglass-split"></i> Chờ Quản trị xác nhận</div>
+        }
+        else if (choXuLy)
+        {
+            <div class="the-mem p-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-shield-check text-cam"></i> Xử lý giao dịch</h6>
+                <form asp-action="XacNhan" asp-route-id="@Model.MaGiaoDich" method="post"
+                      data-xac-nhan="@(nop ? $"Xác nhận đã NHẬN {DinhDang.Tien(Model.SoTien)}? {Model.DonNop.Count} đơn sẽ được đối soát & hoàn tất." : $"Xác nhận đã CHUYỂN KHOẢN {DinhDang.Tien(Model.SoTien)}?")">
+                    <button class="btn btn-success w-100 py-2 mb-3"><i class="bi bi-check2-circle"></i> @(nop ? "Xác nhận đã nhận tiền" : "Xác nhận đã chuyển khoản")</button>
+                </form>
+                <form asp-action="TuChoi" asp-route-id="@Model.MaGiaoDich" method="post" data-xac-nhan="Từ chối giao dịch @Model.MaHienThi?">
+                    <label class="form-label" for="lyDo">Lý do từ chối</label>
+                    <textarea name="lyDo" id="lyDo" rows="2" class="form-control mb-2" placeholder="@(nop ? "VD: Chưa nhận được tiền, sai số tiền…" : "VD: Sai thông tin tài khoản…")" required></textarea>
+                    <button class="btn btn-outline-danger w-100"><i class="bi bi-x-circle"></i> Từ chối</button>
+                </form>
+            </div>
+        }
+    </div>
+    <div class="col-lg-7">
+        @if (nop)
+        {
+            <div class="the-mem">
+                <div class="p-3 fw-bold">Các đơn trong lệnh nộp (@Model.DonNop.Count)</div>
+                <div class="table-responsive">
+                    <table class="table bang mb-0">
+                        <thead><tr><th>Đơn / Khách gửi</th><th class="text-end">Thu hộ</th><th class="text-end">Phí ship người nhận trả</th><th class="text-end">Shipper đã thu</th><th>Trạng thái</th></tr></thead>
+                        <tbody>
+                        @foreach (var d in Model.DonNop.OrderBy(d => d.MaDon))
+                        {
+                            <tr>
+                                <td class="text-nowrap"><a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@d.MaDon" class="fw-bold">@d.MaHienThi</a><div class="nho mo">@d.KhachHang?.HoTen</div></td>
+                                <td class="text-end text-nowrap">@DinhDang.Tien(d.TienThuHo)</td>
+                                <td class="text-end text-nowrap">@DinhDang.Tien(d.NguoiTraPhi == NguoiTraPhi.NguoiNhan ? d.PhiVanChuyen : 0)</td>
+                                <td class="text-end fw-semibold text-nowrap">@DinhDang.Tien(d.TongThuNguoiNhan)</td>
+                                <td><span class="tt @d.TrangThai.LopBadge()">@d.TrangThai.TenHienThi()</span></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.DonNop.Count == 0) { <div class="o-trong">@(Model.TrangThai == TrangThaiGiaoDich.TuChoi ? "Lệnh đã bị từ chối – các đơn đã trở lại trạng thái shipper đang giữ tiền." : "Không có đơn")</div> }
+            </div>
+        }
+        else
+        {
+            <div class="the-mem p-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-bank text-cam"></i> Chuyển khoản cho shipper</h6>
+                @{ var tk = (Model.ThongTinThanhToan ?? "").Split(" – "); }
+                <div class="dong-tt"><span>Ngân hàng</span><span>@(tk.ElementAtOrDefault(0) ?? "—")</span></div>
+                <div class="dong-tt"><span>Số tài khoản</span><span class="fw-bold">@(tk.ElementAtOrDefault(1) ?? "—")</span></div>
+                <div class="dong-tt"><span>Chủ tài khoản</span><span>@(tk.ElementAtOrDefault(2) ?? "—")</span></div>
+                <div class="dong-tt"><span>Số tiền</span><span class="fw-bold text-cam">@DinhDang.Tien(Model.SoTien)</span></div>
+                <div class="dong-tt"><span>Nội dung</span><span>RUT TIEN @Model.MaHienThi</span></div>
+            </div>
+        }
+    </div>
+</div>

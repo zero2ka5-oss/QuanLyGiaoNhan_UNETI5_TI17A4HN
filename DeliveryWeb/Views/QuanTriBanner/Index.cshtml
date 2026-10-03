@@ -1,0 +1,41 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Danh sách banner trang chủ – xem ảnh, sắp thứ tự, ẩn / hiện, sửa, xóa. *@
+@model List<BannerTrangChu>
+@{ ViewData["Title"] = "Banner trang chủ"; }
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div class="mo">@Model.Count(b => b.HienThi) / @Model.Count banner đang hiển thị</div>
+    <div class="d-flex gap-2">
+        <a asp-controller="TrangChu" asp-action="Index" target="_blank" class="btn btn-light"><i class="bi bi-box-arrow-up-right"></i> Xem trang chủ</a>
+        <a asp-action="TaoMoi" class="btn btn-cam"><i class="bi bi-plus-lg"></i> Thêm banner</a>
+    </div>
+</div>
+<div class="row g-3">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        var b = Model[i];
+        <div class="col-md-6 col-xxl-4">
+            <div class="the-banner @(b.HienThi ? "" : "da-an")">
+                <div class="the-banner-anh">
+                    <img src="@b.Anh" alt="@b.TieuDe" loading="lazy" />
+                    <span class="so-thu-tu">@(i + 1)</span>
+                    <span class="tt @(b.HienThi ? "tt-thanhcong" : "tt-huy") trang-thai">@(b.HienThi ? "Đang hiển thị" : "Đã ẩn")</span>
+                </div>
+                <div class="p-3">
+                    <div class="fw-bold text-truncate">@b.TieuDe</div>
+                    <div class="nho mo text-truncate">@(b.MoTa ?? "—")</div>
+                    <div class="d-flex align-items-center gap-1 mt-3">
+                        @if (b.ChuNut is not null) { <span class="cm-nhan cm-thongbao text-truncate" style="max-width:45%"><i class="bi bi-cursor"></i> @b.ChuNut</span> }
+                        <div class="ms-auto d-flex gap-1">
+                            <form asp-action="DoiThuTu" asp-route-id="@b.MaBanner" asp-route-len="true" method="post"><button class="btn btn-sm btn-light" title="Đưa lên trước" disabled="@(i == 0)"><i class="bi bi-arrow-up"></i></button></form>
+                            <form asp-action="DoiThuTu" asp-route-id="@b.MaBanner" asp-route-len="false" method="post"><button class="btn btn-sm btn-light" title="Đưa xuống sau" disabled="@(i == Model.Count - 1)"><i class="bi bi-arrow-down"></i></button></form>
+                            <a asp-action="ChinhSua" asp-route-id="@b.MaBanner" class="btn btn-sm btn-light" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="DoiHienThi" asp-route-id="@b.MaBanner" method="post"><button class="btn btn-sm btn-light" title="@(b.HienThi ? "Ẩn banner" : "Hiện banner")"><i class="bi @(b.HienThi ? "bi-eye-slash" : "bi-eye")"></i></button></form>
+                            <form asp-action="Xoa" asp-route-id="@b.MaBanner" method="post" data-xac-nhan="Xóa banner &quot;@b.TieuDe&quot;?"><button class="btn btn-sm btn-light text-danger" title="Xóa"><i class="bi bi-trash"></i></button></form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@if (Model.Count == 0) { <div class="the-mem"><div class="o-trong"><i class="bi bi-images"></i>Chưa có banner nào</div></div> }

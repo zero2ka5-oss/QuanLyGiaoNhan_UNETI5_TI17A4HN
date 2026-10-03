@@ -1,0 +1,107 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 4 - Bảng điều phối: đơn chờ phân công / cần giao lại, phân công đang thực hiện, lịch sử phân công. *@
+@{
+    ViewData["Title"] = "Điều phối giao hàng";
+    string tab = ViewBag.Tab;
+    int? maNv = ViewBag.MaNhanVien, maKv = ViewBag.MaKhuVuc;
+    var dsNv = (List<NhanVienGiaoHang>)ViewBag.DsNhanVien;
+    var dsKv = (List<KhuVuc>)ViewBag.DsKhuVuc;
+}
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Chờ phân công / giao lại</div><div class="gia-tri text-cam">@ViewBag.SoChoPhanCong</div></div><div class="icon icon-cam"><i class="bi bi-hourglass-split"></i></div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Phân công đang thực hiện</div><div class="gia-tri">@ViewBag.SoDangThucHien</div></div><div class="icon icon-xanh"><i class="bi bi-truck"></i></div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Nhân viên có thể nhận việc</div><div class="gia-tri">@ViewBag.SoNhanVienSanSang</div></div><div class="icon icon-luc"><i class="bi bi-person-check"></i></div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Xe đang trống</div><div class="gia-tri">@ViewBag.SoXeSanSang</div></div><div class="icon icon-tim"><i class="bi bi-truck-front"></i></div></div></div>
+</div>
+
+<ul class="nav nav-pills mb-3 gap-1">
+    <li class="nav-item"><a class="nav-link @(tab == "cho" ? "active bg-cam" : "text-dark")" asp-route-tab="cho"><i class="bi bi-hourglass-split"></i> Cần phân công</a></li>
+    <li class="nav-item"><a class="nav-link @(tab == "dang" ? "active bg-cam" : "text-dark")" asp-route-tab="dang"><i class="bi bi-truck"></i> Đang thực hiện</a></li>
+    <li class="nav-item"><a class="nav-link @(tab == "lichsu" ? "active bg-cam" : "text-dark")" asp-route-tab="lichsu"><i class="bi bi-clock-history"></i> Lịch sử phân công</a></li>
+</ul>
+
+<form method="get" class="thanh-loc mb-3">
+    <input type="hidden" name="tab" value="@tab" />
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label nho">Khu vực giao</label>
+            <select name="maKhuVuc" class="form-select"><option value="">Tất cả</option>
+                @foreach (var kv in dsKv) { <option value="@kv.MaKhuVuc" selected="@(maKv == kv.MaKhuVuc)">@kv.TenKhuVuc</option> }</select></div>
+        @if (tab != "cho")
+        {
+            <div class="col-md-4"><label class="form-label nho">Nhân viên</label>
+                <select name="maNhanVien" class="form-select"><option value="">Tất cả</option>
+                    @foreach (var nv in dsNv) { <option value="@nv.MaNhanVien" selected="@(maNv == nv.MaNhanVien)">@nv.HoTen</option> }</select></div>
+        }
+        <div class="col-md-2"><button class="btn btn-cam w-100"><i class="bi bi-funnel"></i> Lọc</button></div>
+    </div>
+</form>
+
+@if (tab == "cho")
+{
+    var ds = (DanhSachTrang<DonGiaoHang>)ViewBag.DsDonCho;
+    <div class="the-mem">
+        <div class="table-responsive">
+            <table class="table bang">
+                <thead><tr><th>Đơn</th><th>Khách hàng</th><th>Giao đến</th><th>Loại hàng</th><th class="text-end">Khối lượng</th><th>Ngày giao dự kiến</th><th>Tình trạng</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var d in ds.DanhSach)
+                {
+                    bool treHan = d.NgayGiaoDuKien.Date < DateTime.Today;
+                    <tr>
+                        <td><a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@d.MaDon" class="fw-bold">@d.MaHienThi</a><div class="nho mo">@DinhDang.NgayGio(d.NgayTao)</div></td>
+                        <td>@d.KhachHang?.HoTen</td>
+                        <td class="nho"><b>@d.KhuVuc?.TenKhuVuc</b><div class="mo">@d.DiaChiNhan</div></td>
+                        <td class="nho">@d.LoaiHang?.TenLoaiHang</td>
+                        <td class="text-end fw-semibold">@DinhDang.KhoiLuong(d.KhoiLuong)</td>
+                        <td class="nho @(treHan ? "text-danger fw-semibold" : "")">@DinhDang.Ngay(d.NgayGiaoDuKien) @if (treHan) { <i class="bi bi-alarm" title="Đã quá ngày giao dự kiến"></i> }</td>
+                        <td><span class="tt @d.TrangThai.LopBadge()">@(d.TrangThai == TrangThaiDon.GiaoKhongThanhCong ? "Cần giao lại" : d.TrangThai.TenHienThi())</span></td>
+                        <td class="text-end"><a asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam text-nowrap"><i class="bi bi-person-plus"></i> Phân công</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (ds.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-check2-all"></i>Không còn đơn nào chờ phân công 🎉</div> }
+    </div>
+    <partial name="_PhanTrang" model="ds" />
+}
+else
+{
+    var ds = (DanhSachTrang<PhanCongGiaoHang>)ViewBag.DsPhanCong;
+    <div class="the-mem">
+        <div class="table-responsive">
+            <table class="table bang">
+                <thead><tr><th>#</th><th>Đơn</th><th>Nhân viên</th><th>Phương tiện</th><th>Phân công</th><th>Nhận hàng</th><th>Bắt đầu giao</th><th>Kết thúc</th><th>Trạng thái</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var p in ds.DanhSach)
+                {
+                    <tr>
+                        <td class="mo">@p.MaPhanCong</td>
+                        <td><a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@p.MaDon" class="fw-bold">@p.DonGiaoHang?.MaHienThi</a><div class="nho mo">@p.DonGiaoHang?.KhuVuc?.TenKhuVuc</div></td>
+                        <td><a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@p.MaNhanVien" class="ten fw-medium">@p.NhanVien?.HoTen</a></td>
+                        <td class="nho">@p.PhuongTien?.BienSo</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayPhanCong)</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayNhanHang)</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayBatDauGiao)</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayKetThuc)</td>
+                        <td>@if (p.KetQua.HasValue)
+                            {
+                                <span class="tt @(p.KetQua == KetQuaGiao.GiaoThanhCong ? "tt-thanhcong" : p.KetQua == KetQuaGiao.GiaoKhongThanhCong ? "tt-thatbai" : "tt-huy")">@p.KetQua.Value.TenHienThi()</span>
+                                @if (p.LyDoThatBai.HasValue) { <div class="nho text-danger">@p.LyDoThatBai.Value.TenHienThi()</div> }
+                            }
+                            else { <span class="tt @p.TrangThai.LopBadge()">@p.TrangThai.TenHienThi()</span> }</td>
+                        <td class="text-end">
+                            @if (p.DangHieuLuc && p.TrangThai != TrangThaiPhanCong.DangGiao)
+                            {
+                                <a asp-action="DoiPhanCong" asp-route-maDon="@p.MaDon" class="btn btn-sm btn-outline-primary text-nowrap"><i class="bi bi-arrow-left-right"></i> Đổi</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (ds.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-inbox"></i>Không có phân công phù hợp</div> }
+    </div>
+    <partial name="_PhanTrang" model="ds" />
+}

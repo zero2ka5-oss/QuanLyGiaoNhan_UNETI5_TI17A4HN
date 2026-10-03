@@ -1,0 +1,87 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 4 - Hồ sơ nhân viên giao hàng: thẻ cá nhân, tổng tiền cước đã giao, thống kê 6 tháng,
+                       xe đang dùng, cập nhật liên hệ, đổi mật khẩu. *@
+@model HoSoNhanVienVM
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+    var nv = Model.NhanVien;
+    decimal cotCaoNhat = Math.Max(1, Model.TheoThang.Max(x => x.GiaTriPhu ?? 0));
+}
+
+@* Thẻ cá nhân *@
+<div class="the-don the-ho-so mb-3">
+    <div class="bia"></div>
+    <partial name="_DoiAnhDaiDien" model='new AnhDaiDienVM(Context.Session.AnhDaiDien(), nv.HoTen, "avt-xanh")' />
+    <h5 class="fw-bold mt-2 mb-0">@nv.HoTen</h5>
+    <div class="mo nho mb-2">NV@(nv.MaNhanVien.ToString("D3")) · @@@Model.TenDangNhap</div>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <span class="tt @nv.TrangThai.LopBadge()">@nv.TrangThai.TenHienThi()</span>
+        <span class="tt tt-huy"><i class="bi bi-geo-alt"></i> @(nv.KhuVucPhuTrach?.TenKhuVuc ?? "Chưa phân khu vực")</span>
+    </div>
+</div>
+
+@* Tổng tiền *@
+<div class="the-tien mb-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <div class="nho" style="opacity:.85">Tổng tiền ship các đơn đã giao</div>
+            <div class="so-tien">@DinhDang.Tien(Model.TongTien)</div>
+            <div class="nho" style="opacity:.85">@Model.TongThanhCong đơn thành công · @DinhDang.KhoiLuong(Model.TongKhoiLuong)</div>
+        </div>
+        <span class="icon-tien"><i class="bi bi-wallet2"></i></span>
+    </div>
+    <div class="d-flex gap-2 mt-3">
+        <div class="o-tien"><div class="nho">Tháng này</div><div class="fw-bold">@DinhDang.Tien(Model.TienThangNay)</div><div class="nho">@Model.DonThangNay đơn</div></div>
+        <div class="o-tien"><div class="nho">Tỷ lệ thành công</div><div class="fw-bold">@Model.TiLeThanhCong.ToString("0.#")%</div><div class="nho">@Model.TongThatBai lần thất bại</div></div>
+    </div>
+</div>
+
+@* Tiền thu hộ đang giữ – cần nộp về công ty để đối soát *@
+<a asp-controller="NhanVienVi" asp-action="Index" class="thu-tien mb-3 text-reset">
+    <div><div class="nho fw-semibold">Tiền thu hộ đang giữ</div><div class="so">@DinhDang.Tien(Model.TienDangGiu)</div><div class="nho mo">@Model.SoDonDangGiuTien đơn chưa nộp · <span class="text-cam fw-semibold">Nộp qua ví</span></div></div>
+    <i class="bi bi-safe2 fs-2" style="color:#C2410C"></i>
+</a>
+
+@* Biểu đồ 6 tháng *@
+<div class="the-don mb-3">
+    <div class="fw-bold mb-3"><i class="bi bi-bar-chart text-cam"></i> Tiền ship 6 tháng gần nhất</div>
+    <div class="bieu-do-cot">
+        @foreach (var t in Model.TheoThang)
+        {
+            var cao = (int)Math.Round((double)((t.GiaTriPhu ?? 0) / cotCaoNhat) * 100);
+            <div class="cot" title="@t.Nhan: @DinhDang.Tien(t.GiaTriPhu ?? 0) – @t.GiaTri đơn">
+                <div class="gia">@(t.GiaTriPhu > 0 ? ((t.GiaTriPhu ?? 0) / 1000).ToString("0") + "k" : "")</div>
+                <div class="vung"><div class="than-cot @(t == Model.TheoThang[^1] ? "hien-tai" : "")" style="height:@(Math.Max(cao, 3))%"></div></div>
+                <div class="nhan">T@(t.Nhan[..2])</div>
+            </div>
+        }
+    </div>
+</div>
+
+@* Nguồn lực đang dùng *@
+<div class="the-don mb-3">
+    <div class="fw-bold mb-2"><i class="bi bi-truck-front text-cam"></i> Công việc hiện tại</div>
+    <div class="dong-tt"><span>Đơn đang giữ</span><span>@Model.SoDonDangGiu / @DonHangXuLy.SoDonToiDa đơn</span></div>
+    <div class="dong-tt"><span>Xe đang dùng</span><span>@(Model.XeDangDung is { } xe ? $"{xe.BienSo} · {xe.LoaiPhuongTien}" : "Chưa được giao xe")</span></div>
+</div>
+
+@* Thông tin liên hệ *@
+<div class="the-don mb-3">
+    <div class="fw-bold mb-1"><i class="bi bi-person-lines-fill text-cam"></i> Thông tin liên hệ</div>
+    <form asp-action="Index" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="mb-3"><label asp-for="LienHe.SoDienThoai" class="form-label"></label><input asp-for="LienHe.SoDienThoai" class="form-control" inputmode="tel" /><span asp-validation-for="LienHe.SoDienThoai" class="text-danger nho"></span></div>
+        <div class="mb-3"><label asp-for="LienHe.Email" class="form-label"></label><input asp-for="LienHe.Email" class="form-control" inputmode="email" /><span asp-validation-for="LienHe.Email" class="text-danger nho"></span></div>
+        <button class="btn btn-cam w-100 py-2"><i class="bi bi-check2"></i> Lưu thông tin</button>
+    </form>
+</div>
+
+<a asp-controller="DangNhap" asp-action="DoiMatKhau" class="the-don d-flex align-items-center gap-3 text-reset">
+    <span class="kpi-icon icon icon-cam rounded-3 d-grid" style="width:40px;height:40px;place-items:center"><i class="bi bi-key"></i></span>
+    <div class="flex-grow-1 fw-semibold">Đổi mật khẩu</div>
+    <i class="bi bi-chevron-right mo"></i>
+</a>
+<form asp-controller="DangNhap" asp-action="DangXuat" method="post" data-xac-nhan="Đăng xuất khỏi ứng dụng?">
+    <button class="btn btn-light w-100 py-2 text-danger"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

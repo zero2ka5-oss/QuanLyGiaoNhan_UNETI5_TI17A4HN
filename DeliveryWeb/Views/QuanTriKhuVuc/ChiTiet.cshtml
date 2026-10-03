@@ -1,0 +1,28 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 1 - Chi tiết khu vực: nhân viên phụ trách, đơn gần đây. *@
+@model KhuVuc
+@{ ViewData["Title"] = "Khu vực: " + Model.TenKhuVuc; var donGanDay = (List<DonGiaoHang>)ViewBag.DonGanDay; }
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Phí cơ bản</div><div class="gia-tri text-cam">@DinhDang.Tien(Model.PhiCoBan)</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Tổng số đơn</div><div class="gia-tri">@ViewBag.TongDon</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Tổng phí (trừ đơn hủy)</div><div class="gia-tri fs-5">@DinhDang.Tien((decimal)ViewBag.TongPhi)</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Trạng thái</div><div class="mt-1"><span class="tt @Model.TrangThai.LopBadge()">@Model.TrangThai.TenHienThi()</span></div></div></div>
+</div>
+<div class="row g-3 mb-3">
+    <div class="col-lg-5">
+        <div class="the-mem p-3 h-100">
+            <div class="fw-bold mb-2">Thông tin</div>
+            <div class="nho mb-3">@(Model.MoTa ?? "—")</div>
+            <div class="fw-bold mb-2">Nhân viên phụ trách (@Model.NhanViens.Count)</div>
+            <ul class="list-unstyled mb-3">
+                @foreach (var nv in Model.NhanViens)
+                {
+                    <li class="d-flex justify-content-between py-1"><a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@nv.MaNhanVien">@nv.HoTen</a><span class="tt @nv.TrangThai.LopBadge()">@nv.TrangThai.TenHienThi()</span></li>
+                }
+            </ul>
+            @if (Context.Session.LaQuanTri()) { <a asp-action="ChinhSua" asp-route-id="@Model.MaKhuVuc" class="btn btn-sm btn-cam"><i class="bi bi-pencil"></i> Sửa</a> }
+            
+        </div>
+    </div>
+    <div class="col-lg-7"><partial name="_BangDonNgan" model="donGanDay" /></div>
+</div>

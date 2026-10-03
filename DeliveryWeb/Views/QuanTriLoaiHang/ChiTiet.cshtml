@@ -1,0 +1,13 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 1 - Chi tiết loại hàng và các đơn gần đây. *@
+@model LoaiHang
+@{ ViewData["Title"] = "Loại hàng: " + Model.TenLoaiHang; var donGanDay = (List<DonGiaoHang>)ViewBag.DonGanDay; }
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Hệ số phụ thu</div><div class="gia-tri text-cam">@Model.HeSoPhuThu.ToString("0.00")</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Tổng số đơn</div><div class="gia-tri">@ViewBag.TongDon</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Tổng khối lượng</div><div class="gia-tri">@DinhDang.KhoiLuong((decimal)ViewBag.TongKhoiLuong)</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Trạng thái</div><div class="mt-1"><span class="tt @Model.TrangThai.LopBadge()">@Model.TrangThai.TenHienThi()</span></div></div></div>
+</div>
+<div class="the-mem p-3 mb-3"><b>Mô tả:</b> @(Model.MoTa ?? "—")
+    <div class="mt-2">@if (Context.Session.LaQuanTri()) { <a asp-action="ChinhSua" asp-route-id="@Model.MaLoaiHang" class="btn btn-sm btn-cam"><i class="bi bi-pencil"></i> Sửa</a> }</div></div>
+<partial name="_BangDonNgan" model="donGanDay" />

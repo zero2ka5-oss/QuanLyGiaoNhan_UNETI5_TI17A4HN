@@ -1,0 +1,81 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 1 + 2 - Khách hàng tự đăng ký tài khoản gửi hàng: bố cục chia đôi, 2 nhóm thông tin,
+                       nút ẩn / hiện mật khẩu, thanh độ mạnh mật khẩu, báo ngay khi nhập lại chưa khớp. *@
+@model DangKyVM
+@{ Layout = null; ViewData["Title"] = "Đăng ký"; ViewData["CheDo"] = "DangKy"; }
+<!DOCTYPE html>
+<html lang="vi">
+<head><partial name="_TaiNguyenDau" /></head>
+<body class="xt-body">
+<div class="xt-khung">
+    <partial name="_KhoiThuongHieu" />
+    <main class="xt-phai">
+        <a asp-controller="TrangChu" asp-action="Index" class="nut-ve-trang-chu">Về trang chủ</a>
+        <div class="xt-form xt-form-rong">
+            <a class="logo d-lg-none mb-4" asp-controller="TrangChu" asp-action="Index"><span class="bieu-tuong"><i class="bi bi-truck"></i></span>GiaoNhanh</a>
+            <span class="xt-chao"><i class="bi bi-stars"></i> Miễn phí trọn đời</span>
+            <h1 class="xt-h1">Đăng ký tài khoản</h1>
+            <p class="mo mb-4">Tạo đơn và theo dõi ngay sau khi đăng ký</p>
+            <form asp-action="DangKy" method="post" id="formDangKy">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                <div class="xt-nhom"><span class="xt-so">1</span> Thông tin đăng nhập</div>
+                <div class="row g-3 mb-4">
+                    <div class="col-12"><label asp-for="TenDangNhap" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-at"></i><input asp-for="TenDangNhap" class="form-control" placeholder="vd: nguyenvana" autocomplete="username" /></div>
+                        <span asp-validation-for="TenDangNhap" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="MatKhau" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-lock"></i><input asp-for="MatKhau" class="form-control" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" />
+                            <button type="button" class="nut-hien-mk" aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button></div>
+                        <div class="do-manh" id="doManh"><span></span><span></span><span></span><span></span></div>
+                        <div class="nho mo" id="chuDoManh"></div>
+                        <span asp-validation-for="MatKhau" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="NhapLaiMatKhau" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-shield-lock"></i><input asp-for="NhapLaiMatKhau" class="form-control" placeholder="Nhập lại mật khẩu" autocomplete="new-password" />
+                            <span class="dau-khop" id="dauKhop"><i class="bi bi-check-circle-fill"></i></span></div>
+                        <span asp-validation-for="NhapLaiMatKhau" class="text-danger nho"></span></div>
+                </div>
+
+                <div class="xt-nhom"><span class="xt-so">2</span> Thông tin liên hệ</div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6"><label asp-for="HoTen" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-person"></i><input asp-for="HoTen" class="form-control" placeholder="Nguyễn Văn A" autocomplete="name" /></div>
+                        <span asp-validation-for="HoTen" class="text-danger nho"></span></div>
+                    <div class="col-md-6"><label asp-for="SoDienThoai" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-telephone"></i><input asp-for="SoDienThoai" class="form-control" placeholder="09xxxxxxxx" inputmode="tel" autocomplete="tel" /></div>
+                        <span asp-validation-for="SoDienThoai" class="text-danger nho"></span></div>
+                    <div class="col-12"><label asp-for="Email" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-envelope"></i><input asp-for="Email" class="form-control" placeholder="ban@email.com" inputmode="email" autocomplete="email" /></div>
+                        <span asp-validation-for="Email" class="text-danger nho"></span></div>
+                    <div class="col-12"><label asp-for="DiaChi" class="form-label"></label>
+                        <div class="o-nhap"><i class="bi bi-geo-alt"></i><input asp-for="DiaChi" class="form-control" placeholder="Số nhà, đường, quận/huyện, tỉnh/thành" autocomplete="street-address" /></div>
+                        <span asp-validation-for="DiaChi" class="text-danger nho"></span></div>
+                </div>
+                <button class="btn btn-cam btn-lg w-100 xt-nut">Tạo tài khoản <i class="bi bi-arrow-right-short"></i></button>
+            </form>
+            <p class="text-center mt-4 mb-0 mo">Đã có tài khoản? <a asp-action="Index" class="fw-semibold">Đăng nhập</a></p>
+        </div>
+    </main>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<partial name="_ValidationScriptsPartial" />
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script>
+    // Thanh độ mạnh mật khẩu: độ dài, chữ hoa, chữ số, ký tự đặc biệt
+    const mk = document.getElementById('MatKhau'), nl = document.getElementById('NhapLaiMatKhau');
+    const muc = [['Rất yếu', 'yeu'], ['Yếu', 'yeu'], ['Trung bình', 'tb'], ['Mạnh', 'manh'], ['Rất mạnh', 'manh']];
+    const capNhat = () => {
+        const v = mk.value;
+        let diem = (v.length >= 6) + (v.length >= 10) + /[A-Z]/.test(v) + /\d/.test(v) + /[^A-Za-z0-9]/.test(v);
+        diem = Math.min(4, v ? Math.max(1, diem - 1) : 0);
+        const khung = document.getElementById('doManh');
+        khung.className = 'do-manh ' + (v ? muc[diem][1] : '');
+        khung.querySelectorAll('span').forEach((s, i) => s.classList.toggle('bat', v && i < diem));
+        document.getElementById('chuDoManh').textContent = v ? 'Độ mạnh: ' + muc[diem][0] : '';
+        document.getElementById('dauKhop').classList.toggle('hien', !!nl.value && nl.value === v);
+    };
+    mk.addEventListener('input', capNhat); nl.addEventListener('input', capNhat); capNhat();
+</script>
+</body>
+</html>

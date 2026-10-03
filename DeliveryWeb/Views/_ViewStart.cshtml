@@ -1,0 +1,11 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Chọn layout theo vai trò trong Session (mỗi tác nhân một giao diện riêng). *@
+@{
+    Layout = Context.Session.VaiTro() switch
+    {
+        VaiTroNguoiDung.QuanTri or VaiTroNguoiDung.DieuPhoi => "_QuanTriLayout",
+        VaiTroNguoiDung.KhachHang => "_KhachHangLayout",
+        VaiTroNguoiDung.GiaoHang => "_NhanVienLayout",
+        _ => "_Layout"
+    };
+}

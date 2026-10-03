@@ -1,0 +1,29 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 1 - Tài khoản của tôi (mọi vai trò): đổi ảnh đại diện và đổi mật khẩu. *@
+@model DoiMatKhauVM
+@{
+    ViewData["Title"] = "Tài khoản của tôi";
+    string hoTen = Context.Session.HoTen();
+}
+<div class="row g-3 justify-content-center">
+    <div class="col-lg-4 col-md-5">
+        <div class="the-mem the-ho-so h-100">
+            <div class="bia"></div>
+            <partial name="_DoiAnhDaiDien" model="new AnhDaiDienVM(Context.Session.AnhDaiDien(), hoTen)" />
+            <h5 class="fw-bold mt-2 mb-0">@hoTen</h5>
+            <div class="mo nho mb-3">@HienThi.TenVaiTro(Context.Session.VaiTro())</div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-7">
+        <div class="the-mem p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock text-cam"></i> Đổi mật khẩu</h5>
+            <form asp-action="DoiMatKhau" method="post">
+                <div class="mb-3"><label asp-for="MatKhauHienTai" class="form-label"></label><input asp-for="MatKhauHienTai" class="form-control" /><span asp-validation-for="MatKhauHienTai" class="text-danger nho"></span></div>
+                <div class="mb-3"><label asp-for="MatKhauMoi" class="form-label"></label><input asp-for="MatKhauMoi" class="form-control" /><span asp-validation-for="MatKhauMoi" class="text-danger nho"></span></div>
+                <div class="mb-4"><label asp-for="NhapLaiMatKhau" class="form-label"></label><input asp-for="NhapLaiMatKhau" class="form-control" /><span asp-validation-for="NhapLaiMatKhau" class="text-danger nho"></span></div>
+                <button class="btn btn-cam w-100">Lưu mật khẩu mới</button>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

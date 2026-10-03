@@ -1,0 +1,232 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 5 - Thống kê LINQ (mục 9.5): theo trạng thái, khu vực, loại hàng, nhân viên, lý do thất bại,
+                       tỷ lệ thành công, tổng phí và số đơn theo tháng, khối lượng theo khu vực;
+                       tiền ship của từng shipper; thu hộ (COD): đã thu / chờ đối soát / đã đối soát, theo tháng,
+                       shipper đang giữ tiền, top khách hàng. *@
+@model ThongKeVM
+@{ ViewData["Title"] = "Thống kê"; }
+<form method="get" class="thanh-loc mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label nho">Từ ngày (ngày tạo đơn)</label><input type="date" name="tuNgay" value="@Model.TuNgay.ToString("yyyy-MM-dd")" class="form-control" /></div>
+        <div class="col-md-3"><label class="form-label nho">Đến ngày</label><input type="date" name="denNgay" value="@Model.DenNgay.ToString("yyyy-MM-dd")" class="form-control" /></div>
+        <div class="col-md-2"><button class="btn btn-cam w-100"><i class="bi bi-funnel"></i> Xem</button></div>
+    </div>
+</form>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><div class="kpi"><div class="nhan">Tỷ lệ giao thành công</div><div class="gia-tri text-success">@Model.TiLeThanhCong%</div><div class="nho mo">trên @Model.SoDonCoKetQua đơn đã có kết quả</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi"><div class="nhan">Nhân viên xuất sắc</div><div class="gia-tri fs-5">@(Model.NhanVienXuatSac?.Nhan ?? "—")</div><div class="nho mo">@(Model.NhanVienXuatSac is null ? "" : $"{Model.NhanVienXuatSac.GiaTri:0} đơn giao thành công")</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi"><div class="nhan">Khối lượng trung bình mỗi đơn</div><div class="gia-tri fs-4">@DinhDang.KhoiLuong(Math.Round(Model.KhoiLuongTrungBinh, 2))</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi"><div class="nhan">Phí trung bình mỗi đơn</div><div class="gia-tri fs-4">@DinhDang.Tien(Math.Round(Model.PhiTrungBinh))</div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-xl-8"><div class="the-mem p-3 h-100"><div class="fw-bold mb-2">Số đơn và tổng phí vận chuyển theo tháng</div><div class="chart-box"><canvas id="bdThang"></canvas></div></div></div>
+    <div class="col-xl-4"><div class="the-mem p-3 h-100"><div class="fw-bold mb-2">Số đơn theo trạng thái</div><div class="chart-box"><canvas id="bdTrangThai"></canvas></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="the-mem h-100">
+            <div class="p-3 fw-bold">Số đơn & khối lượng hàng giao theo khu vực</div>
+            <div class="table-responsive"><table class="table bang mb-0">
+                <thead><tr><th>Khu vực</th><th class="text-end">Số đơn</th><th class="text-end">Tổng khối lượng</th></tr></thead>
+                <tbody>@foreach (var r in Model.TheoKhuVuc) { <tr><td>@r.Nhan</td><td class="text-end fw-semibold">@r.GiaTri</td><td class="text-end">@DinhDang.KhoiLuong(r.GiaTriPhu ?? 0)</td></tr> }</tbody>
+            </table></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="the-mem h-100">
+            <div class="p-3 fw-bold">Số đơn theo loại hàng</div>
+            <div class="table-responsive"><table class="table bang mb-0">
+                <thead><tr><th>Loại hàng</th><th class="text-end">Số đơn</th><th class="text-end">Tổng phí</th></tr></thead>
+                <tbody>@foreach (var r in Model.TheoLoaiHang) { <tr><td>@r.Nhan</td><td class="text-end fw-semibold">@r.GiaTri</td><td class="text-end">@DinhDang.Tien(r.GiaTriPhu ?? 0)</td></tr> }</tbody>
+            </table></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="the-mem h-100">
+            <div class="p-3 fw-bold">Số đơn mỗi nhân viên đã giao</div>
+            <div class="table-responsive"><table class="table bang mb-0">
+                <thead><tr><th>#</th><th>Nhân viên</th><th class="text-end">Thành công</th><th class="text-end">Không thành công</th><th style="width: 32%">Tỷ lệ</th></tr></thead>
+                <tbody>
+                @{ int hang = 0; }
+                @foreach (var r in Model.DonDaGiaoTheoNhanVien)
+                {
+                    decimal tong = r.GiaTri + (r.GiaTriPhu ?? 0);
+                    int tiLe = tong == 0 ? 0 : (int)Math.Round(r.GiaTri / tong * 100);
+                    <tr>
+                        <td>@(++hang == 1 ? "🏆" : hang.ToString())</td>
+                        <td class="fw-semibold">@r.Nhan</td>
+                        <td class="text-end text-success">@r.GiaTri</td>
+                        <td class="text-end text-danger">@r.GiaTriPhu</td>
+                        <td><div class="d-flex align-items-center gap-2"><div class="progress flex-grow-1" style="height: 7px"><div class="progress-bar bg-success" style="width: @tiLe%"></div></div><span class="nho">@tiLe%</span></div></td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+            @if (Model.DonDaGiaoTheoNhanVien.Count == 0) { <div class="o-trong">Chưa có dữ liệu</div> }
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="the-mem p-3 h-100">
+            <div class="fw-bold mb-2">Số lần giao không thành công theo lý do</div>
+            @if (Model.ThatBaiTheoLyDo.Count == 0) { <div class="o-trong">Chưa có lần giao thất bại</div> }
+            else { <div class="chart-box"><canvas id="bdLyDo"></canvas></div> }
+        </div>
+    </div>
+</div>
+
+@* ===================== TIỀN SHIP CỦA TỪNG SHIPPER ===================== *@
+<div class="the-mem mb-3">
+    <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="fw-bold"><i class="bi bi-person-badge text-cam"></i> Tiền ship của từng shipper trong kỳ</span>
+        <a asp-controller="QuanTriViShipper" asp-action="Index" class="btn btn-cam btn-sm rounded-pill px-3">Xem ví & số dư shipper</a>
+    </div>
+    @{ decimal tienShipLonNhat = Model.TienShipTheoNhanVien.Count == 0 ? 1 : Math.Max(1, Model.TienShipTheoNhanVien.Max(x => x.GiaTri)); int hangShip = 0; }
+    <div class="table-responsive">
+        <table class="table bang mb-0">
+            <thead><tr><th>#</th><th>Shipper</th><th class="text-end">Đơn giao thành công</th><th class="text-end">Tiền ship</th><th class="text-end">Trung bình mỗi đơn</th><th style="width:30%"></th></tr></thead>
+            <tbody>
+            @foreach (var r in Model.TienShipTheoNhanVien)
+            {
+                int pt = (int)Math.Round(r.GiaTri / tienShipLonNhat * 100);
+                <tr>
+                    <td>@(++hangShip == 1 ? "🏆" : hangShip.ToString())</td>
+                    <td class="fw-semibold">@r.Nhan</td>
+                    <td class="text-end">@r.GiaTriPhu</td>
+                    <td class="text-end fw-bold text-cam text-nowrap">@DinhDang.Tien(r.GiaTri)</td>
+                    <td class="text-end nho text-nowrap">@DinhDang.Tien(Math.Round(r.GiaTri / Math.Max(1, r.GiaTriPhu ?? 1)))</td>
+                    <td><div class="progress" style="height:7px"><div class="progress-bar" style="width:@pt%;background:var(--cam)"></div></div></td>
+                </tr>
+            }
+            @if (Model.TienShipTheoNhanVien.Count > 1)
+            {
+                <tr class="fw-bold" style="background:#F8F9FB"><td></td><td>Tổng cộng</td><td class="text-end">@Model.TienShipTheoNhanVien.Sum(x => x.GiaTriPhu)</td><td class="text-end text-cam text-nowrap">@DinhDang.Tien(Model.TienShipTheoNhanVien.Sum(x => x.GiaTri))</td><td></td><td></td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TienShipTheoNhanVien.Count == 0) { <div class="o-trong">Chưa có đơn giao thành công trong kỳ</div> }
+</div>
+
+@* ===================== THU HỘ (COD) ===================== *@
+<div class="d-flex align-items-center gap-2 mt-4 mb-2" id="thu-ho" style="scroll-margin-top: 80px">
+    <h5 class="fw-bold mb-0"><i class="bi bi-cash-coin text-cam"></i> Tiền thu hộ</h5>
+</div>
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Tổng tiền thu hộ trong kỳ</div><div class="gia-tri fs-4">@DinhDang.Tien(Model.CodTong)</div><div class="nho mo">@Model.CodSoDon đơn · @Model.CodTiLeDon% số đơn có thu hộ</div></div><div class="icon icon-cam"><i class="bi bi-cash-coin"></i></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Shipper đã thu của người nhận</div><div class="gia-tri fs-4 text-primary">@DinhDang.Tien(Model.CodDaThu)</div><div class="nho mo">Chưa thu: @DinhDang.Tien(Model.CodChuaThu)</div></div><div class="icon icon-xanh"><i class="bi bi-hand-thumbs-up"></i></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Chờ đối soát (shipper đang giữ)</div><div class="gia-tri fs-4 text-cam">@DinhDang.Tien(Model.CodChoDoiSoat)</div></div><div class="icon icon-vang"><i class="bi bi-hourglass-split"></i></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="kpi d-flex justify-content-between"><div><div class="nhan">Đã đối soát trả người gửi</div><div class="gia-tri fs-4 text-success">@DinhDang.Tien(Model.CodDaDoiSoat)</div><div class="nho mo">Thực trả sau trừ phí ship: @DinhDang.Tien(Model.CodThucTraShop)</div></div><div class="icon icon-luc"><i class="bi bi-check2-all"></i></div></div></div>
+</div>
+@if (Model.CodTong > 0)
+{
+    int ptDoiSoat = (int)Math.Round(Model.CodDaDoiSoat / Model.CodTong * 100), ptCho = (int)Math.Round(Model.CodChoDoiSoat / Model.CodTong * 100);
+    <div class="the-mem p-3 mb-3">
+        <div class="d-flex justify-content-between nho mb-2"><span class="fw-semibold">Tiến độ thu hộ trong kỳ</span><span class="mo">@DinhDang.Tien(Model.CodTong)</span></div>
+        <div class="progress" style="height: 14px">
+            <div class="progress-bar bg-success" style="width:@ptDoiSoat%" title="Đã đối soát"></div>
+            <div class="progress-bar" style="width:@ptCho%; background:#F59E0B" title="Chờ đối soát"></div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 nho mt-2">
+            <span><i class="bi bi-square-fill text-success"></i> Đã đối soát @ptDoiSoat%</span>
+            <span><i class="bi bi-square-fill" style="color:#F59E0B"></i> Shipper đang giữ @ptCho%</span>
+            <span><i class="bi bi-square-fill" style="color:#E5E7EB"></i> Chưa thu @(100 - ptDoiSoat - ptCho)%</span>
+        </div>
+    </div>
+}
+<div class="row g-3 mb-3">
+    <div class="col-xl-7"><div class="the-mem p-3 h-100"><div class="fw-bold mb-2">Thu hộ theo tháng</div><div class="chart-box"><canvas id="bdCod"></canvas></div></div></div>
+    <div class="col-xl-5">
+        <div class="the-mem h-100">
+            <div class="p-3 fw-bold">Top khách hàng theo tiền thu hộ</div>
+            <div class="table-responsive"><table class="table bang mb-0">
+                <thead><tr><th>#</th><th>Khách hàng</th><th class="text-end">Số đơn</th><th class="text-end">Tiền thu hộ</th></tr></thead>
+                <tbody>
+                @{ int hangKh = 0; }
+                @foreach (var r in Model.TopKhachThuHo)
+                {
+                    <tr><td class="mo">@(++hangKh)</td><td class="fw-semibold">@r.Nhan</td><td class="text-end">@r.GiaTriPhu</td><td class="text-end fw-semibold text-cam">@DinhDang.Tien(r.GiaTri)</td></tr>
+                }
+                </tbody>
+            </table></div>
+            @if (Model.TopKhachThuHo.Count == 0) { <div class="o-trong">Chưa có đơn thu hộ</div> }
+        </div>
+    </div>
+</div>
+<div class="the-mem mb-3">
+    <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="fw-bold"><i class="bi bi-safe2 text-cam"></i> Shipper đang giữ tiền – cần nộp để đối soát</span>
+    </div>
+    <div class="table-responsive"><table class="table bang mb-0">
+        <thead><tr><th>Nhân viên</th><th class="text-end">Số đơn</th><th class="text-end">Tiền thu hộ</th><th class="text-end">Phí ship người nhận trả</th><th class="text-end">Tổng phải nộp</th></tr></thead>
+        <tbody>
+        @foreach (var r in Model.ShipperGiuTien)
+        {
+            <tr><td class="fw-semibold">@r.TenNhanVien</td><td class="text-end">@r.SoDon</td><td class="text-end">@DinhDang.Tien(r.TienThuHo)</td><td class="text-end">@DinhDang.Tien(r.PhiShipDaThu)</td><td class="text-end fw-bold text-cam">@DinhDang.Tien(r.TongPhaiNop)</td></tr>
+        }
+        @if (Model.ShipperGiuTien.Count > 1)
+        {
+            <tr class="fw-bold" style="background:#F8F9FB"><td>Tổng cộng</td><td class="text-end">@Model.ShipperGiuTien.Sum(x => x.SoDon)</td><td class="text-end">@DinhDang.Tien(Model.ShipperGiuTien.Sum(x => x.TienThuHo))</td><td class="text-end">@DinhDang.Tien(Model.ShipperGiuTien.Sum(x => x.PhiShipDaThu))</td><td class="text-end text-cam">@DinhDang.Tien(Model.ShipperGiuTien.Sum(x => x.TongPhaiNop))</td></tr>
+        }
+        </tbody>
+    </table></div>
+    @if (Model.ShipperGiuTien.Count == 0) { <div class="o-trong"><i class="bi bi-check2-all"></i>Không có shipper nào đang giữ tiền – đã đối soát hết.</div> }
+</div>
+
+<div class="the-mem">
+    <div class="p-3 fw-bold">Chi tiết theo tháng</div>
+    <div class="table-responsive"><table class="table bang mb-0">
+        <thead><tr><th>Tháng</th><th class="text-end">Số đơn (trừ đơn hủy)</th><th class="text-end">Tổng phí vận chuyển</th></tr></thead>
+        <tbody>@foreach (var r in Model.TheoThang) { <tr><td>@r.Nhan</td><td class="text-end">@r.GiaTri</td><td class="text-end fw-semibold">@DinhDang.Tien(r.GiaTriPhu ?? 0)</td></tr> }</tbody>
+    </table></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        Chart.defaults.font.family = 'Be Vietnam Pro, Arial, sans-serif';
+        Chart.defaults.maintainAspectRatio = false;
+        const tien = v => Number(v).toLocaleString('vi-VN');
+        new Chart(document.getElementById('bdThang'), {
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.TheoThang.Select(x => x.Nhan))),
+                datasets: [
+                    { type: 'bar', label: 'Số đơn', data: @Html.Raw(Json.Serialize(Model.TheoThang.Select(x => x.GiaTri))), backgroundColor: '#F26522', borderRadius: 6, yAxisID: 'y' },
+                    { type: 'line', label: 'Tổng phí (đ)', data: @Html.Raw(Json.Serialize(Model.TheoThang.Select(x => x.GiaTriPhu ?? 0))), borderColor: '#1A73E8', backgroundColor: '#1A73E8', tension: .3, yAxisID: 'y1' }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: tien } } } }
+        });
+        new Chart(document.getElementById('bdTrangThai'), {
+            type: 'doughnut',
+            data: { labels: @Html.Raw(Json.Serialize(Model.TheoTrangThai.Select(x => x.Nhan))),
+                    datasets: [{ data: @Html.Raw(Json.Serialize(Model.TheoTrangThai.Select(x => x.GiaTri))),
+                                 backgroundColor: ['#F59E0B', '#60A5FA', '#3B82F6', '#6366F1', '#22C55E', '#EF4444', '#059669', '#9CA3AF'] }] },
+            options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+        });
+        new Chart(document.getElementById('bdCod'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.CodTheoThang.Select(x => x.Nhan))),
+                datasets: [
+                    { label: 'Thu hộ phát sinh (đ)', data: @Html.Raw(Json.Serialize(Model.CodTheoThang.Select(x => x.GiaTri))), backgroundColor: '#FDBA74', borderRadius: 6 },
+                    { label: 'Đã đối soát (đ)', data: @Html.Raw(Json.Serialize(Model.CodTheoThang.Select(x => x.GiaTriPhu ?? 0))), backgroundColor: '#22C55E', borderRadius: 6 }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { callback: tien } } },
+                       plugins: { tooltip: { callbacks: { label: c => c.dataset.label.replace(' (đ)', '') + ': ' + tien(c.raw) + ' đ' } } } }
+        });
+        const bdLyDo = document.getElementById('bdLyDo');
+        if (bdLyDo) new Chart(bdLyDo, {
+            type: 'bar',
+            data: { labels: @Html.Raw(Json.Serialize(Model.ThatBaiTheoLyDo.Select(x => x.Nhan))),
+                    datasets: [{ label: 'Số lần', data: @Html.Raw(Json.Serialize(Model.ThatBaiTheoLyDo.Select(x => x.GiaTri))), backgroundColor: '#EF4444', borderRadius: 6 }] },
+            options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+    </script>
+}

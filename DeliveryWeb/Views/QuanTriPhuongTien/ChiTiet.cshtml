@@ -1,0 +1,43 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 3 - Chi tiết phương tiện và lịch sử sử dụng. *@
+@model PhuongTien
+@{ ViewData["Title"] = "Phương tiện " + Model.BienSo; var dsPc = (List<PhanCongGiaoHang>)ViewBag.DsPhanCong; decimal dangCho = ViewBag.DangCho; }
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Loại</div><div class="gia-tri fs-5">@Model.LoaiPhuongTien</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Tải trọng tối đa</div><div class="gia-tri">@DinhDang.KhoiLuong(Model.TaiTrongToiDa)</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Đang chở</div><div class="gia-tri text-primary">@DinhDang.KhoiLuong(dangCho)</div></div></div>
+    <div class="col-md-3"><div class="kpi"><div class="nhan">Trạng thái</div><div class="mt-1"><span class="tt @Model.TrangThai.LopBadge()">@Model.TrangThai.TenHienThi()</span></div></div></div>
+</div>
+<div class="the-mem p-3 mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3"><partial name="_AnhXe" model="Model" view-data="@(new ViewDataDictionary(ViewData) { ["Lon"] = true })" /><div class="nho"><b>Ghi chú:</b> @(Model.GhiChu ?? "—")</div></div>
+    <div class="d-flex gap-2">
+        @if (Context.Session.LaQuanTri())
+        {
+            <a asp-action="ChinhSua" asp-route-id="@Model.MaPhuongTien" class="btn btn-sm btn-cam"><i class="bi bi-pencil"></i> Sửa</a>
+            <form asp-action="Xoa" asp-route-id="@Model.MaPhuongTien" method="post" data-xac-nhan="Xóa phương tiện @Model.BienSo?"><button class="btn btn-sm btn-light text-danger"><i class="bi bi-trash"></i> Xóa</button></form>
+        }
+        
+    </div>
+</div>
+<div class="the-mem">
+    <div class="p-3 fw-bold">Lịch sử sử dụng (30 lần gần nhất)</div>
+    <div class="table-responsive">
+        <table class="table bang">
+            <thead><tr><th>Đơn</th><th>Nhân viên</th><th class="text-end">Khối lượng đơn</th><th>Phân công</th><th>Kết thúc</th><th>Trạng thái</th></tr></thead>
+            <tbody>
+            @foreach (var p in dsPc)
+            {
+                <tr>
+                    <td><a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@p.MaDon" class="fw-semibold">@p.DonGiaoHang?.MaHienThi</a></td>
+                    <td>@p.NhanVien?.HoTen</td>
+                    <td class="text-end">@DinhDang.KhoiLuong(p.DonGiaoHang?.KhoiLuong ?? 0)</td>
+                    <td class="nho">@DinhDang.NgayGio(p.NgayPhanCong)</td>
+                    <td class="nho">@DinhDang.NgayGio(p.NgayKetThuc)</td>
+                    <td><span class="tt @p.TrangThai.LopBadge()">@p.TrangThai.TenHienThi()</span></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (dsPc.Count == 0) { <div class="o-trong"><i class="bi bi-inbox"></i>Chưa được sử dụng</div> }
+</div>

@@ -1,0 +1,21 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Ảnh đại diện có nút máy ảnh để đổi ảnh (chọn tệp là tự tải lên) và nút xóa ảnh – dùng cho mọi vai trò. *@
+@model AnhDaiDienVM
+@{ string quayLai = Context.Request.Path + Context.Request.QueryString; }
+<div class="doi-avt">
+    @HienThi.AnhDaiDien(Model.Anh, Model.HoTen, ("avt avt-lg " + Model.Lop).Trim())
+    <form asp-controller="DangNhap" asp-action="DoiAnhDaiDien" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="returnUrl" value="@quayLai" />
+        <label class="nut-camera" title="Đổi ảnh đại diện">
+            <i class="bi bi-camera-fill"></i>
+            <input type="file" name="anh" accept="@AnhXuLy.ChapNhan" class="d-none" onchange="if (this.files.length) this.form.submit()" />
+        </label>
+    </form>
+</div>
+@if (!string.IsNullOrEmpty(Model.Anh))
+{
+    <form asp-controller="DangNhap" asp-action="XoaAnhDaiDien" method="post" class="mt-1" data-xac-nhan="Xóa ảnh đại diện?">
+        <input type="hidden" name="returnUrl" value="@quayLai" />
+        <button class="btn btn-link btn-sm p-0 nho mo text-decoration-none">Xóa ảnh</button>
+    </form>
+}
