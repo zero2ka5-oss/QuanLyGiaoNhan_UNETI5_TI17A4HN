@@ -1,0 +1,30 @@
+// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@model LoaiHang
+
+@{
+    ViewData["Title"] = "Xóa loại hàng";
+}
+
+<h1>Xóa loại hàng?</h1>
+
+<div class="alert alert-warning">
+    Bạn có chắc chắn muốn xóa loại hàng
+    <strong>@Model.TenLoaiHang</strong> không?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Hệ số phụ thu</dt>
+    <dd class="col-sm-9">@Model.HeSoPhuThu</dd>
+
+    <dt class="col-sm-3">Mô tả</dt>
+    <dd class="col-sm-9">@Model.MoTa</dd>
+
+    <dt class="col-sm-3">Trạng thái</dt>
+    <dd class="col-sm-9">@Model.TrangThai</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input asp-for="MaLoaiHang" type="hidden" />
+    <button type="submit" class="btn btn-danger">Xóa</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

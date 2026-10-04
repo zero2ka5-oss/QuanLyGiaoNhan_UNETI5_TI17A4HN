@@ -1,0 +1,52 @@
+// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@model LoaiHang
+
+@{
+    ViewData["Title"] = "Thêm loại hàng";
+}
+
+<h1>Thêm loại hàng</h1>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="TenLoaiHang" class="form-label"></label>
+                <input asp-for="TenLoaiHang" class="form-control" />
+                <span asp-validation-for="TenLoaiHang" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="HeSoPhuThu" class="form-label"></label>
+                <input asp-for="HeSoPhuThu" class="form-control" type="number" step="0.01" min="0" />
+                <span asp-validation-for="HeSoPhuThu" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MoTa" class="form-label"></label>
+                <textarea asp-for="MoTa" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="MoTa" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TrangThai" class="form-label"></label>
+                <select asp-for="TrangThai" class="form-select">
+                    <option value="Hoạt động">Hoạt động</option>
+                    <option value="Không hoạt động">Không hoạt động</option>
+                </select>
+                <span asp-validation-for="TrangThai" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

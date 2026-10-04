@@ -1,0 +1,30 @@
+// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@model LoaiHang
+
+@{
+    ViewData["Title"] = "Sửa loại hàng";
+}
+
+<h1>Sửa loại hàng</h1>
+
+<hr />
+
+<form asp-action="Edit" method="post">
+    <input asp-for="MaLoaiHang" type="hidden" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <partial name="_Form" model="Model" />
+
+    <button type="submit" class="btn btn-primary">
+        Lưu thay đổi
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Quay lại
+    </a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

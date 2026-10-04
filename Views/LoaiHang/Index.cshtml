@@ -1,0 +1,41 @@
+// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@model IEnumerable<LoaiHang>
+
+@{
+    ViewData["Title"] = "Loại hàng";
+}
+
+<h1>Loại hàng</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Thêm loại hàng</a>
+</p>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Tên loại hàng</th>
+            <th>Hệ số phụ thu</th>
+            <th>Mô tả</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr>
+                <td>@x.TenLoaiHang</td>
+                <td>@x.HeSoPhuThu</td>
+                <td>@x.MoTa</td>
+                <td>@x.TrangThai</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@x.MaLoaiHang" class="btn btn-sm btn-info">Chi tiết</a>
+                    <a asp-action="Edit" asp-route-id="@x.MaLoaiHang" class="btn btn-sm btn-warning">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@x.MaLoaiHang" class="btn btn-sm btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
