@@ -1,0 +1,71 @@
+// Họ và tên: Vũ Thị Vân Anh
+// Mã sinh viên: 23103100194
+// Nội dung thực hiện: Module 1 - View danh sách khách hàng
+
+@model IEnumerable<KhachHang>
+
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+<h1>Quản lý khách hàng</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">
+        Thêm khách hàng
+    </a>
+</p>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Họ tên</th>
+            <th>Số điện thoại</th>
+            <th>Email</th>
+            <th>Địa chỉ</th>
+            <th>Ngày đăng ký</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.HoTen</td>
+                <td>@item.SoDienThoai</td>
+                <td>@item.Email</td>
+                <td>@item.DiaChi</td>
+                <td>@item.NgayDangKy.ToString("dd/MM/yyyy")</td>
+                <td>@item.TrangThai</td>
+                <td>
+                    <a asp-action="Details"
+                       asp-route-id="@item.MaKhachHang"
+                       class="btn btn-sm btn-info">
+                        Chi tiết
+                    </a>
+
+                    <a asp-action="Edit"
+                       asp-route-id="@item.MaKhachHang"
+                       class="btn btn-sm btn-warning">
+                        Sửa
+                    </a>
+
+                    <a asp-action="Delete"
+                       asp-route-id="@item.MaKhachHang"
+                       class="btn btn-sm btn-danger">
+                        Xóa
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

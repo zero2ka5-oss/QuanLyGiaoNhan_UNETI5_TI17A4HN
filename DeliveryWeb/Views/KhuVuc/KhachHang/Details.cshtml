@@ -1,0 +1,84 @@
+// Họ và tên: Vũ Thị Vân Anh
+// Mã sinh viên: 23103100194
+// Nội dung thực hiện: Module 1 - View chi tiết khách hàng
+
+@model KhachHang
+
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+}
+
+<h1>Chi tiết khách hàng</h1>
+
+<hr />
+
+<dl class="row">
+
+    <dt class="col-sm-3">
+        Tài khoản
+    </dt>
+
+    <dd class="col-sm-9">
+        @(Model.TaiKhoan?.TenDangNhap ?? "Không có")
+    </dd>
+
+    <dt class="col-sm-3">
+        Họ tên
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.HoTen
+    </dd>
+
+    <dt class="col-sm-3">
+        Số điện thoại
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.SoDienThoai
+    </dd>
+
+    <dt class="col-sm-3">
+        Email
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Email
+    </dd>
+
+    <dt class="col-sm-3">
+        Địa chỉ
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.DiaChi
+    </dd>
+
+    <dt class="col-sm-3">
+        Ngày đăng ký
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.NgayDangKy.ToString("dd/MM/yyyy")
+    </dd>
+
+    <dt class="col-sm-3">
+        Trạng thái
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.TrangThai
+    </dd>
+
+</dl>
+
+<a asp-action="Edit"
+   asp-route-id="@Model.MaKhachHang"
+   class="btn btn-warning">
+    Sửa
+</a>
+
+<a asp-action="Index"
+   class="btn btn-secondary">
+    Quay lại
+</a>

@@ -1,0 +1,157 @@
+// Họ và tên: Vũ Thị Vân Anh
+// Mã sinh viên: 23103100194
+// Nội dung thực hiện: Module 1 - View chỉnh sửa khách hàng
+
+@model KhachHang
+
+@{
+    ViewData["Title"] = "Sửa khách hàng";
+}
+
+<h1>Sửa khách hàng</h1>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+
+        <form asp-action="Edit" method="post">
+
+            <input asp-for="MaKhachHang"
+                   type="hidden" />
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger">
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MaTaiKhoan"
+                       class="form-label">
+                </label>
+
+                <select asp-for="MaTaiKhoan"
+                        class="form-select">
+
+                    @foreach (var taiKhoan in ViewBag.TaiKhoans)
+                    {
+                        <option value="@taiKhoan.MaTaiKhoan">
+                            @taiKhoan.TenDangNhap - @taiKhoan.HoTen
+                        </option>
+                    }
+
+                </select>
+
+                <span asp-validation-for="MaTaiKhoan"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="HoTen"
+                       class="form-label">
+                </label>
+
+                <input asp-for="HoTen"
+                       class="form-control" />
+
+                <span asp-validation-for="HoTen"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SoDienThoai"
+                       class="form-label">
+                </label>
+
+                <input asp-for="SoDienThoai"
+                       class="form-control" />
+
+                <span asp-validation-for="SoDienThoai"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email"
+                       class="form-label">
+                </label>
+
+                <input asp-for="Email"
+                       class="form-control" />
+
+                <span asp-validation-for="Email"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DiaChi"
+                       class="form-label">
+                </label>
+
+                <textarea asp-for="DiaChi"
+                          class="form-control"
+                          rows="3">
+                </textarea>
+
+                <span asp-validation-for="DiaChi"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NgayDangKy"
+                       class="form-label">
+                </label>
+
+                <input asp-for="NgayDangKy"
+                       type="date"
+                       class="form-control" />
+
+                <span asp-validation-for="NgayDangKy"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TrangThai"
+                       class="form-label">
+                </label>
+
+                <select asp-for="TrangThai"
+                        class="form-select">
+
+                    <option value="Hoạt động">
+                        Hoạt động
+                    </option>
+
+                    <option value="Không hoạt động">
+                        Không hoạt động
+                    </option>
+
+                </select>
+
+                <span asp-validation-for="TrangThai"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary">
+                Lưu thay đổi
+            </button>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+                Quay lại
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

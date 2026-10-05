@@ -1,0 +1,77 @@
+// Họ và tên: Vũ Thị Vân Anh
+// Mã sinh viên: 23103100194
+// Nội dung thực hiện: Module 1 - View xóa khách hàng
+
+@model KhachHang
+
+@{
+    ViewData["Title"] = "Xóa khách hàng";
+}
+
+<h1>Xóa khách hàng?</h1>
+
+<div class="alert alert-warning">
+    Bạn có chắc chắn muốn xóa khách hàng
+    <strong>@Model.HoTen</strong> không?
+</div>
+
+<dl class="row">
+
+    <dt class="col-sm-3">
+        Họ tên
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.HoTen
+    </dd>
+
+    <dt class="col-sm-3">
+        Số điện thoại
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.SoDienThoai
+    </dd>
+
+    <dt class="col-sm-3">
+        Email
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Email
+    </dd>
+
+    <dt class="col-sm-3">
+        Địa chỉ
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.DiaChi
+    </dd>
+
+    <dt class="col-sm-3">
+        Trạng thái
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.TrangThai
+    </dd>
+
+</dl>
+
+<form asp-action="Delete" method="post">
+
+    <input asp-for="MaKhachHang"
+           type="hidden" />
+
+    <button type="submit"
+            class="btn btn-danger">
+        Xóa
+    </button>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Hủy
+    </a>
+
+</form>
