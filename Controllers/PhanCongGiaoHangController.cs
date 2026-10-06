@@ -24,9 +24,9 @@ public class PhanCongGiaoHangController(ApplicationDbContext context) : AppContr
         {
             var searchText = search.Trim();
             if (int.TryParse(searchText, out var maDon))
-                query = query.Where(x => x.MaDon == maDon || x.DonGiaoHang!.TenNguoiNhan.Contains(searchText) || x.DonGiaoHang.DiaChiNhan.Contains(searchText) || x.NhanVienGiaoHang!.HoTen.Contains(searchText) || x.PhuongTien!.BienSo.Contains(searchText));
+                query = query.Where(x => x.MaDon == maDon || x.DonGiaoHang!.TenNguoiNhan.Contains(searchText) || x.DonGiaoHang.SoDienThoaiNguoiNhan.Contains(searchText) || x.DonGiaoHang.DiaChiNhan.Contains(searchText) || x.NhanVienGiaoHang!.HoTen.Contains(searchText) || x.PhuongTien!.BienSo.Contains(searchText));
             else
-                query = query.Where(x => x.DonGiaoHang!.TenNguoiNhan.Contains(searchText) || x.DonGiaoHang.DiaChiNhan.Contains(searchText) || x.NhanVienGiaoHang!.HoTen.Contains(searchText) || x.PhuongTien!.BienSo.Contains(searchText));
+                query = query.Where(x => x.DonGiaoHang!.TenNguoiNhan.Contains(searchText) || x.DonGiaoHang.SoDienThoaiNguoiNhan.Contains(searchText) || x.DonGiaoHang.DiaChiNhan.Contains(searchText) || x.NhanVienGiaoHang!.HoTen.Contains(searchText) || x.PhuongTien!.BienSo.Contains(searchText));
         }
 
         if (!string.IsNullOrWhiteSpace(status))
