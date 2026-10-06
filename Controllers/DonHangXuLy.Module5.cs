@@ -1,7 +1,7 @@
 // Họ và tên: Nguyễn Minh Hướng
 // Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 5 - Áp phí vào đơn, ghi lịch sử, bảng giá (đã chạy);
-//                     hoàn tất, tra cứu, thống kê theo tháng (khung, hoàn thiện ở tuần 3, 4, 6).
+// Nội dung thực hiện: Module 5 - Áp phí vào đơn, hoàn tất & đối soát thu hộ, ghi lịch sử, bảng giá, tra cứu đơn (đã chạy);
+//                     thống kê phí theo tháng (khung, hoàn thiện ở tuần 6).
 
 using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
@@ -34,8 +34,32 @@ public partial class DonHangXuLy
     // HOÀN TẤT & ĐỐI SOÁT THU HỘ  (khung – hoàn thiện tuần 4)
     // =====================================================================
 
-    public Task<KetQua> HoanTatAsync(int maDon, string nguoiThucHien, bool tuGiaoDichVi = false) =>
-        Task.FromResult(KetQua.Loi("Chức năng hoàn tất đơn (Module 5) đang được phát triển"));
+    /// <summary>
+    /// Hoàn tất = đối soát: shipper đã nộp tiền thu của người nhận; hệ thống trả tiền thu hộ cho người gửi
+    /// (nếu người gửi trả phí thì phí ship được trừ vào tiền thu hộ).
+    /// </summary>
+    /// <param name="tuGiaoDichVi">true khi gọi từ việc xác nhận lệnh nộp tiền trên ví shipper.</param>
+    public async Task<KetQua> HoanTatAsync(int maDon, string nguoiThucHien, bool tuGiaoDichVi = false)
+    {
+        var don = await db.DonGiaoHangs.Include(d => d.GiaoDichNop).FirstOrDefaultAsync(d => d.MaDon == maDon);
+        if (don is null) return KetQua.Loi("Không tìm thấy đơn hàng");
+        if (don.TrangThai != TrangThaiDon.GiaoThanhCong)
+            return KetQua.Loi($"Chỉ đơn Giao thành công mới được hoàn tất (đơn đang '{don.TrangThai.TenHienThi()}')");
+        // Tiền của đơn đã nằm trong lệnh nộp của shipper → xác nhận ở trang Ví shipper để không đối soát 2 lần
+        if (!tuGiaoDichVi && don.GiaoDichNop is { TrangThai: TrangThaiGiaoDich.ChoXacNhan } gd)
+            return KetQua.Loi($"Tiền của đơn nằm trong lệnh nộp {gd.MaHienThi} đang chờ xác nhận – hãy xác nhận ở mục Ví shipper");
+
+        don.NgayHoanTat = BayGio();
+        string noiDung = "Xác nhận hoàn tất đơn";
+        if (don.TienThuHo > 0 || don.NguoiTraPhi == NguoiTraPhi.NguoiNhan)
+        {
+            don.NgayDoiSoat = don.NgayHoanTat;
+            noiDung += don.TienTraNguoiGui >= 0
+                ? $" – đối soát: trả người gửi {DinhDang.Tien(don.TienTraNguoiGui)}"
+                : $" – đối soát: người gửi thanh toán phí {DinhDang.Tien(-don.TienTraNguoiGui)}";
+        }
+        return await DoiTrangThaiDonAsync(don, TrangThaiDon.HoanTat, noiDung, nguoiThucHien, null);
+    }
 
     // =====================================================================
     // LỊCH SỬ GIAO NHẬN
@@ -56,8 +80,21 @@ public partial class DonHangXuLy
         return Task.FromResult(Enumerable.Range(0, n).Select(i => ($"T{dau.AddMonths(i).Month}", 0, 0m)).ToList());
     }
 
-    public Task<(DonGiaoHang? Don, string? Loi)> TraCuuAsync(string? ma, string? sdt) =>
-        Task.FromResult<(DonGiaoHang?, string?)>((null, "Chức năng tra cứu đơn đang được phát triển"));
+    /// <summary>
+    /// Tra cứu đơn theo mã đơn + số điện thoại người nhận (trang công khai và trang Tra cứu của khách hàng).
+    /// Số điện thoại chỉ giữ chữ số nên nhập "0912 345 678" hay "0912.345.678" đều được.
+    /// </summary>
+    public async Task<(DonGiaoHang? Don, string? Loi)> TraCuuAsync(string? ma, string? sdt)
+    {
+        int? maDon = DinhDang.TachMaDon(ma);
+        if (maDon is null || string.IsNullOrWhiteSpace(sdt))
+            return (null, "Nhập đúng mã đơn (VD: DH000012) và số điện thoại người nhận");
+        string soDienThoai = new(sdt.Where(char.IsDigit).ToArray());
+        var don = await db.DonGiaoHangs.AsNoTracking()
+            .Include(d => d.KhuVuc).Include(d => d.LoaiHang).Include(d => d.LichSus)
+            .FirstOrDefaultAsync(d => d.MaDon == maDon && d.SoDienThoaiNguoiNhan == soDienThoai);
+        return don is null ? (null, "Không tìm thấy đơn khớp mã đơn và số điện thoại đã nhập") : (don, null);
+    }
 
     /// <summary>Dữ liệu khối ước lượng phí + bảng giá: khu vực, loại hàng đang hoạt động và khối lượng tối đa một đơn.</summary>
     public async Task<BangGiaVM> BangGiaAsync(bool laKhachHang) => new(
