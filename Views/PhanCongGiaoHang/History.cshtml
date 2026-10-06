@@ -1,0 +1,7 @@
+@model PhanCongLichSuViewModel
+@{
+    ViewData["Title"] = "Lịch sử phân công";
+}
+
+<div class="page-heading-row"><div><span class="eyebrow">Đơn #@Model.DonGiaoHang.MaDon</span><h2>Lịch sử phân công</h2><p>@Model.DonGiaoHang.TenNguoiNhan · @Model.DonGiaoHang.DiaChiNhan</p></div><a asp-action="Index" class="button button-secondary">Quay lại danh sách</a></div>
+<section class="panel assignment-history-panel"><div class="panel-header"><div><h3>Toàn bộ lần phân công</h3><p>Bản ghi cũ được giữ lại khi đổi nhân viên hoặc phương tiện.</p></div><span class="status-badge" data-status="@Model.DonGiaoHang.TrangThai">Đơn: @Model.DonGiaoHang.TrangThai</span></div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Phân công</th><th>Thời gian</th><th>Nhân viên</th><th>Phương tiện</th><th>Trạng thái</th><th></th></tr></thead><tbody>@foreach (var item in Model.PhanCongs) {<tr><td><span class="table-id">#@item.MaPhanCong</span></td><td>@item.NgayPhanCong.ToString("dd/MM/yyyy HH:mm")</td><td>@item.NhanVienGiaoHang?.HoTen</td><td>@item.PhuongTien?.BienSo</td><td><span class="status-badge" data-status="@item.TrangThai">@item.TrangThai</span></td><td class="text-end"><a class="row-action" asp-action="Details" asp-route-id="@item.MaPhanCong">Chi tiết</a></td></tr>}</tbody></table></div></section>

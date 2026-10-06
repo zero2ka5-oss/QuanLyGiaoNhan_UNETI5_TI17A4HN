@@ -1,2 +1,11 @@
 @model PhanCongGiaoHang
-@{ ViewData["Title"] = "Phân công mới"; }<h1>Phân công mới</h1><form asp-action="Create"><partial name="_Form" model="Model" /></form>
+@{
+    ViewData["Title"] = "Phân công mới";
+}
+
+<div class="page-heading-row"><div><span class="eyebrow">Điều phối vận hành</span><h2>Phân công giao hàng</h2><p>Chọn đơn, nhân viên và phương tiện đang sẵn sàng.</p></div><a asp-action="Index" class="button button-ghost">Quay lại danh sách</a></div>
+<section class="panel assignment-form-panel"><div class="panel-header"><div><h3>Thông tin phân công</h3><p>Hệ thống sẽ kiểm tra trùng lịch và trạng thái nguồn lực trước khi lưu.</p></div></div><div class="assignment-form-body"><form asp-action="Create" method="post"><div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div><partial name="_Form" model="Model" /></form></div></section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

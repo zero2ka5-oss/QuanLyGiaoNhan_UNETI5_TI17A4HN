@@ -1,2 +1,4 @@
 @model PhanCongGiaoHang
-@{ ViewData["Title"] = "Sửa phân công"; }<h1>Sửa phân công</h1><form asp-action="Edit"><input asp-for="MaPhanCong" type="hidden" /><partial name="_Form" model="Model" /></form>
+@{ ViewData["Title"] = "Đổi phân công"; }
+<div class="page-heading-row"><div><span class="eyebrow">Bảo toàn lịch sử</span><h2>Đổi phân công</h2><p>Thao tác này tạo bản ghi mới và giữ nguyên phân công cũ.</p></div><a asp-action="Details" asp-route-id="@Model.MaPhanCong" class="button button-ghost">Quay lại</a></div>
+<section class="panel assignment-form-panel"><div class="assignment-form-body"><p>Phân công #@Model.MaPhanCong · Đơn #@Model.MaDon</p><form asp-action="Reassign" method="post"><input asp-for="MaPhanCong" type="hidden" /><input asp-for="MaDon" type="hidden" /><partial name="_Form" model="Model" /></form></div></section>
