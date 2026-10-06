@@ -1,19 +1,43 @@
 @* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: KHUNG (tuần 1) - Lịch sử giao nhận của một đơn dạng danh sách đơn giản (timeline hoàn thiện ở tuần 3). *@
+   Nội dung thực hiện: Module 5 - Timeline lịch sử giao nhận của một đơn (mới nhất trên cùng).
+                       ViewData["CongKhai"] = true (trang tra cứu công khai): chỉ hiện mô tả chung của từng mốc,
+                       ẩn nội dung nội bộ và người thực hiện. *@
 @model IEnumerable<LichSuGiaoNhan>
-@{ var ds = Model.ToList(); }
+@{
+    bool congKhai = ViewData["CongKhai"] is true;
+    // Trang công khai: bỏ các dòng "cập nhật thông tin" nội bộ (trạng thái không đổi)
+    var ds = congKhai ? Model.Where(l => l.TrangThaiCu != l.TrangThaiMoi).ToList() : Model.ToList();
+}
 @if (ds.Count == 0)
 {
     <div class="mo nho">Chưa có lịch sử.</div>
 }
 else
 {
-    <ul class="list-unstyled mb-0">
+    <ul class="dong-thoi-gian">
         @foreach (var ls in ds)
         {
-            <li class="mb-2">
-                <b>@ls.TrangThaiMoi.TenHienThi()</b> – @DinhDang.NgayGio(ls.ThoiGian)
-                <div class="nho mo">@ls.NoiDung (@ls.NguoiThucHien)</div>
+            <li>
+                <div class="d-flex align-items-center flex-wrap gap-2 row-gap-1">
+                    <span class="tt @ls.TrangThaiMoi.LopBadge()"><i class="bi @ls.TrangThaiMoi.BieuTuong()"></i> @ls.TrangThaiMoi.TenHienThi()</span>
+                    <span class="ls-gio ms-auto" title="@DinhDang.NgayGio(ls.ThoiGian)"><i class="bi bi-clock"></i> @DinhDang.ThoiGianTuongDoi(ls.ThoiGian)</span>
+                </div>
+                @if (congKhai)
+                {
+                    <div class="ls-noi-dung">@DinhDang.MoTaCongKhai(ls.TrangThaiMoi)</div>
+                }
+                else
+                {
+                    var (ten, vaiTro, thamChieu) = DinhDang.TachNguoiThucHien(ls.NguoiThucHien);
+                    <div class="ls-noi-dung">@ls.NoiDung</div>
+                    <div class="ls-meta">
+                        <span class="ls-nguoi @DinhDang.LopVaiTro(vaiTro)">
+                            <span class="ls-avt">@HienThi.ChuCaiDau(ten)</span>@ten
+                            @if (vaiTro is not null) { <span class="ls-vai-tro">@vaiTro</span> }
+                        </span>
+                        @if (thamChieu is not null) { <span class="nho mo">Giao dịch @thamChieu</span> }
+                    </div>
+                }
             </li>
         }
     </ul>
