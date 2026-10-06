@@ -1,0 +1,71 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 3 - Danh sách phương tiện: tải trọng, khối lượng đang chở, người đang sử dụng. *@
+@model DanhSachTrang<PhuongTien>
+@{
+    ViewData["Title"] = "Phương tiện";
+    var soTheoTT = (Dictionary<TrangThaiPhuongTien, int>)ViewBag.SoTheoTrangThai;
+    var dangCho = (Dictionary<int, decimal>)ViewBag.DangCho;
+    var nguoiDung = (Dictionary<int, string>)ViewBag.NguoiDung;
+    TrangThaiPhuongTien? loc = ViewBag.TrangThai;
+    string? loaiLoc = ViewBag.Loai;
+}
+<div class="row g-3 mb-3">
+    @foreach (var (tt, mau, icon) in new[] { (TrangThaiPhuongTien.SanSang, "icon-luc", "bi-check-circle"), (TrangThaiPhuongTien.DangSuDung, "icon-xanh", "bi-truck"),
+                                            (TrangThaiPhuongTien.BaoTri, "icon-vang", "bi-tools"), (TrangThaiPhuongTien.NgungHoatDong, "icon-do", "bi-slash-circle") })
+    {
+        <div class="col-6 col-xl-3">
+            <a class="kpi d-flex justify-content-between align-items-center text-reset" asp-route-trangThai="@tt">
+                <div><div class="nhan">@tt.TenHienThi()</div><div class="gia-tri">@soTheoTT.GetValueOrDefault(tt)</div></div>
+                <div class="icon @mau"><i class="bi @icon"></i></div>
+            </a>
+        </div>
+    }
+</div>
+<form method="get" class="thanh-loc mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label nho">Biển số</label><input name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="VD: 29B1" /></div>
+        <div class="col-md-3"><label class="form-label nho">Loại</label>
+            <select name="loai" class="form-select"><option value="">Tất cả</option>
+                @foreach (var l in PhuongTien.DanhSachLoai) { <option value="@l" selected="@(loaiLoc == l)">@l</option> }
+            </select></div>
+        <div class="col-md-3"><label class="form-label nho">Trạng thái</label>
+            <select name="trangThai" class="form-select"><option value="">Tất cả</option>
+                @foreach (var tt in Enum.GetValues<TrangThaiPhuongTien>()) { <option value="@tt" selected="@(loc == tt)">@tt.TenHienThi()</option> }
+            </select></div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-cam flex-fill"><i class="bi bi-funnel"></i> Lọc</button>
+            @if (Context.Session.LaQuanTri()) { <a asp-action="TaoMoi" class="btn btn-outline-dark flex-fill"><i class="bi bi-plus-lg"></i> Thêm</a> }
+        </div>
+    </div>
+</form>
+<div class="the-mem">
+    <div class="table-responsive">
+        <table class="table bang">
+            <thead><tr><th>Biển số</th><th>Loại</th><th>Tải trọng / đang chở</th><th>Người đang dùng</th><th>Trạng thái</th><th>Ghi chú</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model.DanhSach)
+            {
+                decimal cho = dangCho.GetValueOrDefault(p.MaPhuongTien);
+                int phanTram = (int)Math.Min(100, cho / p.TaiTrongToiDa * 100);
+                <tr>
+                    <td><div class="d-flex align-items-center gap-2"><partial name="_AnhXe" model="p" /><a asp-action="ChiTiet" asp-route-id="@p.MaPhuongTien" class="fw-bold">@p.BienSo</a></div></td>
+                    <td>@p.LoaiPhuongTien</td>
+                    <td style="min-width: 190px">
+                        <div class="d-flex justify-content-between nho"><span>@DinhDang.KhoiLuong(cho)</span><span class="mo">/ @DinhDang.KhoiLuong(p.TaiTrongToiDa)</span></div>
+                        <div class="progress" style="height: 6px"><div class="progress-bar @(phanTram > 80 ? "bg-danger" : "bg-success")" style="width: @phanTram%"></div></div>
+                    </td>
+                    <td class="nho">@(nguoiDung.GetValueOrDefault(p.MaPhuongTien) ?? "—")</td>
+                    <td><span class="tt @p.TrangThai.LopBadge()">@p.TrangThai.TenHienThi()</span></td>
+                    <td class="nho mo">@p.GhiChu</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="ChiTiet" asp-route-id="@p.MaPhuongTien" class="btn btn-sm btn-light" title="Chi tiết"><i class="bi bi-eye"></i></a>
+                        @if (Context.Session.LaQuanTri()) { <a asp-action="ChinhSua" asp-route-id="@p.MaPhuongTien" class="btn btn-sm btn-light" title="Sửa"><i class="bi bi-pencil"></i></a> }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-truck"></i>Không có phương tiện phù hợp</div> }
+</div>
+<partial name="_PhanTrang" model="Model" />

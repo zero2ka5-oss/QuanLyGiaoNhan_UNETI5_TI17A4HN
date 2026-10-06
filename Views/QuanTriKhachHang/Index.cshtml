@@ -1,0 +1,59 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Module 2 - Danh sách khách hàng (tìm kiếm, lọc trạng thái, sắp xếp, phân trang). *@
+@model DanhSachTrang<KhachHang>
+@{
+    ViewData["Title"] = "Khách hàng";
+    var soDon = (Dictionary<int, int>)ViewBag.SoDon;
+    string sapXep = ViewBag.SapXep;
+}
+<form method="get" class="thanh-loc mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label nho">Tìm kiếm</label><input name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Họ tên, số điện thoại, email, địa chỉ" /></div>
+        <div class="col-md-2"><label class="form-label nho">Trạng thái</label>
+            <select name="trangThai" class="form-select"><option value="">Tất cả</option>
+                <option value="HoatDong" selected="@(ViewBag.TrangThai == TrangThaiHoatDong.HoatDong)">Đang hoạt động</option>
+                <option value="NgungHoatDong" selected="@(ViewBag.TrangThai == TrangThaiHoatDong.NgungHoatDong)">Ngừng hoạt động</option>
+            </select></div>
+        <div class="col-md-3"><label class="form-label nho">Sắp xếp</label>
+            <select name="sapXep" class="form-select">
+                <option value="moi" selected="@(sapXep == "moi")">Đăng ký mới nhất</option>
+                <option value="cu" selected="@(sapXep == "cu")">Đăng ký cũ nhất</option>
+                <option value="ten" selected="@(sapXep == "ten")">Họ tên A → Z</option>
+                <option value="nhieudon" selected="@(sapXep == "nhieudon")">Nhiều đơn nhất</option>
+            </select></div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-cam flex-fill"><i class="bi bi-funnel"></i> Lọc</button>
+            <a asp-action="TaoMoi" class="btn btn-outline-dark flex-fill"><i class="bi bi-person-plus"></i> Thêm</a>
+        </div>
+    </div>
+</form>
+<div class="the-mem">
+    <div class="table-responsive">
+        <table class="table bang">
+            <thead><tr><th>Khách hàng</th><th>Liên hệ</th><th>Địa chỉ</th><th>Tài khoản</th><th class="text-end">Số đơn</th><th>Ngày đăng ký</th><th>Trạng thái</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var k in Model.DanhSach)
+            {
+                <tr>
+                    <td><div class="d-flex align-items-center gap-2">@HienThi.AnhDaiDien(k.TaiKhoan?.AnhDaiDien, k.HoTen, "avt avt-sm")<div class="lh-sm"><a asp-action="ChiTiet" asp-route-id="@k.MaKhachHang" class="ten">@k.HoTen</a><div class="nho mo">KH@(k.MaKhachHang.ToString("D4"))</div></div></div></td>
+                    <td class="nho">@DinhDang.SoDienThoai(k.SoDienThoai)<div class="mo">@k.Email</div></td>
+                    <td class="nho">@k.DiaChi</td>
+                    <td class="nho">@if (k.TaiKhoan is not null) { <code>@k.TaiKhoan.TenDangNhap</code> } else { <span class="mo">—</span> }</td>
+                    <td class="text-end fw-semibold">@soDon.GetValueOrDefault(k.MaKhachHang)</td>
+                    <td class="nho mo">@DinhDang.Ngay(k.NgayDangKy)</td>
+                    <td><span class="tt @k.TrangThai.LopBadge()">@k.TrangThai.TenHienThi()</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="ChiTiet" asp-route-id="@k.MaKhachHang" class="btn btn-sm btn-light" title="Chi tiết"><i class="bi bi-eye"></i></a>
+                        <a asp-action="ChinhSua" asp-route-id="@k.MaKhachHang" class="btn btn-sm btn-light" title="Sửa"><i class="bi bi-pencil"></i></a>
+                        <form asp-action="DoiTrangThai" asp-route-id="@k.MaKhachHang" method="post" class="d-inline">
+                            <button class="btn btn-sm btn-light" title="@(k.TrangThai == TrangThaiHoatDong.HoatDong ? "Ngừng hoạt động" : "Kích hoạt")"><i class="bi @(k.TrangThai == TrangThaiHoatDong.HoatDong ? "bi-pause-circle" : "bi-play-circle")"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-people"></i>Không có khách hàng phù hợp</div> }
+</div>
+<partial name="_PhanTrang" model="Model" />
