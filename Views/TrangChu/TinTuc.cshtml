@@ -1,0 +1,70 @@
+@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
+   Nội dung thực hiện: Trang danh sách tin tức, thông báo, cẩm nang gửi hàng – dải đầu trang có ô tìm kiếm,
+                       lọc theo chuyên mục (kèm số bài), bài nổi bật, lưới bài viết, phân trang. *@
+@model DanhSachTrang<TinTuc>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Tin tức";
+    ChuyenMucTinTuc? dangChon = ViewBag.ChuyenMuc;
+    string? tuKhoa = ViewBag.TuKhoa;
+    TinTuc? noiBat = ViewBag.NoiBat;
+    var soBai = (Dictionary<ChuyenMucTinTuc, int>)ViewBag.SoTheoChuyenMuc;
+}
+<section class="tc-dau tt-dau">
+    <div class="container position-relative">
+        <span class="xt-chao tc-nhan"><i class="bi bi-newspaper"></i> Tin tức GiaoNhanh</span>
+        <h1 class="tc-tieu-de">Tin tức & thông báo</h1>
+        <p class="tc-mo-ta">Thông báo vận hành, cẩm nang và hướng dẫn gửi hàng</p>
+        <form method="get" class="tt-tim">
+            @if (dangChon is not null) { <input type="hidden" name="chuyenMuc" value="@dangChon" /> }
+            <i class="bi bi-search"></i>
+            <input name="tuKhoa" value="@tuKhoa" placeholder="Tìm bài viết…" autocomplete="off" />
+            @if (!string.IsNullOrEmpty(tuKhoa)) { <a asp-action="TinTuc" asp-route-chuyenMuc="@dangChon" class="tt-xoa" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a> }
+            <button class="btn btn-cam">Tìm</button>
+        </form>
+    </div>
+</section>
+
+<div class="container tt-than">
+    <div class="tt-loc">
+        <a asp-action="TinTuc" asp-route-tuKhoa="@tuKhoa" class="loc-cm @(dangChon is null ? "active" : "")"><i class="bi bi-grid"></i> Tất cả <span>@soBai.Values.Sum()</span></a>
+        @foreach (var cm in Enum.GetValues<ChuyenMucTinTuc>())
+        {
+            <a asp-action="TinTuc" asp-route-chuyenMuc="@cm" asp-route-tuKhoa="@tuKhoa" class="loc-cm @(dangChon == cm ? "active" : "")">
+                <i class="bi @(cm == ChuyenMucTinTuc.ThongBao ? "bi-megaphone" : cm == ChuyenMucTinTuc.CamNang ? "bi-journal-bookmark" : "bi-signpost-2")"></i>
+                @cm.TenChuyenMuc() <span>@soBai.GetValueOrDefault(cm)</span>
+            </a>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(tuKhoa))
+    {
+        <div class="mo mb-3">Tìm thấy <b class="text-body">@Model.TongSoDong</b> bài cho “<b class="text-body">@tuKhoa</b>”</div>
+    }
+
+    @if (noiBat is not null)
+    {
+        <div class="mb-4"><partial name="_TheTinTuc" model="noiBat" view-data="@(new ViewDataDictionary(ViewData) { ["NoiBat"] = true })" /></div>
+    }
+
+    @if (Model.TongSoDong > 0)
+    {
+        @if (noiBat is not null) { <h2 class="tt-muc">Bài viết khác</h2> }
+        <div class="row g-4">
+            @foreach (var t in Model.DanhSach)
+            {
+                <div class="col-md-6 col-lg-4"><partial name="_TheTinTuc" model="t" /></div>
+            }
+        </div>
+        @if (Model.TongSoTrang > 1) { <partial name="_PhanTrang" model="Model" /> }
+    }
+    else if (noiBat is null)
+    {
+        <div class="tc-trong">
+            <div class="tc-trong-icon"><i class="bi bi-newspaper"></i></div>
+            <h2 class="h5 fw-bold mb-1">Chưa có bài viết phù hợp</h2>
+            <p class="mo mb-3">Thử từ khóa khác hoặc xem tất cả chuyên mục</p>
+            <a asp-action="TinTuc" class="btn btn-cam rounded-pill px-4">Xem tất cả</a>
+        </div>
+    }
+</div>

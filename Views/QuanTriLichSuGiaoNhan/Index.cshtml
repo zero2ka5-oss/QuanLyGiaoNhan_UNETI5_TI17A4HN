@@ -1,7 +1,7 @@
 @* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
    Nội dung thực hiện: Module 5 - Tra cứu lịch sử giao nhận toàn hệ thống: bộ lọc tự áp dụng khi đổi trạng thái,
                        mỗi mốc hiển thị thanh tiến trình Phân công → Nhận hàng → Đang giao → Giao xong → Hoàn tất. *@
-@model List<LichSuGiaoNhan>
+@model DanhSachTrang<LichSuGiaoNhan>
 @{
     ViewData["Title"] = "Lịch sử giao nhận";
     TrangThaiDon? loc = ViewBag.TrangThaiMoi;
@@ -29,7 +29,7 @@
         <table class="table bang bang-lich-su">
             <thead><tr><th>Thời gian</th><th>Đơn</th><th>Tiến trình</th><th>Nội dung</th><th>Người thực hiện</th></tr></thead>
             <tbody>
-            @foreach (var l in Model)
+            @foreach (var l in Model.DanhSach)
             {
                 var (ten, vaiTro, thamChieu) = DinhDang.TachNguoiThucHien(l.NguoiThucHien);
                 <tr>
@@ -53,9 +53,9 @@
             </tbody>
         </table>
     </div>
-    @if (Model.Count == 0) { <div class="o-trong"><i class="bi bi-clock-history"></i>Không có lịch sử phù hợp</div> }
+    @if (Model.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-clock-history"></i>Không có lịch sử phù hợp</div> }
 </div>
-<div class="nho mo mt-2">Hiển thị tối đa 100 mốc mới nhất</div>
+<partial name="_PhanTrang" model="Model" />
 
 @section Scripts {
     <script>

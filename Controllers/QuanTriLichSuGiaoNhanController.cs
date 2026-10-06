@@ -1,7 +1,6 @@
 // Họ và tên: Nguyễn Minh Hướng
 // Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 5 - Tra cứu lịch sử giao nhận toàn hệ thống (lọc theo đơn, trạng thái, người thực hiện, ngày;
-//                     phân trang làm ở tuần 4).
+// Nội dung thực hiện: Module 5 - Tra cứu lịch sử giao nhận toàn hệ thống (lọc theo đơn, trạng thái, người thực hiện, ngày).
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +10,14 @@ using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
 
 /*
- * QuanTriLichSuGiaoNhanController — URL: /QuanTriLichSuGiaoNhan?tuKhoa=&trangThaiMoi=&tuNgay=&denNgay=
+ * QuanTriLichSuGiaoNhanController — URL: /QuanTriLichSuGiaoNhan?tuKhoa=&trangThaiMoi=&tuNgay=&denNgay=&trang=
  * Quyền: Quản trị, Điều phối. Chỉ đọc – lịch sử không bao giờ bị sửa / xóa.
  * Khách hàng xem lịch sử đơn của mình tại DonGiaoHang/ChiTiet; nhân viên tại PhanCongGiaoHang/ChiTiet.
  */
 [YeuCauVaiTro(VaiTroNguoiDung.QuanTri, VaiTroNguoiDung.DieuPhoi)]
 public class QuanTriLichSuGiaoNhanController(QuanLyGiaoNhanDbContext db) : Controller
 {
-    public async Task<IActionResult> Index(string? tuKhoa, TrangThaiDon? trangThaiMoi, DateTime? tuNgay, DateTime? denNgay)
+    public async Task<IActionResult> Index(string? tuKhoa, TrangThaiDon? trangThaiMoi, DateTime? tuNgay, DateTime? denNgay, int trang = 1)
     {
         var truyVan = db.LichSuGiaoNhans.AsNoTracking().Include(l => l.DonGiaoHang).AsQueryable();
         if (!string.IsNullOrWhiteSpace(tuKhoa))
@@ -39,7 +38,7 @@ public class QuanTriLichSuGiaoNhanController(QuanLyGiaoNhanDbContext db) : Contr
         ViewBag.TrangThaiMoi = trangThaiMoi;
         ViewBag.TuNgay = tuNgay?.ToString("yyyy-MM-dd");
         ViewBag.DenNgay = denNgay?.ToString("yyyy-MM-dd");
-        // Tạm hiện 100 mốc mới nhất – phân trang làm ở tuần 4
-        return View(await truyVan.OrderByDescending(l => l.ThoiGian).ThenByDescending(l => l.MaLichSu).Take(100).ToListAsync());
+        return View(await DanhSachTrang<LichSuGiaoNhan>.TaoAsync(
+            truyVan.OrderByDescending(l => l.ThoiGian).ThenByDescending(l => l.MaLichSu), trang, 20));
     }
 }
