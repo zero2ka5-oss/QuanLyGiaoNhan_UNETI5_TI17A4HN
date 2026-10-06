@@ -9,7 +9,7 @@ public class PhanCongGiaoHangController(ApplicationDbContext context) : AppContr
 {
     private static readonly string[] ActiveStatuses = ["Đã phân công", "Đã nhận hàng", "Đang giao"];
 
-    public async Task<IActionResult> Index(string? search, string? status)
+    public async Task<IActionResult> Index(string? search, string? status, int? maNhanVien, int? maKhuVuc)
     {
         IQueryable<PhanCongGiaoHang> query = context.PhanCongGiaoHangs
             .Include(x => x.DonGiaoHang)
@@ -32,8 +32,23 @@ public class PhanCongGiaoHangController(ApplicationDbContext context) : AppContr
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(x => x.TrangThai == status);
 
+        if (maNhanVien.HasValue)
+            query = query.Where(x => x.MaNhanVien == maNhanVien.Value);
+
+        if (maKhuVuc.HasValue)
+            query = query.Where(x => x.DonGiaoHang!.MaKhuVuc == maKhuVuc.Value);
+
         ViewBag.Search = search;
         ViewBag.Status = status;
+        ViewBag.MaNhanVien = maNhanVien;
+        ViewBag.MaKhuVuc = maKhuVuc;
+        if (IsCoordinator)
+        {
+            ViewBag.NhanVienGiaoHangs = await context.NhanVienGiaoHangs
+                .AsNoTracking().OrderBy(x => x.HoTen).ToListAsync();
+            ViewBag.KhuVucs = await context.KhuVucs
+                .AsNoTracking().OrderBy(x => x.TenKhuVuc).ToListAsync();
+        }
         return View(await query.OrderByDescending(x => x.NgayPhanCong).ToListAsync());
     }
 
