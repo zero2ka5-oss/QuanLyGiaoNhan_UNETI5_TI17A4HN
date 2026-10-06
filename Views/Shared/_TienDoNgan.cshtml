@@ -1,4 +1,13 @@
 @* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: KHUNG (tuần 1) - Tiến độ ngắn trên thẻ đơn: tạm hiện tên trạng thái (thanh 4 đoạn làm ở tuần 3). *@
+   Nội dung thực hiện: Thanh tiến độ ngắn 4 đoạn (Tạo đơn · Lấy hàng · Đang giao · Đã giao) trên thẻ đơn của khách hàng.
+                       Đoạn đã qua màu xanh, đoạn đang chờ màu cam nhấp nháy, giao lỗi màu đỏ. *@
 @model TrangThaiDon
-<div class="nho mo mt-1">@Model.TenHienThi()</div>
+@{ int bac = Model.BacHanhTrinh(); bool loi = Model == TrangThaiDon.GiaoKhongThanhCong; bool daDanhDau = false; }
+<div class="kh-tien-do">
+    @foreach (int moc in new[] { 0, 2, 3, 4 })
+    {
+        string lop = bac >= moc ? "xong" : daDanhDau ? "" : (loi ? "loi" : "hien-tai");
+        if (bac < moc) daDanhDau = true;
+        <span class="@lop"></span>
+    }
+</div>

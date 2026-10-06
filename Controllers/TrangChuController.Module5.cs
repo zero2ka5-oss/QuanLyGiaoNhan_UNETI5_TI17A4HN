@@ -1,6 +1,6 @@
 // Họ và tên: Nguyễn Minh Hướng
 // Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 5 - Trang chủ công khai: xem trước phí vận chuyển (AJAX); tra cứu đơn (khung – hoàn thiện tuần 3).
+// Nội dung thực hiện: Module 5 - Trang chủ công khai: xem trước phí vận chuyển (AJAX) và tra cứu hành trình đơn theo mã + số điện thoại.
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -35,11 +35,14 @@ public partial class TrangChuController
         });
     }
 
-    /// <summary>KHUNG: tra cứu đơn hoàn thiện ở tuần 3.</summary>
-    public IActionResult TraCuu(string? ma, string? sdt)
+    public async Task<IActionResult> TraCuu(string? ma, string? sdt)
     {
         ViewBag.Ma = ma;
         ViewBag.Sdt = sdt;
-        return View();
+        if (string.IsNullOrWhiteSpace(ma) && string.IsNullOrWhiteSpace(sdt)) return View(null);
+
+        var (don, loi) = await xuLy.TraCuuAsync(ma, sdt);
+        ViewBag.Loi = loi;
+        return View(don);
     }
 }
