@@ -90,9 +90,10 @@ Seed tạo 1 admin, 1 khách hàng, 2 nhân viên giao hàng, 4 loại hàng, 4 
 
 | Vai trò | Tài khoản | Mật khẩu |
 | --- | --- | --- |
-| Admin | `admin` | `Admin@123` |
-| Nhân viên giao hàng | `shipper01` | `Shipper@123` |
-| Khách hàng | `khachhang01` | `Khach@123` |
+| Admin | `admin` | `123456` |
+| Nhân viên | `nv01` | `123456` |
+| Khách hàng | `kh01` | `123456` |
+| Shipper | `sp01` | `123456` |
 
 Mật khẩu hiện đang lưu dạng đơn giản để phù hợp phạm vi học tập; trước khi triển khai thật cần thay bằng ASP.NET Core Identity hoặc cơ chế hash mật khẩu.
 
