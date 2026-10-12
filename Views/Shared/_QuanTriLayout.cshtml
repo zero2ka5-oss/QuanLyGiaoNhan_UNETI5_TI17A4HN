@@ -1,0 +1,191 @@
+@inject QuanLyGiaoNhanDbContext Db
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string A(string c, string? a = null) => ctrl == c && (a is null || action == a) ? "active" : "";
+    // Số giao dịch ví shipper chờ xác nhận (nộp COD, rút tiền) – hiện huy hiệu trên menu
+    int soGiaoDichCho = Db.GiaoDichVis.Count(g => g.TrangThai == TrangThaiGiaoDich.ChoXacNhan);
+    int soCuocChoDuyet = Db.DonGiaoHangs.Count(d => d.NgayYeuCauThanhToan != null && d.NgayThuPhiNguoiGui == null && d.PhiVanChuyen > d.TienThuHo);
+    int soRutKhachCho = Db.GiaoDichViKhachHangs.Count(g => g.Loai == LoaiGiaoDichKhach.RutTien && g.TrangThai == TrangThaiGiaoDich.ChoXacNhan);
+    int soLienHeCho = Db.YeuCauLienHes.Count(y => y.TrangThai == TrangThaiLienHe.ChoPhanHoi);
+    string hoTen = Context.Session.HoTen();
+    string nhomMenu = ctrl switch
+    {
+        "QuanTriBangDieuKhien" or "QuanTriThongKe" => "Tổng quan",
+        "QuanTriDonGiaoHang" or "QuanTriLichSuGiaoNhan" => "Giám sát đơn hàng",
+        "QuanTriViShipper" or "QuanTriCongNo" or "QuanTriViKhachHang" => "Tài chính & Phê duyệt",
+        "QuanTriLienHe" => "Chăm sóc & Hỗ trợ",
+        "QuanTriNhanVien" or "QuanTriPhuongTien" or "QuanTriBuuCuc" => "Nguồn lực",
+        "QuanTriKhachHang" or "QuanTriLoaiHang" or "QuanTriKhuVuc" => "Danh mục",
+        "QuanTriTaiKhoan" or "QuanTriTinTuc" or "QuanTriBanner" or "TrangChu" => "Hệ thống",
+        _ => "Tài khoản"
+    };
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <partial name="_TaiNguyenDau" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+<div class="khung">
+    <aside class="thanh-ben sb-toi">
+        <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="menuBen">
+            <div class="px-4 pt-4 pb-2 d-flex align-items-center justify-content-between">
+                <a class="logo" asp-controller="QuanTriBangDieuKhien" asp-action="Index">
+                    <span class="bieu-tuong"><i class="bi bi-shield-check"></i></span>GiaoNhanh
+                </a>
+                <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#menuBen" aria-label="Đóng"></button>
+            </div>
+            
+            <div class="px-4 py-2">
+                <div class="p-2 rounded-3 bg-white bg-opacity-10 d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-lock-fill text-cam fs-6"></i>
+                    <div class="lh-sm text-truncate">
+                        <span class="d-block text-white-50" style="font-size: .72rem">PHÂN HỆ</span>
+                        <span class="fw-semibold text-white nho text-truncate d-block">Quản trị cấp cao</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="pb-2">
+                <div class="nhom">Tổng quan</div>
+                <a class="muc @A("QuanTriBangDieuKhien")" asp-controller="QuanTriBangDieuKhien" asp-action="Index">
+                    <i class="bi bi-grid-1x2"></i> Bảng điều khiển
+                </a>
+                <a class="muc @A("QuanTriThongKe")" asp-controller="QuanTriThongKe" asp-action="Index">
+                    <i class="bi bi-bar-chart-line"></i> Báo cáo & Thống kê
+                </a>
+
+                <div class="nhom">Giám sát đơn hàng</div>
+                <a class="muc @A("QuanTriDonGiaoHang")" asp-controller="QuanTriDonGiaoHang" asp-action="Index">
+                    <i class="bi bi-box-seam"></i> Đơn giao hàng toàn quốc
+                </a>
+                <a class="muc @A("QuanTriLichSuGiaoNhan")" asp-controller="QuanTriLichSuGiaoNhan" asp-action="Index">
+                    <i class="bi bi-clock-history"></i> Lịch sử giao nhận
+                </a>
+
+                <div class="nhom">Phê duyệt & Tài chính</div>
+                <a class="muc @A("QuanTriCongNo")" asp-controller="QuanTriCongNo" asp-action="Index">
+                    <i class="bi bi-credit-card-2-front"></i> Duyệt cước khách hàng
+                    @if (soCuocChoDuyet > 0) { <span class="dem bg-warning text-dark">@soCuocChoDuyet</span> }
+                </a>
+                <a class="muc @A("QuanTriViShipper")" asp-controller="QuanTriViShipper" asp-action="Index">
+                    <i class="bi bi-wallet2"></i> Phê duyệt ví Shipper
+                    @if (soGiaoDichCho > 0) { <span class="dem">@soGiaoDichCho</span> }
+                </a>
+                <a class="muc @A("QuanTriViKhachHang")" asp-controller="QuanTriViKhachHang" asp-action="Index">
+                    <i class="bi bi-cash-stack"></i> Phê duyệt ví Khách hàng
+                    @if (soRutKhachCho > 0) { <span class="dem bg-warning text-dark">@soRutKhachCho</span> }
+                </a>
+
+                <div class="nhom">Chăm sóc & Hỗ trợ</div>
+                <a class="muc @A("QuanTriLienHe")" asp-controller="QuanTriLienHe" asp-action="Index">
+                    <i class="bi bi-headset"></i> Chăm sóc & Liên hệ KH
+                    @if (soLienHeCho > 0) { <span class="dem bg-danger text-white">@soLienHeCho</span> }
+                </a>
+
+                <div class="nhom">Quản lý nguồn lực</div>
+                <a class="muc @A("QuanTriNhanVien")" asp-controller="QuanTriNhanVien" asp-action="Index">
+                    <i class="bi bi-person-badge"></i> Quản lý Shipper
+                </a>
+                <a class="muc @A("QuanTriPhuongTien")" asp-controller="QuanTriPhuongTien" asp-action="Index">
+                    <i class="bi bi-truck-front"></i> Quản lý Phương tiện
+                </a>
+                <a class="muc @A("QuanTriBuuCuc")" asp-controller="QuanTriBuuCuc" asp-action="Index">
+                    <i class="bi bi-building"></i> Mạng lưới Bưu cục
+                </a>
+
+                <div class="nhom">Danh mục & Bảng giá</div>
+                <a class="muc @A("QuanTriKhachHang")" asp-controller="QuanTriKhachHang" asp-action="Index">
+                    <i class="bi bi-people"></i> Khách hàng
+                </a>
+                <a class="muc @A("QuanTriLoaiHang")" asp-controller="QuanTriLoaiHang" asp-action="Index">
+                    <i class="bi bi-tags"></i> Loại hàng & Phụ phí
+                </a>
+                <a class="muc @A("QuanTriKhuVuc")" asp-controller="QuanTriKhuVuc" asp-action="Index">
+                    <i class="bi bi-geo-alt"></i> Khu vực & Biểu phí
+                </a>
+
+                <div class="nhom">Cấu hình hệ thống</div>
+                <a class="muc @A("QuanTriTaiKhoan")" asp-controller="QuanTriTaiKhoan" asp-action="Index">
+                    <i class="bi bi-shield-lock"></i> Tài khoản & Phân quyền
+                </a>
+                <a class="muc @A("QuanTriTinTuc")" asp-controller="QuanTriTinTuc" asp-action="Index">
+                    <i class="bi bi-newspaper"></i> Tin tức & Thông báo
+                </a>
+                <a class="muc @A("QuanTriBanner")" asp-controller="QuanTriBanner" asp-action="Index">
+                    <i class="bi bi-images"></i> Banner quảng bá
+                </a>
+
+                <a class="muc" asp-controller="TrangChu" asp-action="Index" target="_blank">
+                    <i class="bi bi-box-arrow-up-right"></i> Trang công khai
+                </a>
+            </nav>
+
+            <div class="the-nguoi-dung">
+                @HienThi.AnhDaiDien(Context.Session.AnhDaiDien(), hoTen)
+                <div class="flex-grow-1 lh-sm text-truncate">
+                    <div class="fw-semibold text-truncate">@hoTen</div>
+                    <div class="nho">@HienThi.TenVaiTro(Context.Session.VaiTro())</div>
+                </div>
+                <form asp-controller="DangNhap" asp-action="DangXuat" method="post">
+                    <button title="Đăng xuất"><i class="bi bi-box-arrow-right fs-5"></i></button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <div class="noi-dung-chinh">
+        <header class="thanh-tren d-flex align-items-center gap-3">
+            <button class="btn btn-light d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuBen" aria-label="Mở menu">
+                <i class="bi bi-list"></i>
+            </button>
+            <partial name="_NutQuayLai" />
+            <div class="flex-grow-1 min-w-0">
+                <div class="duong-dan d-none d-sm-flex">Quản trị hệ thống <i class="bi bi-chevron-right"></i> @nhomMenu</div>
+                <h1 class="tieu-de-trang text-truncate">@ViewData["Title"]</h1>
+            </div>
+            
+            <a class="btn btn-cam btn-sm d-none d-md-inline-flex align-items-center gap-1" asp-controller="QuanTriDonGiaoHang" asp-action="TaoMoi">
+                <i class="bi bi-plus-lg"></i> Tạo đơn
+            </a>
+
+            <button type="button" class="nut-theme" onclick="doiTheme()" title="Chuyển chế độ Sáng / Tối" aria-label="Đổi giao diện"><i class="bi bi-moon-stars"></i></button>
+
+            @await Component.InvokeAsync("ChuongThongBao")
+
+            <div class="dropdown">
+                <button class="nut-tai-khoan dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    @HienThi.AnhDaiDien(Context.Session.AnhDaiDien(), hoTen, "avt avt-sm")
+                    <span class="d-none d-sm-inline text-start lh-sm">
+                        <span class="fw-semibold nho d-block">@hoTen</span>
+                        <span class="mo" style="font-size:.74rem">@HienThi.TenVaiTro(Context.Session.VaiTro())</span>
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" asp-controller="DangNhap" asp-action="DoiMatKhau"><i class="bi bi-person-circle me-1"></i> Tài khoản của tôi</a></li>
+                    <li><a class="dropdown-item" asp-controller="TrangChu" asp-action="Index" target="_blank"><i class="bi bi-globe me-1"></i> Trang công khai</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form asp-controller="DangNhap" asp-action="DangXuat" method="post">
+                            <button class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-1"></i> Đăng xuất</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </header>
+
+        <main class="vung-noi-dung">
+            <partial name="_ThongBao" />
+            @RenderBody()
+        </main>
+    </div>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/tinh-phi.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
