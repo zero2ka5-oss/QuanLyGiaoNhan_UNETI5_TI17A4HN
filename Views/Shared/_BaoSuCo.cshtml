@@ -1,0 +1,24 @@
+﻿@model DonGiaoHang
+@* Nút + hộp ghi nhận thất lạc / hư hỏng (hàng đang ở bưu cục hoặc trong tay shipper). ViewData["UrlBaoSuCo"]: action POST. *@
+@if (Model.TrangThai != TrangThaiDon.DaTao && !Model.TrangThai.DaKetThuc() && ViewData["UrlBaoSuCo"] is string url)
+{
+    <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#hopSuCo"><i class="bi bi-exclamation-diamond"></i> Báo sự cố</button>
+    <div class="modal fade" id="hopSuCo" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="@url" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <div class="modal-header"><h5 class="modal-title">Sự cố đơn @Model.MaHienThi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="d-flex gap-3 mb-3">
+                        <label class="form-check"><input class="form-check-input" type="radio" name="loai" value="@TrangThaiDon.ThatLac" checked /> <span class="form-check-label">Thất lạc</span></label>
+                        <label class="form-check"><input class="form-check-input" type="radio" name="loai" value="@TrangThaiDon.HuHong" /> <span class="form-check-label">Hư hỏng</span></label>
+                    </div>
+                    <label class="form-label" for="moTaSuCo">Mô tả (bắt buộc)</label>
+                    <textarea name="moTa" id="moTaSuCo" maxlength="400" rows="3" class="form-control" required placeholder="VD: Kiện không có trên xe khi kiểm đếm tại bưu cục"></textarea>
+                    <div class="alert alert-warning nho mt-3 mb-0">Đơn sẽ kết thúc vận chuyển ở trạng thái sự cố.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button><button class="btn btn-danger">Ghi nhận sự cố</button></div>
+            </form>
+        </div>
+    </div>
+}

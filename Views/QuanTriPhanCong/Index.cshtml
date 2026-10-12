@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "Điều phối vận chuyển";
+    string tab = ViewBag.Tab;
+    int? maNv = ViewBag.MaNhanVien, maBc = ViewBag.MaBuuCuc;
+    bool khoaBuuCuc = ViewBag.KhoaBuuCuc;
+    var dsNv = (List<NhanVienGiaoHang>)ViewBag.DsNhanVien;
+    var dsBc = (List<BuuCuc>)ViewBag.DsBuuCuc;
+    bool laNvBuuCuc = Context.Session.LaNhanVienBuuCuc();
+    string DonUrl(int maDon) => laNvBuuCuc ? Url.Action("Don", "BuuCuc", new { id = maDon })! : Url.Action("ChiTiet", "QuanTriDonGiaoHang", new { id = maDon })!;
+}
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><a asp-route-tab="layhang" asp-route-maBuuCuc="@maBc" class="kpi d-flex justify-content-between text-reset"><div><div class="nhan">Chờ lấy tận nơi</div><div class="gia-tri text-cam">@ViewBag.SoChoLayHang</div></div><div class="icon icon-cam"><i class="bi bi-person-walking"></i></div></a></div>
+    <div class="col-6 col-xl-3"><a asp-route-tab="lientinh" asp-route-maBuuCuc="@maBc" class="kpi d-flex justify-content-between text-reset"><div><div class="nhan">Chờ shipper liên tỉnh</div><div class="gia-tri">@ViewBag.SoChoLienTinh</div></div><div class="icon icon-xanh"><i class="bi bi-truck-front"></i></div></a></div>
+    <div class="col-6 col-xl-3"><a asp-route-tab="khuvuc" asp-route-maBuuCuc="@maBc" class="kpi d-flex justify-content-between text-reset"><div><div class="nhan">Chờ shipper khu vực</div><div class="gia-tri text-cam">@ViewBag.SoChoKhuVuc</div></div><div class="icon icon-vang"><i class="bi bi-truck"></i></div></a></div>
+    <div class="col-6 col-xl-3"><a asp-route-tab="dang" asp-route-maBuuCuc="@maBc" class="kpi d-flex justify-content-between text-reset"><div><div class="nhan">Chặng đang thực hiện</div><div class="gia-tri">@ViewBag.SoDangThucHien</div></div><div class="icon icon-luc"><i class="bi bi-signpost-split"></i></div></a></div>
+</div>
+
+<div class="tab-trang-thai mb-3">
+    <a class="@(tab == "layhang" ? "active" : "")" asp-route-tab="layhang" asp-route-maBuuCuc="@maBc"><i class="bi bi-person-walking"></i> Chờ lấy tận nơi</a>
+    <a class="@(tab == "lientinh" ? "active" : "")" asp-route-tab="lientinh" asp-route-maBuuCuc="@maBc"><i class="bi bi-truck-front"></i> Chờ liên tỉnh</a>
+    <a class="@(tab == "khuvuc" ? "active" : "")" asp-route-tab="khuvuc" asp-route-maBuuCuc="@maBc"><i class="bi bi-truck"></i> Chờ giao khu vực</a>
+    <a class="@(tab == "dang" ? "active" : "")" asp-route-tab="dang" asp-route-maBuuCuc="@maBc"><i class="bi bi-signpost-split"></i> Đang thực hiện</a>
+    <a class="@(tab == "lichsu" ? "active" : "")" asp-route-tab="lichsu" asp-route-maBuuCuc="@maBc"><i class="bi bi-clock-history"></i> Lịch sử phân công</a>
+</div>
+
+<form method="get" class="thanh-loc mb-3">
+    <input type="hidden" name="tab" value="@tab" />
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label nho">Bưu cục</label>
+            @if (khoaBuuCuc)
+            {
+                <div class="form-control bg-light"><i class="bi bi-building text-cam"></i> @dsBc.FirstOrDefault(b => b.MaBuuCuc == maBc)?.TenBuuCuc</div>
+            }
+            else
+            {
+                <select name="maBuuCuc" class="form-select"><option value="">Tất cả bưu cục</option>
+                    @foreach (var bc in dsBc) { <option value="@bc.MaBuuCuc" selected="@(maBc == bc.MaBuuCuc)">@bc.TenBuuCuc</option> }</select>
+            }
+        </div>
+        @if (tab is "dang" or "lichsu")
+        {
+            <div class="col-md-4"><label class="form-label nho">Shipper</label>
+                <select name="maNhanVien" class="form-select"><option value="">Tất cả</option>
+                    @foreach (var nv in dsNv) { <option value="@nv.MaNhanVien" selected="@(maNv == nv.MaNhanVien)">@nv.HoTen (@nv.LoaiShipper.TenChang().Replace("Chặng ", ""))</option> }</select></div>
+        }
+        <div class="col-md-2"><button class="btn btn-cam w-100"><i class="bi bi-funnel"></i> Lọc</button></div>
+    </div>
+</form>
+
+@if (tab is "lientinh" or "khuvuc" or "layhang")
+{
+    var ds = (DanhSachTrang<DonGiaoHang>)ViewBag.DsDonCho;
+    bool lienTinh = tab == "lientinh";
+    bool layHang = tab == "layhang";
+    <div class="the-mem">
+        <div class="table-responsive">
+            <table class="table bang">
+                <thead><tr><th>Đơn</th><th>@(layHang ? "Địa chỉ lấy hàng" : "Tuyến")</th><th>@(layHang ? "Bưu cục nhận gửi" : "Giao đến")</th><th class="text-end">Khối lượng</th><th>Giao dự kiến</th><th>Tình trạng</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var d in ds.DanhSach)
+                {
+                    bool treHan = d.NgayGiaoDuKien.Date < DateTime.Today;
+                    int thatBai = DonHangXuLy.SoLanThatBai(d);
+                    <tr>
+                        <td><a href="@DonUrl(d.MaDon)" class="fw-bold">@d.MaHienThi</a><div class="nho mo">@d.KhachHang?.HoTen · @d.LoaiHang?.TenLoaiHang</div></td>
+                        @if (layHang)
+                        {
+                            <td class="nho"><i class="bi bi-geo-alt text-cam"></i> <b>@(d.DiaChiLayHang ?? d.KhachHang?.DiaChi)</b><div class="mo"><i class="bi bi-telephone"></i> @DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)</div></td>
+                            <td class="nho text-nowrap"><i class="bi bi-building"></i> @d.BuuCucGui?.TenBuuCuc</td>
+                        }
+                        else if (d.TrangThai == TrangThaiDon.ChoChuyenHoan)
+                        {
+                            <td class="nho text-nowrap"><span class="badge bg-danger-subtle text-danger mb-1"><i class="bi bi-arrow-return-left"></i> Chuyển hoàn</span><div>@(d.BuuCucHienTai?.TenBuuCuc ?? d.BuuCucNhan?.TenBuuCuc)</div><div class="mo"><i class="bi bi-arrow-right"></i> @d.BuuCucGui?.TenBuuCuc</div></td>
+                            <td class="nho"><b>Trả người gửi:</b> @d.KhachHang?.HoTen<div class="mo">@(d.KhachHang?.DiaChi)</div></td>
+                        }
+                        else if (d.TrangThai == TrangThaiDon.DaVeBuuCucGui)
+                        {
+                            <td class="nho text-nowrap"><span class="badge bg-warning-subtle text-warning-emphasis mb-1"><i class="bi bi-arrow-return-left"></i> Giao hoàn</span><div>@d.BuuCucGui?.TenBuuCuc</div></td>
+                            <td class="nho"><b>Người gửi:</b> @d.KhachHang?.HoTen<div class="mo">@(d.KhachHang?.DiaChi)</div></td>
+                        }
+                        else
+                        {
+                            <td class="nho text-nowrap">@d.BuuCucGui?.TenBuuCuc<div class="mo"><i class="bi bi-arrow-right"></i> @d.BuuCucNhan?.TenBuuCuc</div></td>
+                            <td class="nho"><b>@d.KhuVuc?.TenKhuVuc</b><div class="mo">@d.DiaChiNhan</div></td>
+                        }
+                        <td class="text-end fw-semibold text-nowrap">@DinhDang.KhoiLuong(d.KhoiLuong)</td>
+                        <td class="nho @(treHan ? "text-danger fw-semibold" : "")">@DinhDang.Ngay(d.NgayGiaoDuKien) @if (treHan) { <i class="bi bi-alarm" title="Đã quá ngày giao dự kiến"></i> }</td>
+                        <td><span class="tt @d.TrangThai.LopBadge()">@d.TrangThai.TenHienThi()</span>
+                            @if (thatBai > 0) { <div class="nho text-danger">Giao lỗi @thatBai/@DonHangXuLy.SoLanGiaoToiDa lần</div> }</td>
+                        <td class="text-end">
+                            @if (!lienTinh && !layHang && thatBai >= DonHangXuLy.SoLanGiaoToiDa)
+                            {
+                                <a href="@DonUrl(d.MaDon)" class="btn btn-sm btn-outline-danger text-nowrap"><i class="bi bi-arrow-return-left"></i> Hủy / hoàn</a>
+                            }
+                            else
+                            {
+                                <a asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam text-nowrap"><i class="bi bi-person-plus"></i> @(layHang ? "Phân lấy hàng" : "Phân shipper")</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (ds.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-check2-all"></i>Không còn đơn nào chờ @(layHang ? "lấy hàng tận nơi" : (lienTinh ? "shipper liên tỉnh" : "shipper khu vực"))</div> }
+    </div>
+    <partial name="_PhanTrang" model="ds" />
+}
+else
+{
+    var ds = (DanhSachTrang<PhanCongGiaoHang>)ViewBag.DsPhanCong;
+    <div class="the-mem">
+        <div class="table-responsive">
+            <table class="table bang">
+                <thead><tr><th>#</th><th>Đơn</th><th>Chặng</th><th>Shipper / phương tiện</th><th>Phân công</th><th>Nhận hàng</th><th>Xuất phát</th><th>Kết thúc</th><th>Trạng thái</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var p in ds.DanhSach)
+                {
+                    <tr>
+                        <td class="mo">@p.MaPhanCong</td>
+                        <td><a href="@DonUrl(p.MaDon)" class="fw-bold">@p.DonGiaoHang?.MaHienThi</a><div class="nho mo">@p.DonGiaoHang?.KhuVuc?.TenKhuVuc</div></td>
+                        <td class="nho text-nowrap"><span class="tt @(p.LoaiChang == LoaiShipper.LienTinh ? "tt-dang" : "tt-xuly")">@p.LoaiChang.TenChang().Replace("Chặng ", "")</span>
+                            @if (p.LoaiChang == LoaiShipper.LienTinh) { <div class="mo">@p.DonGiaoHang?.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") → @p.DonGiaoHang?.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")</div> }</td>
+                        <td>@if (!laNvBuuCuc) { <a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@p.MaNhanVien" class="ten fw-medium">@p.NhanVien?.HoTen</a> } else { <span class="fw-medium">@p.NhanVien?.HoTen</span> }
+                            <div class="nho mo">@p.PhuongTien?.MaHienThi · @p.PhuongTien?.BienSo</div></td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayPhanCong)</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayNhanHang)</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayBatDauGiao)</td>
+                        <td class="nho">@DinhDang.NgayGio(p.NgayKetThuc)</td>
+                        <td>@if (p.KetQua.HasValue)
+                            {
+                                <span class="tt @(p.KetQua is KetQuaGiao.GiaoThanhCong or KetQuaGiao.DaBanGiaoBuuCuc ? "tt-thanhcong" : p.KetQua is KetQuaGiao.GiaoKhongThanhCong or KetQuaGiao.SuCo ? "tt-thatbai" : "tt-huy")">@p.KetQua.Value.TenHienThi()</span>
+                                @if (p.LyDoThatBai.HasValue) { <div class="nho text-danger">@p.LyDoThatBai.Value.TenHienThi()</div> }
+                            }
+                            else { <span class="tt @p.TrangThai.LopBadge()">@p.TrangThai.TenHienThi()</span> }</td>
+                        <td class="text-end">
+                            @if (p.TrangThai == TrangThaiPhanCong.DaPhanCong)
+                            {
+                                <a asp-action="DoiPhanCong" asp-route-maDon="@p.MaDon" class="btn btn-sm btn-outline-primary text-nowrap"><i class="bi bi-arrow-left-right"></i> Đổi shipper</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (ds.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-inbox"></i>Không có phân công phù hợp</div> }
+    </div>
+    <partial name="_PhanTrang" model="ds" />
+}
