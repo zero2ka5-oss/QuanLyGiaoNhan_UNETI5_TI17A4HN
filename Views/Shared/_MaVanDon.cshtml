@@ -1,0 +1,13 @@
+﻿@model DonGiaoHang
+@* Mã vận đơn duy nhất suốt vòng đời đơn: QR + barcode CODE128, quét ở mỗi lần tiếp nhận / bàn giao. ViewData["UrlInNhan"]: trang in nhãn. *@
+<div class="the-mem p-4 @(ViewData["KhoangCach"] as string ?? "mb-3") ma-van-don">
+    <div class="vc-tieu-de justify-content-center"><i class="bi bi-qr-code"></i> Mã vận đơn</div>
+    <div class="ma-qr" data-qr="@Model.MaHienThi" data-co-o="5"></div>
+    <div class="ma-chu">@Model.MaHienThi</div>
+    <svg class="ma-vach" data-barcode="@Model.MaHienThi" data-cao="40" data-hien-chu="0"></svg>
+    <div class="nho mo">Quét tại bưu cục và khi shipper nhận hàng</div>
+    @if (ViewData["UrlInNhan"] is string urlIn)
+    {
+        <a href="@urlIn" target="_blank" class="btn btn-outline-dark btn-sm w-100 mt-3"><i class="bi bi-printer"></i> In nhãn dán kiện hàng</a>
+    }
+</div>

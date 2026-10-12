@@ -1,0 +1,50 @@
+@model DonGiaoHang
+@* Hành trình 6 bước: đã tạo → bưu cục gửi → trung chuyển → bưu cục nhận → đang giao → đã giao.
+   Đơn nội vùng (gửi = nhận) không có chặng trung chuyển: bước này hiện "Nội vùng". *@
+@{
+    var buoc = HienThi.BuocHanhTrinh;
+    int bac = HienThi.BacHanhTrinh(Model);
+    bool dung = Model.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong;
+    bool xong = Model.TrangThai is TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat;
+    bool noiVung = Model.MaBuuCucGui is not null && Model.MaBuuCucGui == Model.MaBuuCucNhan;
+    string nhanLoi = Model.TrangThai switch
+    {
+        TrangThaiDon.DaHuy => "Đã hủy", TrangThaiDon.ThatLac => "Thất lạc", TrangThaiDon.HuHong => "Hư hỏng", _ => "Chưa giao được"
+    };
+
+    bool laDonHoan = Model.LaDonHoan || Model.TrangThai is TrangThaiDon.ChoChuyenHoan or TrangThaiDon.DangChuyenHoan or TrangThaiDon.DaVeBuuCucGui or TrangThaiDon.DangGiaoHoan or TrangThaiDon.DaHoanHang;
+    var buocHoan = HienThi.BuocHanhTrinhHoan;
+    int bacHoan = Model.TrangThai.BacHanhTrinhHoan();
+    bool xongHoan = Model.TrangThai == TrangThaiDon.DaHoanHang;
+}
+<div class="hanh-trinh" style="--tien-do: @(((laDonHoan ? 4 : bac) * 0.2m).ToString(System.Globalization.CultureInfo.InvariantCulture))">
+    @for (int i = 0; i < buoc.Length; i++)
+    {
+        string lop = laDonHoan ? (i < 4 ? "xong" : i == 4 ? "loi" : "") : (dung && i == bac + 1 ? "loi" : i < bac || (i == bac && (xong || dung)) ? "xong" : i == bac ? "hien-tai" : "");
+        string ten = laDonHoan && i == 4 ? "Giao lỗi / Hoàn" : lop == "loi" ? nhanLoi : i == 2 && noiVung ? "Nội vùng" : buoc[i].Ten;
+        <div class="ht-buoc @lop">
+            <span class="ht-cham"><i class="bi @(lop == "loi" ? "bi-x-lg" : lop == "xong" ? "bi-check-lg" : buoc[i].Icon)"></i></span>
+            <span class="ht-ten">@ten</span>
+        </div>
+    }
+</div>
+
+@if (laDonHoan)
+{
+    <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+        <div class="d-flex align-items-center gap-2 nho fw-bold text-danger text-uppercase mb-2">
+            <i class="bi bi-arrow-return-left"></i> Hành trình chuyển hoàn 2 chiều về người gửi
+        </div>
+        <div class="hanh-trinh hanh-trinh-5 hanh-trinh-hoan mt-1" style="--tien-do: @((bacHoan * 0.25m).ToString(System.Globalization.CultureInfo.InvariantCulture))">
+            @for (int i = 0; i < buocHoan.Length; i++)
+            {
+                string lop = i < bacHoan || (i == bacHoan && xongHoan) ? "xong" : i == bacHoan ? "hien-tai" : "";
+                string ten = i == 1 && noiVung ? "Nội vùng" : buocHoan[i].Ten;
+                <div class="ht-buoc @lop">
+                    <span class="ht-cham"><i class="bi @(lop == "xong" ? "bi-check-lg" : buocHoan[i].Icon)"></i></span>
+                    <span class="ht-ten">@ten</span>
+                </div>
+            }
+        </div>
+    </div>
+}

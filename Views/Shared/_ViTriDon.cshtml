@@ -1,0 +1,25 @@
+﻿@model ViTriDon
+@* Vị trí hiện tại của đơn – suy ra từ bưu cục / shipper đang giữ (đơn không có GPS riêng). ViewData["UrlViTri"]: JSON để tự làm mới. *@
+@{
+    string icon = Model.Loai switch { "buucuc" => "bi-building", "shipper" => "bi-truck", "dagiao" => "bi-house-check", "khach" => "bi-person", "loi" => "bi-question-octagon", _ => "bi-geo" };
+    bool coBanDo = Model.ViDo is not null && Model.KinhDo is not null;
+    bool cu = Model.Loai == "shipper" && Model.CapNhatLuc is { } t && (DateTime.Now - t).TotalMinutes > DonHangXuLy.PhutViTriConHieuLuc;
+    string Toa(double? x) => x!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}
+<div class="the-mem p-4 @(ViewData["KhoangCach"] as string ?? "mb-3")">
+    <div class="vt-dong">
+        <span class="vt-icon @Model.Loai"><i class="bi @icon"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="vt-nhan">Vị trí hiện tại của đơn</div>
+            <div class="fw-bold fs-6">@Model.TieuDe</div>
+            <div class="nho mo" id="viTriMoTa">@Model.MoTa</div>
+            @if (Model.PhuongTien is not null) { <span class="vt-xe"><i class="bi bi-truck-front text-cam"></i> @Model.PhuongTien</span> }
+            @if (cu) { <div class="nho text-warning mt-1"><i class="bi bi-exclamation-triangle"></i> Vị trí đã lâu chưa cập nhật – có thể không chính xác</div> }
+        </div>
+    </div>
+    @if (coBanDo)
+    {
+        <div class="ban-do" data-ban-do data-loai="@Model.Loai" data-zoom="@(Model.Loai == "shipper" ? 13 : 15)"
+             data-vi-do="@Toa(Model.ViDo)" data-kinh-do="@Toa(Model.KinhDo)" data-nhan="@Model.TieuDe" data-url="@(ViewData["UrlViTri"] as string)"></div>
+    }
+</div>

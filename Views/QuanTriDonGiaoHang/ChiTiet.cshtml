@@ -1,0 +1,272 @@
+@model ChiTietDonVM
+@{
+    var d = Model.Don;
+    ViewData["Title"] = "Đơn " + d.MaHienThi;
+    var pc = Model.PhanCongHienTai;
+    ViewData["ThuVien"] = "ma,bando";
+    ViewData["UrlViTri"] = Url.Action("ViTri", new { id = d.MaDon });
+    ViewData["UrlInNhan"] = Url.Action("InNhan", new { id = d.MaDon });
+    ViewData["UrlBaoSuCo"] = Url.Action("BaoSuCo", new { id = d.MaDon });
+}
+@section Head { <partial name="_BanDoHead" /> }
+
+<div class="tc-trang-thai @d.TrangThai.LopTheTrangThai() mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="tc-icon-lon"><i class="bi @d.TrangThai.BieuTuong()"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="ct-ma">@d.MaHienThi</span>
+                <button type="button" class="ct-chep" data-chep="@d.MaHienThi" title="Sao chép mã đơn"><i class="bi bi-copy"></i></button>
+            </div>
+            <div class="tc-ten-trang-thai">@d.TrangThai.TenHienThi()</div>
+            @if (DonHangXuLy.ChoHoanHang(d))
+            {
+                <div class="nho fw-semibold text-danger"><i class="bi bi-arrow-return-left"></i> Hàng đang được chuyển hoàn về người gửi</div>
+            }
+            else if (d.NgayHoanHang.HasValue)
+            {
+                <div class="nho fw-semibold"><i class="bi bi-arrow-return-left"></i> Đã hoàn hàng về người gửi @DinhDang.NgayGio(d.NgayHoanHang)</div>
+            }
+            <div class="nho mo">Tạo lúc @DinhDang.NgayGio(d.NgayTao)@if (d.NgayHoanTat.HasValue) { <span> · Hoàn tất @DinhDang.NgayGio(d.NgayHoanTat)</span> }</div>
+        </div>
+        <div class="tc-ngay">
+            <small>Giao dự kiến</small>
+            <b>@d.NgayGiaoDuKien.ToString("dd/MM")</b>
+            <small>@d.NgayGiaoDuKien.ToString("yyyy")</small>
+        </div>
+    </div>
+
+    <partial name="_HanhTrinhDon" model="d" />
+
+    <div class="ct-chan">
+        <span><i class="bi bi-person"></i> @d.KhachHang?.HoTen · @DinhDang.Tien(d.PhiVanChuyen)</span>
+        <div class="d-flex gap-2 flex-wrap ms-auto">
+            @if (Model.CoThePhanCong)
+            {
+                <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-sm rounded-pill px-3">
+                    <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "lấy hàng" : DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh ? "liên tỉnh" : "khu vực")</a>
+            }
+            @if (Model.CoTheDoiPhanCong)
+            {
+                <a asp-controller="QuanTriPhanCong" asp-action="DoiPhanCong" asp-route-maDon="@d.MaDon" class="btn btn-outline-primary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left-right"></i> Đổi shipper</a>
+            }
+            @if (Model.CoTheHoanTat)
+            {
+                <form asp-action="HoanTat" asp-route-id="@d.MaDon" method="post" data-xac-nhan="Hoàn tất đơn @d.MaHienThi? (đơn không có tiền thu của người nhận)">
+                    <button class="btn btn-success btn-sm rounded-pill px-3"><i class="bi bi-patch-check"></i> Hoàn tất</button>
+                </form>
+            }
+            else if (d.TrangThai == TrangThaiDon.GiaoThanhCong && d.TongThuNguoiNhan > 0)
+            {
+                // Đơn có tiền thu: đối soát & hoàn tất khi xác nhận lệnh nộp tiền của shipper
+                var maShipper = Model.DsPhanCong.FirstOrDefault(p => p.KetQua == KetQuaGiao.GiaoThanhCong)?.MaNhanVien;
+                <a asp-controller="QuanTriViShipper" asp-action="@(d.MaGiaoDichNop.HasValue ? "ChiTiet" : "Index")"
+                   asp-route-id="@d.MaGiaoDichNop" asp-route-maNhanVien="@(d.MaGiaoDichNop.HasValue ? null : maShipper)"
+                   class="btn btn-outline-success btn-sm rounded-pill px-3"><i class="bi bi-wallet2"></i>
+                    @(d.MaGiaoDichNop.HasValue ? "Lệnh nộp đang chờ xác nhận" : $"Shipper chưa nộp {DinhDang.Tien(d.TongThuNguoiNhan)}")</a>
+            }
+            @{
+                bool coTheYeuCauChuyenHoan = (d.TrangThai is TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.HenGiaoLai or TrangThaiDon.DaHuy)
+                    && d.MaNhanVienDangGiu == null
+                    && d.TrangThai != TrangThaiDon.ChoChuyenHoan && d.TrangThai != TrangThaiDon.DangChuyenHoan
+                    && d.TrangThai != TrangThaiDon.DaVeBuuCucGui && d.TrangThai != TrangThaiDon.DangGiaoHoan
+                    && d.TrangThai != TrangThaiDon.DaHoanHang && !d.TrangThai.DaKetThuc();
+                bool coTheHoanTaiQuay = d.TrangThai == TrangThaiDon.DaVeBuuCucGui
+                    || (d.TrangThai == TrangThaiDon.DaHuy && d.MaBuuCucHienTai == d.MaBuuCucGui && d.NgayHoanHang == null);
+            }
+            @if (coTheYeuCauChuyenHoan)
+            {
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#hopChuyenHoan">
+                    <i class="bi bi-arrow-return-left"></i> Yêu cầu chuyển hoàn
+                </button>
+            }
+            @if (coTheHoanTaiQuay)
+            {
+                <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#hopHoanTaiQuay">
+                    <i class="bi bi-box-arrow-in-down-left"></i> Hoàn hàng tại quầy
+                </button>
+            }
+            @if (d.ConNoPhi && Context.Session.LaQuanTri())
+            {
+                <form asp-action="ThuPhiNguoiGui" asp-route-id="@d.MaDon" method="post" data-xac-nhan="Xác nhận đã thu @DinhDang.Tien(d.PhiNguoiGuiPhaiTra) phí người gửi của đơn @d.MaHienThi?">
+                    <button class="btn btn-outline-warning btn-sm rounded-pill px-3"><i class="bi bi-receipt"></i> Đã thu phí @DinhDang.Tien(d.PhiNguoiGuiPhaiTra)</button>
+                </form>
+            }
+            @if (Model.CoTheSua)
+            {
+                <a asp-action="ChinhSua" asp-route-id="@d.MaDon" class="btn btn-light btn-sm rounded-pill px-3"><i class="bi bi-pencil"></i> Sửa đơn</a>
+            }
+            @if (Model.CoTheHuy)
+            {
+                <button class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#hopHuy"><i class="bi bi-x-circle"></i> Hủy đơn</button>
+            }
+            <partial name="_BaoSuCo" model="d" />
+            <a asp-action="InNhan" asp-route-id="@d.MaDon" target="_blank" class="btn btn-light btn-sm rounded-pill px-3"><i class="bi bi-printer"></i> In nhãn</a>
+        </div>
+    </div>
+</div>
+
+@if (d.TrangThai == TrangThaiDon.ChoLayTanNoi)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-geo-alt-fill fs-5 text-cam"></i>
+        <div>Đơn hàng yêu cầu <b>Lấy hàng tận nơi</b> tại: <b>@(d.DiaChiLayHang ?? d.KhachHang?.DiaChi)</b>. Bưu cục cần phân shipper khu vực đến nhận kiện hàng từ người gửi.</div>
+    </div>
+}
+else if (d.TrangThai == TrangThaiDon.DaLayTanNoi)
+{
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-truck fs-5 text-primary"></i>
+        <div>Shipper <b>@(d.NhanVienDangGiu?.HoTen ?? "khu vực")</b> đã nhận hàng từ người gửi và đang mang về <b>@d.BuuCucGui?.TenBuuCuc</b> để làm thủ tục tiếp nhận nhập kho.</div>
+    </div>
+}
+
+<partial name="_CanhBaoGiaoLoi" model="d" />
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="the-mem p-4 mb-3">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="text-cam fw-bold mb-2"><i class="bi bi-person-up"></i> Người gửi (khách hàng)
+                        <span class="badge bg-light text-dark border ms-2">@d.HinhThucGui.TenHienThi()</span>
+                    </div>
+                    <div class="fw-semibold">@d.KhachHang?.HoTen</div>
+                    <div class="nho">@DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)</div>
+                    <div class="nho mo">
+                        @if (d.HinhThucGui == HinhThucGui.LayTanNoi && !string.IsNullOrEmpty(d.DiaChiLayHang))
+                        {
+                            <div><i class="bi bi-geo-alt text-cam"></i> Lấy tại: <b>@d.DiaChiLayHang</b></div>
+                        }
+                        else
+                        {
+                            <div>@d.KhachHang?.DiaChi</div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-cam fw-bold mb-2"><i class="bi bi-person-down"></i> Người nhận</div>
+                    <div class="fw-semibold">@d.TenNguoiNhan</div>
+                    <div class="nho"><a href="tel:@d.SoDienThoaiNguoiNhan">@DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</a></div>
+                    <div class="nho mo">@d.DiaChiNhan</div>
+                </div>
+            </div>
+            <hr>
+            <div class="row g-3 nho">
+                <div class="col-sm-3"><div class="mo">Loại hàng</div><b>@d.LoaiHang?.TenLoaiHang</b></div>
+                <div class="col-sm-3"><div class="mo">Khu vực giao</div><b>@d.KhuVuc?.TenKhuVuc</b></div>
+                <div class="col-sm-3"><div class="mo">Khối lượng</div><b>@DinhDang.KhoiLuong(d.KhoiLuong)</b></div>
+                <div class="col-sm-3"><div class="mo">Kích thước</div><b>@d.KichThuocM3.ToString("0.####") m³</b></div>
+                @if (!string.IsNullOrEmpty(d.GhiChu)) { <div class="col-12"><div class="mo">Ghi chú</div>@d.GhiChu</div> }
+            </div>
+        </div>
+
+        <partial name="_ChangVanChuyen" model="Model" />
+        <div class="the-mem p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-clock-history text-cam"></i> Lịch sử giao nhận</h6>
+            <partial name="_LichSuGiaoNhan" model="Model.DsLichSu" />
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <partial name="_ViTriDon" model="Model.ViTri" />
+        <partial name="_TuyenBuuCuc" model="d" />
+        <partial name="_MaVanDon" model="d" />
+        <div class="the-mem p-4 mb-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-receipt text-cam"></i> Phí vận chuyển</h6>
+            <partial name="_ThanhPhanPhi" model="d" />
+        </div>
+        @if (!string.IsNullOrEmpty(d.AnhGiaoHang))
+        {
+            <div class="the-mem p-4 mb-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-camera text-cam"></i> Ảnh giao hàng</h6>
+                <a href="@d.AnhGiaoHang" target="_blank"><img src="@d.AnhGiaoHang" alt="Ảnh giao hàng @d.MaHienThi" class="anh-giao-hang" loading="lazy" /></a>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.CoTheHuy)
+{
+    <div class="modal fade" id="hopHuy" tabindex="-1">
+        <div class="modal-dialog">
+            <form asp-action="Huy" asp-route-id="@d.MaDon" method="post" class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Hủy đơn @d.MaHienThi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label" for="lyDo">Lý do hủy</label>
+                    <textarea name="lyDo" id="lyDo" maxlength="300" rows="3" class="form-control" placeholder="VD: Khách đổi ý, sai thông tin người nhận..."></textarea>
+                    @if (d.MaBuuCucHienTai is not null) { <div class="alert alert-warning nho mt-3 mb-0">Hàng đang ở @d.BuuCucHienTai?.TenBuuCuc – sau khi hủy, bưu cục giữ hàng chờ chuyển hoàn về người gửi.</div> }
+                    @if (pc is not null) { <div class="alert alert-warning nho mt-2 mb-0">Phân công của @pc.NhanVien?.HoTen sẽ được kết thúc.</div> }
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button><button class="btn btn-danger">Xác nhận hủy</button></div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="hopChuyenHoan" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="YeuCauChuyenHoan" asp-route-id="@d.MaDon" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-arrow-return-left text-danger me-1"></i> Yêu cầu chuyển hoàn đơn @d.MaHienThi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning nho mb-3">
+                    <div><b>Tuyến hoàn:</b> @(d.BuuCucHienTai?.TenBuuCuc ?? d.BuuCucNhan?.TenBuuCuc) &rarr; @d.BuuCucGui?.TenBuuCuc</div>
+                    <div><b>Cước chiều đi:</b> @DinhDang.Tien(d.PhiVanChuyen)</div>
+                    <div><b>Phí chuyển hoàn (50% cước đi):</b> <span class="fw-bold text-danger">@DinhDang.Tien(Math.Ceiling((d.PhiVanChuyen * 0.5m) / 1000m) * 1000m)</span></div>
+                    <div><b>Tổng cước 2 chiều:</b> <span class="fw-bold text-danger">@DinhDang.Tien(d.PhiVanChuyen + Math.Ceiling((d.PhiVanChuyen * 0.5m) / 1000m) * 1000m)</span></div>
+                </div>
+                <label class="form-label" for="lyDoChuyenHoan">Lý do chuyển hoàn</label>
+                <textarea name="lyDo" id="lyDoChuyenHoan" maxlength="300" rows="3" class="form-control" placeholder="VD: Giao thất bại 3 lần, người nhận từ chối / không liên lạc được"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button class="btn btn-danger"><i class="bi bi-check2"></i> Xác nhận chuyển hoàn</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="hopHoanTaiQuay" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="HoanHangTaiQuay" asp-route-id="@d.MaDon" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-arrow-in-down-left text-success me-1"></i> Hoàn hàng tại quầy đơn @d.MaHienThi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="text-muted small">Người gửi nhận lại hàng:</div>
+                    <div class="fw-bold fs-6">@d.KhachHang?.HoTen – @DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)</div>
+                    <div class="small text-muted">@d.KhachHang?.DiaChi</div>
+                </div>
+                @if (d.PhiHoanChuaThu > 0)
+                {
+                    <div class="card bg-light border-0 p-3 mb-3 rounded-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Cước chuyển hoàn cần thu:</span>
+                            <span class="fw-bold text-danger fs-6">@DinhDang.Tien(d.PhiHoanChuaThu)</span>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="daThuCuoc" value="true" id="daThuCuocQuayAdmin" checked>
+                            <label class="form-check-label fw-semibold" for="daThuCuocQuayAdmin">Đã thu @DinhDang.Tien(d.PhiHoanChuaThu) tiền mặt của khách tại quầy</label>
+                        </div>
+                        <div class="small text-muted mt-1">Bỏ tích nếu người gửi nợ cước để thanh toán qua ngân hàng BIDV VietQR sau.</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-success nho mb-0"><i class="bi bi-check-circle me-1"></i> Đơn không có cước hoàn phải thu hoặc đã thanh toán trước đó.</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button class="btn btn-success"><i class="bi bi-check2"></i> Xác nhận đã hoàn trả hàng</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_VanChuyenScripts" /> }
