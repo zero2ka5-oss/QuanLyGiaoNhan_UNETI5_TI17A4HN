@@ -1,0 +1,158 @@
+@model DonGiaoHang?
+@{
+    var bc = (BuuCuc)ViewBag.BuuCuc;
+    ViewData["Title"] = "Quét mã tại " + bc.TenBuuCuc;
+    ViewData["ThuVien"] = "quet";
+    ViewData["UrlQuet"] = Url.Action("Quet");
+    ViewData["ThamSoQuet"] = new Dictionary<string, string?> { ["maBuuCuc"] = bc.MaBuuCuc.ToString() };
+    ViewData["GoiYQuet"] = "Quét mã trên nhãn khi khách gửi hàng, khi shipper liên tỉnh bàn giao hàng tới, hoặc khi shipper trả hàng về.";
+    var d = Model;
+}
+<partial name="_ChonBuuCuc" />
+<div class="row g-3">
+    <div class="col-lg-5">
+        <partial name="_QuetMa" model="(string?)ViewBag.Ma" />
+        @if (ViewBag.Loi is string loi) { <div class="alert alert-danger"><i class="bi bi-x-circle"></i> @loi</div> }
+    </div>
+    <div class="col-lg-7">
+        @if (d is null)
+        {
+            <div class="the-mem p-4">
+                <div class="vc-tieu-de"><i class="bi bi-qr-code"></i> Quét mã để biết cần làm gì</div>
+                <div class="d-grid gap-3 nho">
+                    <div class="vt-dong"><span class="vt-icon"><i class="bi bi-box-arrow-in-down"></i></span><div><b>Khách mang hàng tới</b><div class="mo">Tiếp nhận hàng vào bưu cục gửi, in nhãn nếu kiện chưa dán.</div></div></div>
+                    <div class="vt-dong"><span class="vt-icon buucuc"><i class="bi bi-truck-front"></i></span><div><b>Shipper liên tỉnh bàn giao</b><div class="mo">Xác nhận hàng đã đến bưu cục nhận, sẵn sàng phân shipper khu vực.</div></div></div>
+                    <div class="vt-dong"><span class="vt-icon loi"><i class="bi bi-arrow-return-left"></i></span><div><b>Shipper trả hàng về</b><div class="mo">Nhận lại đơn giao không thành công để giao lại hoặc chuyển hoàn.</div></div></div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <partial name="_TomTatDon" model="d" />
+            bool tiepNhan = d.TrangThai == TrangThaiDon.DaTao || (d.TrangThai == TrangThaiDon.DaLayTanNoi && d.MaBuuCucGui == bc.MaBuuCuc);
+            bool nhanDen = (d.TrangThai is TrangThaiDon.DangTrungChuyen or TrangThaiDon.DaLayLienTinh && d.MaBuuCucNhan == bc.MaBuuCuc)
+                           || (d.TrangThai == TrangThaiDon.DangChuyenHoan && d.MaBuuCucGui == bc.MaBuuCuc);
+            bool nhanLai = d.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.HenGiaoLai or TrangThaiDon.DaLayGiaoHang && d.MaBuuCucNhan == bc.MaBuuCuc;
+            bool phanCong = ((d.MaBuuCucHienTai == bc.MaBuuCuc) || (d.TrangThai == TrangThaiDon.ChoLayTanNoi && d.MaBuuCucGui == bc.MaBuuCuc)) && DonHangXuLy.CoThePhanCong(d);
+            bool choHoanTaiQuay = d.TrangThai == TrangThaiDon.DaVeBuuCucGui && (d.MaBuuCucHienTai == bc.MaBuuCuc || d.MaBuuCucGui == bc.MaBuuCuc);
+            bool coTheYeuCauHoan = (d.TrangThai == TrangThaiDon.DaDenBuuCucNhan && d.MaBuuCucNhan == bc.MaBuuCuc && d.MaBuuCucGui != d.MaBuuCucNhan && DonHangXuLy.SoLanThatBai(d) > 0);
+            <div class="the-mem p-3">
+                <div class="fw-semibold mb-2">Thao tác tại @bc.TenBuuCuc</div>
+                @if (tiepNhan)
+                {
+                    <form asp-action="TiepNhan" method="post">
+                        <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="ma" value="@d.MaHienThi" />
+                        <input type="hidden" name="maBuuCuc" value="@bc.MaBuuCuc" /><input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                        @if (d.TrangThai == TrangThaiDon.DaLayTanNoi)
+                        {
+                            <div class="alert alert-info nho py-2"><i class="bi bi-person-walking"></i> Shipper <b>@d.NhanVienDangGiu?.HoTen</b> đã lấy hàng từ khách và bàn giao về bưu cục.</div>
+                            @if (d.PhiNguoiGuiPhaiTra > 0 && d.NgayThuPhiNguoiGui == null)
+                            {
+                                <div class="alert alert-warning nho py-2">
+                                    <div class="fw-bold mb-1"><i class="bi bi-cash-coin text-warning"></i> Cước người gửi: @DinhDang.Tien(d.PhiNguoiGuiPhaiTra) (Người gửi trả phí)</div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="daThuCuoc" id="daThuCuoc" value="true" checked />
+                                        <label class="form-check-label fw-semibold" for="daThuCuoc">Xác nhận đã nhận tiền cước từ shipper / người gửi</label>
+                                    </div>
+                                </div>
+                            }
+                            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-box-arrow-in-down"></i> Tiếp nhận nhập kho (từ shipper)</button>
+                        }
+                        else
+                        {
+                            @if (d.MaBuuCucGui != bc.MaBuuCuc) { <div class="alert alert-warning nho py-2"><i class="bi bi-info-circle"></i> Khách đăng ký gửi tại @d.BuuCucGui?.TenBuuCuc – tiếp nhận tại đây sẽ đổi bưu cục gửi sang @bc.TenBuuCuc.</div> }
+                            @if (d.PhiNguoiGuiPhaiTra > 0 && d.NgayThuPhiNguoiGui == null)
+                            {
+                                <div class="alert alert-warning nho py-2">
+                                    <div class="fw-bold mb-1"><i class="bi bi-cash-stack text-warning"></i> Cước người gửi phải thu tại quầy: @DinhDang.Tien(d.PhiNguoiGuiPhaiTra)</div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="daThuCuoc" id="daThuCuoc" value="true" checked />
+                                        <label class="form-check-label fw-semibold" for="daThuCuoc">Đã thu cước @DinhDang.Tien(d.PhiNguoiGuiPhaiTra) của khách tại quầy</label>
+                                    </div>
+                                </div>
+                            }
+                            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-building-check"></i> Tiếp nhận hàng khách gửi</button>
+                        }
+                    </form>
+                }
+                else if (nhanDen)
+                {
+                    var pc = d.PhanCongs.FirstOrDefault(p => p.LoaiChang == LoaiShipper.LienTinh && p.DangHieuLuc);
+                    <form asp-action="NhanHangDen" method="post">
+                        <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="ma" value="@d.MaHienThi" />
+                        <input type="hidden" name="maBuuCuc" value="@bc.MaBuuCuc" /><input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                        <div class="nho mb-2">Shipper liên tỉnh bàn giao: <b>@pc?.NhanVien?.HoTen</b> · @pc?.PhuongTien?.MaHienThi @pc?.PhuongTien?.BienSo</div>
+                        @if (d.TrangThai == TrangThaiDon.DangChuyenHoan)
+                        {
+                            <button class="btn btn-warning btn-lg w-100"><i class="bi bi-box-arrow-in-down"></i> Nhận hàng chuyển hoàn về bưu cục gửi</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-building-down"></i> Nhận hàng đến bưu cục</button>
+                        }
+                    </form>
+                }
+                else if (nhanLai)
+                {
+                    <form asp-action="NhanLai" method="post" data-xac-nhan="Nhận lại hàng đơn @d.MaHienThi từ shipper @d.NhanVienDangGiu?.HoTen?">
+                        <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="ma" value="@d.MaHienThi" />
+                        <input type="hidden" name="maBuuCuc" value="@bc.MaBuuCuc" /><input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                        <button class="btn btn-outline-danger btn-lg w-100"><i class="bi bi-arrow-return-left"></i> Nhận lại hàng từ shipper @d.NhanVienDangGiu?.HoTen</button>
+                    </form>
+                }
+                else if (choHoanTaiQuay)
+                {
+                    <div class="mb-2">
+                        <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-lg w-100 mb-2">
+                            <i class="bi bi-person-walking"></i> Phân shipper giao hoàn tận nơi
+                        </a>
+                        <form asp-action="HoanHangTaiQuay" method="post">
+                            <input type="hidden" name="id" value="@d.MaDon" />
+                            @if (d.PhiHoanChuaThu > 0)
+                            {
+                                <div class="alert alert-warning nho py-2 mb-2">
+                                    <div class="fw-bold mb-1"><i class="bi bi-cash-stack"></i> Cước thu người gửi: @DinhDang.Tien(d.PhiHoanChuaThu)</div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="daThuCuoc" id="daThuCuocHoan" value="true" checked />
+                                        <label class="form-check-label fw-semibold" for="daThuCuocHoan">Đã thu cước @DinhDang.Tien(d.PhiHoanChuaThu) tại quầy</label>
+                                    </div>
+                                </div>
+                            }
+                            <button class="btn btn-success btn-lg w-100"><i class="bi bi-check2-circle"></i> Trả hàng cho người gửi tại quầy</button>
+                        </form>
+                    </div>
+                }
+                else if (phanCong)
+                {
+                    <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-lg w-100 mb-2">
+                        <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "lấy hàng" : (d.TrangThai == TrangThaiDon.ChoChuyenHoan ? "xe tải chuyển hoàn" : (DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh ? "liên tỉnh" : "khu vực")))</a>
+                    @if (coTheYeuCauHoan)
+                    {
+                        <form asp-action="YeuCauChuyenHoan" method="post" data-xac-nhan="Yêu cầu chuyển hoàn đơn @d.MaHienThi về bưu cục gửi? (Cước chuyển hoàn: @DinhDang.Tien(Math.Ceiling((d.PhiVanChuyen * 0.5m) / 1000m) * 1000m))">
+                            <input type="hidden" name="id" value="@d.MaDon" />
+                            <input type="hidden" name="lyDo" value="Giao không thành công, bưu cục yêu cầu chuyển hoàn" />
+                            <button class="btn btn-outline-warning w-100"><i class="bi bi-arrow-repeat"></i> Yêu cầu chuyển hoàn về bưu cục gửi</button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="nho mo"><i class="bi bi-info-circle"></i>
+                        @(d.TrangThai switch
+                        {
+                            TrangThaiDon.ChoLayTanNoi => "Đơn chờ phân shipper khu vực đến nhà khách lấy hàng.",
+                            TrangThaiDon.ChoLayLienTinh or TrangThaiDon.ChoLayGiaoHang => "Đã phân shipper – chờ shipper tới quét mã nhận hàng.",
+                            TrangThaiDon.DangGiao => "Shipper đang đi giao.",
+                            _ when d.TrangThai.DaKetThuc() => "Đơn đã kết thúc vận chuyển.",
+                            _ => "Không có thao tác nào cho đơn này tại bưu cục của bạn."
+                        })</div>
+                }
+                <a asp-action="Don" asp-route-id="@d.MaDon" class="btn btn-light w-100 mt-2"><i class="bi bi-eye"></i> Xem chi tiết & tracking</a>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts {
+    <partial name="_VanChuyenScripts" />
+    <script>khoiTaoQuet('vungQuet', 'oMaQuet', 'formQuet', 'nutCamera');</script>
+}

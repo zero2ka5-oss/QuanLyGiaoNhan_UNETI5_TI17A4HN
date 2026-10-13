@@ -1,0 +1,16 @@
+﻿@model DonGiaoHang
+@* Tóm tắt đơn sau khi quét mã (trang quét của bưu cục / shipper). *@
+<div class="the-mem p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+        <div><div class="fw-bold fs-5">@Model.MaHienThi</div><div class="nho mo">Tạo @DinhDang.NgayGio(Model.NgayTao)</div></div>
+        <span class="tt @Model.TrangThai.LopBadge()"><i class="bi @Model.TrangThai.BieuTuong()"></i> @Model.TrangThai.TenHienThi()</span>
+    </div>
+    <hr class="my-2">
+    <div class="nho mb-1"><i class="bi bi-signpost-split text-cam"></i> <b>@Model.BuuCucGui?.TenBuuCuc</b> → <b>@Model.BuuCucNhan?.TenBuuCuc</b> · @Model.KhuVuc?.TenKhuVuc</div>
+    <div class="nho mb-1"><i class="bi bi-person text-cam"></i> Gửi: @Model.KhachHang?.HoTen · @DinhDang.SoDienThoai(Model.KhachHang?.SoDienThoai)</div>
+    <div class="nho mb-1"><i class="bi bi-geo-alt text-cam"></i> Nhận: <b>@Model.TenNguoiNhan</b> · @DinhDang.SoDienThoai(Model.SoDienThoaiNguoiNhan) – @Model.DiaChiNhan</div>
+    <div class="nho"><i class="bi bi-box-seam text-cam"></i> @Model.LoaiHang?.TenLoaiHang · <b>@DinhDang.KhoiLuong(Model.KhoiLuong)</b>
+        @if (Model.TongThuNguoiNhan > 0) { <span> · thu người nhận <b class="text-cam">@DinhDang.Tien(Model.TongThuNguoiNhan)</b></span> }</div>
+    @if (Model.NhanVienDangGiu is { } nv) { <div class="nho mt-1"><i class="bi bi-person-walking text-cam"></i> Đang giữ: shipper @nv.HoTen</div> }
+    else if (Model.BuuCucHienTai is { } bc) { <div class="nho mt-1"><i class="bi bi-building text-cam"></i> Đang ở: @bc.TenBuuCuc</div> }
+</div>

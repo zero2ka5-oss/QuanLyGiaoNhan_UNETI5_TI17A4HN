@@ -1,0 +1,23 @@
+﻿@* Đầu trang bưu cục: tên bưu cục đang thao tác; quản trị / nhân viên đổi được bưu cục (giữ nguyên action hiện tại). *@
+@{
+    var bc = (BuuCuc)ViewBag.BuuCuc;
+    bool khoa = ViewBag.KhoaBuuCuc;
+    var ds = (List<BuuCuc>)ViewBag.DsBuuCuc;
+    string action = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+}
+<div class="the-mem p-3 mb-3 d-flex flex-wrap align-items-center gap-3">
+    <span class="vi-icon"><i class="bi bi-building"></i></span>
+    <div class="flex-grow-1 min-w-0">
+        <div class="fw-bold fs-5">@bc.TenBuuCuc <span class="nho mo fw-normal">@bc.MaHienThi</span></div>
+        <div class="nho mo">@bc.DiaChi, @bc.TinhThanh @if (bc.SoDienThoai is not null) { <span>· @DinhDang.SoDienThoai(bc.SoDienThoai)</span> }</div>
+    </div>
+    @if (!khoa)
+    {
+        <form method="get" asp-action="@action" class="d-flex gap-2">
+            @if (ViewBag.Tab is string tab) { <input type="hidden" name="tab" value="@tab" /> }
+            <select name="maBuuCuc" class="form-select" onchange="this.form.submit()" aria-label="Chọn bưu cục">
+                @foreach (var b in ds) { <option value="@b.MaBuuCuc" selected="@(b.MaBuuCuc == bc.MaBuuCuc)">@b.TenBuuCuc</option> }
+            </select>
+        </form>
+    }
+</div>
