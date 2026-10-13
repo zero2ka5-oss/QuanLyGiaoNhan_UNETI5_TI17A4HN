@@ -1,0 +1,36 @@
+﻿@model DonGiaoHang?
+@{
+    ViewData["Title"] = "Quét mã nhận hàng";
+    ViewData["QuayLai"] = Url.Action("Index");
+    ViewData["UrlQuet"] = Url.Action("Quet");
+    ViewData["GoiYQuet"] = "Quét mã trên nhãn kiện hàng tại bưu cục để xác nhận đã nhận hàng.";
+    var pc = ViewBag.PhanCong as PhanCongGiaoHang;
+    var d = Model;
+}
+<partial name="_QuetMa" model="(string?)ViewBag.Ma" />
+@if (ViewBag.Loi is string loi) { <div class="alert alert-danger"><i class="bi bi-x-circle"></i> @loi</div> }
+@if (d is not null)
+{
+    <partial name="_TomTatDon" model="d" />
+    @if (pc is { TrangThai: TrangThaiPhanCong.DaPhanCong })
+    {
+        <form asp-action="LayHang" method="post" class="mb-2">
+            <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="ma" value="@d.MaHienThi" />
+            <input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-box-arrow-in-down"></i> Xác nhận nhận hàng (@pc.LoaiChang.TenChang().ToLower())</button>
+        </form>
+    }
+    else if (pc is not null)
+    {
+        <div class="alert alert-info nho"><i class="bi bi-info-circle"></i> Bạn đã nhận đơn này – tiếp tục trong mục Công việc.</div>
+        <a asp-action="ChiTiet" asp-route-id="@pc.MaPhanCong" class="btn btn-light w-100">Mở chi tiết chặng</a>
+    }
+    else
+    {
+        <div class="alert alert-info nho"><i class="bi bi-info-circle"></i> Bạn đang giữ đơn này (@d.TrangThai.TenHienThi().ToLower()).</div>
+    }
+}
+@section Scripts {
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>khoiTaoQuet('vungQuet', 'oMaQuet', 'formQuet', 'nutCamera');</script>
+}
