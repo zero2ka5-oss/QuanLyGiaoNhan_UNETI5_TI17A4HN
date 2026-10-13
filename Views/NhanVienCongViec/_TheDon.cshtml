@@ -1,0 +1,184 @@
+@model PhanCongGiaoHang
+@* Thẻ một chặng của shipper. Liên tỉnh: bưu cục gửi → bưu cục nhận. Khu vực: bưu cục nhận → người nhận. *@
+@{
+    var d = Model.DonGiaoHang!;
+    bool lienTinh = Model.LoaiChang == LoaiShipper.LienTinh;
+    bool laLayHang = d.TrangThai is TrangThaiDon.ChoLayTanNoi or TrangThaiDon.DaLayTanNoi;
+    bool treHan = d.NgayGiaoDuKien.Date < DateTime.Today;
+    var bcNhanHang = (lienTinh && d.LaDonHoan)
+        ? (d.BuuCucHienTai ?? d.BuuCucNhan)
+        : ((lienTinh || d.LaDonHoan) ? d.BuuCucGui : d.BuuCucNhan);        // nơi shipper tới quét mã nhận hàng
+    string ChiDuong(string diaChi) => "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(diaChi);
+    string soDienThoaiNhan = d.LaDonHoan ? (d.KhachHang?.SoDienThoai ?? "") : d.SoDienThoaiNguoiNhan;
+    string diaChiNhanHang = d.LaDonHoan ? (d.DiaChiLayHang ?? d.KhachHang?.DiaChi ?? "") : d.DiaChiNhan;
+    decimal tienPhaiThu = d.LaDonHoan ? d.PhiHoanChuaThu : d.TongThuNguoiNhan;
+}
+<div class="the-don">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <a asp-action="ChiTiet" asp-route-id="@Model.MaPhanCong" class="text-reset">
+            <div class="ma">@d.MaHienThi <i class="bi bi-chevron-right nho mo"></i></div>
+            <div class="nho mo">@(laLayHang ? "Lấy hàng tận nơi" : (d.LaDonHoan ? "Chuyển hoàn" : (lienTinh ? "Chặng liên tỉnh" : d.KhuVuc?.TenKhuVuc))) · @d.LoaiHang?.TenLoaiHang</div>
+        </a>
+        <span class="tt @Model.TrangThai.LopBadge()">@(d.TrangThai == TrangThaiDon.HenGiaoLai ? "Hẹn giao lại" : (laLayHang && d.TrangThai == TrangThaiDon.DaLayTanNoi ? "Đã lấy hàng" : Model.TrangThai.TenHienThi()))</span>
+    </div>
+    @if (laLayHang)
+    {
+        if (d.TrangThai == TrangThaiDon.ChoLayTanNoi)
+        {
+            <div class="fw-semibold"><i class="bi bi-person-up text-primary"></i> Người gửi: @d.KhachHang?.HoTen</div>
+            <div class="nho mb-2"><i class="bi bi-geo-alt text-cam"></i> Lấy tại: @(d.DiaChiLayHang ?? d.KhachHang?.DiaChi)</div>
+        }
+        else
+        {
+            <div class="fw-semibold"><i class="bi bi-building text-cam"></i> Về bưu cục: @d.BuuCucGui?.TenBuuCuc</div>
+            <div class="nho mb-2 mo"><i class="bi bi-geo-alt"></i> @d.BuuCucGui?.DiaChi, @d.BuuCucGui?.TinhThanh</div>
+        }
+    }
+    else if (lienTinh)
+    {
+        if (d.LaDonHoan)
+        {
+            <div class="fw-semibold text-danger"><i class="bi bi-arrow-repeat"></i> Chuyển hoàn: @d.BuuCucNhan?.TenBuuCuc <i class="bi bi-arrow-right mx-1"></i> @d.BuuCucGui?.TenBuuCuc</div>
+            <div class="nho mb-2 mo">Trả về bưu cục gửi: @d.BuuCucGui?.DiaChi, @d.BuuCucGui?.TinhThanh</div>
+        }
+        else
+        {
+            <div class="fw-semibold"><i class="bi bi-building text-cam"></i> @d.BuuCucGui?.TenBuuCuc <i class="bi bi-arrow-right mx-1"></i> @d.BuuCucNhan?.TenBuuCuc</div>
+            <div class="nho mb-2 mo">Giao tới bưu cục: @d.BuuCucNhan?.DiaChi, @d.BuuCucNhan?.TinhThanh</div>
+        }
+    }
+    else if (d.LaDonHoan)
+    {
+        <div class="fw-semibold text-danger"><i class="bi bi-arrow-return-left"></i> Giao hoàn người gửi: @d.KhachHang?.HoTen</div>
+        <div class="nho mb-2"><i class="bi bi-geo-alt text-cam"></i> @diaChiNhanHang</div>
+    }
+    else
+    {
+        <div class="fw-semibold"><i class="bi bi-person text-cam"></i> @d.TenNguoiNhan</div>
+        <div class="nho mb-2"><i class="bi bi-geo-alt text-cam"></i> @d.DiaChiNhan</div>
+    }
+    <div class="d-flex justify-content-between nho bg-light rounded-3 p-2 mb-2">
+        <span><i class="bi bi-box"></i> @DinhDang.KhoiLuong(d.KhoiLuong)</span>
+        <span class="@(treHan && !lienTinh && !laLayHang ? "text-danger fw-semibold" : "")"><i class="bi bi-calendar-event"></i> @DinhDang.Ngay(d.NgayGiaoDuKien)</span>
+        <span><i class="bi bi-truck-front"></i> @Model.PhuongTien?.BienSo</span>
+    </div>
+    @if (!lienTinh && !laLayHang)
+    {
+        if (d.LaDonHoan)
+        {
+            if (d.PhiHoanChuaThu > 0)
+            {
+                <div class="thu-tien mb-2">
+                    <div><div class="nho">Thu cước người gửi</div><div class="so">@DinhDang.Tien(d.PhiHoanChuaThu)</div></div>
+                    <div class="nho text-end lh-sm">Cước hoàn @DinhDang.Tien(d.PhiChuyenHoan)@(d.NgayThuPhiNguoiGui == null ? $" + cước đi {DinhDang.Tien(d.PhiVanChuyen)}" : "")</div>
+                </div>
+            }
+            else
+            {
+                <div class="nho mb-2 text-success fw-semibold"><i class="bi bi-check2-circle"></i> Người gửi đã thanh toán đủ cước</div>
+            }
+        }
+        else if (d.TongThuNguoiNhan > 0)
+        {
+            <div class="thu-tien mb-2">
+                <div><div class="nho">Thu người nhận</div><div class="so">@DinhDang.Tien(d.TongThuNguoiNhan)</div></div>
+                <div class="nho text-end lh-sm">@(d.TienThuHo > 0 ? "Thu hộ " + DinhDang.Tien(d.TienThuHo) : "")@(d.NguoiTraPhi == NguoiTraPhi.NguoiNhan ? (d.TienThuHo > 0 ? " + " : "") + "phí ship " + DinhDang.Tien(d.PhiVanChuyen) : "")</div>
+            </div>
+        }
+        else
+        {
+            <div class="nho mb-2 text-success fw-semibold"><i class="bi bi-check2-circle"></i> Không thu tiền người nhận</div>
+        }
+        if (!string.IsNullOrEmpty(d.GhiChu)) { <div class="nho mb-2"><i class="bi bi-chat-left-text text-cam"></i> @d.GhiChu</div> }
+    }
+    @if (!string.IsNullOrEmpty(Model.GhiChu)) { <div class="nho mb-2 text-primary"><i class="bi bi-megaphone"></i> @Model.GhiChu</div> }
+
+    <div class="row g-2">
+        @if (laLayHang)
+        {
+            if (d.TrangThai == TrangThaiDon.ChoLayTanNoi)
+            {
+                <div class="col-12 nho mo"><i class="bi bi-info-circle"></i> Đến địa chỉ người gửi để lấy hàng và bấm xác nhận khi đã nhận kiện hàng.</div>
+                <div class="col-6"><a href="tel:@d.KhachHang?.SoDienThoai" class="btn btn-goi w-100"><i class="bi bi-telephone-fill"></i> Gọi người gửi</a></div>
+                <div class="col-6"><a href="@ChiDuong(d.DiaChiLayHang ?? d.KhachHang?.DiaChi ?? "")" target="_blank" rel="noopener" class="btn btn-outline-secondary w-100"><i class="bi bi-sign-turn-right"></i> Chỉ đường</a></div>
+                <div class="col-12">
+                    <form asp-action="XacNhanLayHang" method="post" data-xac-nhan="Xác nhận đã nhận kiện hàng từ người gửi?">
+                        <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                        <button class="btn btn-cam w-100"><i class="bi bi-box-seam"></i> Xác nhận đã lấy hàng</button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="col-12 nho"><i class="bi bi-building-check text-cam"></i> Đã lấy hàng – mang hàng về <b>@d.BuuCucGui?.TenBuuCuc</b> bàn giao. Bưu cục sẽ quét mã tiếp nhận để nhập kho.</div>
+                <div class="col-12"><a href="@ChiDuong($"{d.BuuCucGui?.DiaChi}, {d.BuuCucGui?.TinhThanh}")" target="_blank" rel="noopener" class="btn btn-outline-secondary w-100"><i class="bi bi-sign-turn-right"></i> Chỉ đường về bưu cục</a></div>
+            }
+        }
+        else
+        {
+            @switch (Model.TrangThai)
+            {
+                case TrangThaiPhanCong.DaPhanCong:
+                    <div class="col-12 nho mo"><i class="bi bi-info-circle"></i> Tới <b>@bcNhanHang?.TenBuuCuc</b> (@bcNhanHang?.DiaChi) quét mã trên kiện để nhận hàng.</div>
+                    <div class="col-6"><a asp-action="Quet" asp-route-ma="" class="btn btn-cam w-100"><i class="bi bi-qr-code-scan"></i> Quét nhận hàng</a></div>
+                    <div class="col-6"><a href="@ChiDuong($"{bcNhanHang?.DiaChi}, {bcNhanHang?.TinhThanh}")" target="_blank" rel="noopener" class="btn btn-outline-secondary w-100"><i class="bi bi-sign-turn-right"></i> Tới bưu cục</a></div>
+                    break;
+                case TrangThaiPhanCong.DaNhanHang:
+                    <div class="col-12">
+                        <form asp-action="BatDau" asp-route-id="@Model.MaPhanCong" method="post">
+                            <input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                            <button class="btn btn-primary w-100"><i class="bi @(lienTinh ? "bi-truck-front" : "bi-truck")"></i> @(lienTinh ? (d.LaDonHoan ? "Bắt đầu chuyển hoàn" : "Bắt đầu vận chuyển") : (d.LaDonHoan ? "Đi giao hoàn" : (d.TrangThai == TrangThaiDon.HenGiaoLai ? "Đi giao lại" : "Bắt đầu giao")))</button>
+                        </form>
+                    </div>
+                    break;
+                case TrangThaiPhanCong.DangGiao when lienTinh:
+                    <div class="col-12 nho"><i class="bi bi-building-down text-cam"></i> Tới <b>@((d.LaDonHoan ? d.BuuCucGui : d.BuuCucNhan)?.TenBuuCuc)</b> bàn giao – nhân viên bưu cục quét mã để nhận hàng.</div>
+                    <div class="col-12"><a href="@ChiDuong($"{(d.LaDonHoan ? d.BuuCucGui : d.BuuCucNhan)?.DiaChi}, {(d.LaDonHoan ? d.BuuCucGui : d.BuuCucNhan)?.TinhThanh}")" target="_blank" rel="noopener" class="btn btn-outline-secondary w-100"><i class="bi bi-sign-turn-right"></i> Chỉ đường tới bưu cục nhận</a></div>
+                    break;
+                case TrangThaiPhanCong.DangGiao:
+                    <div class="col-6"><a href="tel:@soDienThoaiNhan" class="btn btn-goi nut-cham-lon w-100"><i class="bi bi-telephone-fill"></i> Gọi (@soDienThoaiNhan)</a></div>
+                    <div class="col-6"><a href="@ChiDuong(diaChiNhanHang)" target="_blank" rel="noopener" class="btn btn-outline-secondary nut-cham-lon w-100"><i class="bi bi-sign-turn-right"></i> Chỉ đường</a></div>
+                    <div class="col-6">
+                        <button type="button" class="btn btn-success nut-cham-lon w-100" data-bs-toggle="modal" data-bs-target="#hopGiao@(Model.MaPhanCong)"><i class="bi bi-check2-circle"></i> @(d.LaDonHoan ? "Hoàn thành" : "Thành công")</button>
+                    </div>
+                    @if (!d.LaDonHoan)
+                    {
+                        <div class="col-6"><a asp-action="GiaoKhongThanhCong" asp-route-id="@Model.MaPhanCong" class="btn btn-outline-danger nut-cham-lon w-100"><i class="bi bi-x-octagon"></i> Thất bại</a></div>
+                    }
+                    else
+                    {
+                        <div class="col-6"><a asp-action="Index" class="btn btn-outline-secondary nut-cham-lon w-100"><i class="bi bi-arrow-left"></i> Quay lại</a></div>
+                    }
+                    break;
+            }
+        }
+    </div>
+</div>
+@if (Model.TrangThai == TrangThaiPhanCong.DangGiao && !lienTinh)
+{
+    @* Hộp xác nhận giao thành công: chụp ảnh giao hàng (không bắt buộc) + số tiền phải thu *@
+    <div class="modal fade hop-day" id="hopGiao@(Model.MaPhanCong)" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="hop-day-dau"><span class="fw-bold">@(d.LaDonHoan ? "Giao hoàn thành công" : "Giao thành công") · @d.MaHienThi</span><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <form asp-action="GiaoThanhCong" asp-route-id="@Model.MaPhanCong" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                    @if (tienPhaiThu > 0)
+                    {
+                        <div class="text-center mb-3">
+                            <div class="nho mo">@(d.LaDonHoan ? "Thu cước từ người gửi" : "Thu của người nhận")</div>
+                            <div class="fw-bold" style="font-size:1.9rem;color:#C2410C">@DinhDang.Tien(tienPhaiThu)</div>
+                        </div>
+                    }
+                    <label class="o-tai-anh o-tai-anh-rong mb-3">
+                        <img alt="" />
+                        <span class="goi-y"><i class="bi bi-camera"></i>Chụp ảnh giao hàng</span>
+                        <input type="file" name="anhGiaoHang" accept="image/*" capture="environment" class="d-none" />
+                    </label>
+                    <input name="ghiChu" maxlength="300" class="form-control mb-3" placeholder="@(d.LaDonHoan ? "Ghi chú hoàn hàng (người gửi đã nhận lại kiện...)" : "Ghi chú (người nhận, vị trí để hàng…)")" />
+                    <button class="btn btn-success w-100 py-2 fw-semibold"><i class="bi bi-check2-circle"></i> @(tienPhaiThu > 0 ? $"Xác nhận đã giao & thu {DinhDang.Tien(tienPhaiThu)}" : (d.LaDonHoan ? "Xác nhận đã giao hoàn" : "Xác nhận đã giao"))</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

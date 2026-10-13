@@ -1,0 +1,117 @@
+@model CongViecNhanVienVM
+@{
+    ViewData["Title"] = "Công việc hôm nay";
+    var nv = Model.NhanVien;
+    bool lienTinh = nv.LoaiShipper == LoaiShipper.LienTinh;
+    int tong = Model.CanNhanHang.Count + Model.DaNhanHang.Count + Model.DangGiao.Count + Model.GiuSauThatBai.Count;
+    int soChoXuatBen = Model.DaNhanHang.Count(p => p.LoaiChang == LoaiShipper.LienTinh);
+}
+<div class="the-shipper">
+    <span class="tt @(lienTinh ? "tt-dang" : "tt-xuly")"><i class="bi @(lienTinh ? "bi-truck-front" : "bi-truck")"></i> @nv.LoaiShipper.TenHienThi()</span>
+    <span class="fw-semibold"><i class="bi bi-building text-cam"></i> @(nv.BuuCuc?.TenBuuCuc ?? "Chưa gán bưu cục")</span>
+    @if (!lienTinh) { <span class="mo"><i class="bi bi-geo-alt"></i> @(nv.KhuVucPhuTrach?.TenKhuVuc ?? "chưa phân khu vực")</span> }
+    <span class="ms-auto tt @nv.TrangThai.LopBadge()">@nv.TrangThai.TenHienThi()</span>
+    <div class="w-100"></div>
+    @if (nv.PhuongTien is null) { <span class="xe text-danger"><i class="bi bi-exclamation-circle"></i> Chưa được gán phương tiện – liên hệ điều phối</span> }
+    else { <span class="xe"><i class="bi bi-truck-front text-cam"></i> @nv.PhuongTien.MaHienThi · @nv.PhuongTien.LoaiPhuongTien · @nv.PhuongTien.BienSo</span> }
+</div>
+
+<div class="row g-2 mb-2">
+    <div class="col-4"><div class="kpi text-center p-2"><div class="nhan">Đang giữ</div><div class="gia-tri text-cam">@tong</div></div></div>
+    <div class="col-4"><div class="kpi text-center p-2"><div class="nhan">Xong hôm nay</div><div class="gia-tri text-success">@Model.GiaoThanhCongHomNay</div></div></div>
+    <div class="col-4"><div class="kpi text-center p-2"><div class="nhan">Thất bại</div><div class="gia-tri text-danger">@Model.ThatBaiHomNay</div></div></div>
+</div>
+<a asp-controller="NhanVienHoSo" asp-action="Index" class="the-tien-nho mb-2 text-white">
+    <span class="rounded-3 d-grid" style="width:40px;height:40px;place-items:center;background:rgba(255,255,255,.12)"><i class="bi bi-wallet2 fs-5"></i></span>
+    <div class="flex-grow-1 lh-sm">
+        <div class="nho" style="opacity:.8">Thù lao hôm nay</div>
+        <div class="so-tien">@DinhDang.Tien(Model.TienHomNay)</div>
+    </div>
+    <div class="text-end lh-sm nho"><div style="opacity:.8">Tháng này</div><div class="fw-bold">@DinhDang.Tien(Model.TienThangNay)</div></div>
+</a>
+@if (Model.TienCanThu > 0)
+{
+    <div class="thu-tien mb-2"><div><div class="nho">Tiền cần thu người nhận</div><div class="so">@DinhDang.Tien(Model.TienCanThu)</div></div><i class="bi bi-cash-stack fs-3" style="color:#C2410C"></i></div>
+}
+<a asp-action="Quet" class="btn btn-cam w-100 mb-2 py-2 fw-semibold"><i class="bi bi-qr-code-scan"></i> Quét mã nhận hàng tại bưu cục</a>
+@if (soChoXuatBen > 1)
+{
+    <form asp-action="BatDauTatCa" method="post" class="mb-2" data-xac-nhan="Bắt đầu vận chuyển @soChoXuatBen đơn đã nhận?">
+        <input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+        <button class="btn btn-primary w-100"><i class="bi bi-truck-front"></i> Xuất bến – bắt đầu vận chuyển @soChoXuatBen đơn</button>
+    </form>
+}
+
+@if (tong > 0)
+{
+    <div class="the-mem p-3 mb-3">
+        <div class="fw-bold mb-2 d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-map text-cam me-1"></i> Lộ trình hôm nay</span>
+            <span class="badge bg-cam-nhat text-cam">@tong điểm dừng</span>
+        </div>
+        <div class="lo-trinh-timeline">
+            <div class="lo-trinh-moc">
+                <div class="lo-trinh-cham hoan-thanh"><i class="bi bi-check-lg" style="font-size:10px"></i></div>
+                <div class="fw-semibold nho">Bưu cục xuất phát</div>
+                <div class="mo" style="font-size:0.75rem">@(nv.BuuCuc?.TenBuuCuc ?? "Bưu cục trực")</div>
+            </div>
+            @if (Model.CanNhanHang.Count > 0)
+            {
+                <div class="lo-trinh-moc">
+                    <div class="lo-trinh-cham"></div>
+                    <div class="fw-semibold nho text-primary">Điểm nhận & gom hàng (@Model.CanNhanHang.Count kiện)</div>
+                    <div class="mo" style="font-size:0.75rem">Tiếp nhận tại bưu cục hoặc lấy tận nơi người gửi</div>
+                </div>
+            }
+            @if (Model.DangGiao.Count > 0 || Model.DaNhanHang.Count > 0)
+            {
+                <div class="lo-trinh-moc">
+                    <div class="lo-trinh-cham"></div>
+                    <div class="fw-semibold nho text-cam">Tuyến giao người nhận (@(Model.DangGiao.Count + Model.DaNhanHang.Count) điểm)</div>
+                    <div class="mo" style="font-size:0.75rem">Khu vực @(nv.KhuVucPhuTrach?.TenKhuVuc ?? "phụ trách")</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (tong == 0)
+{
+    <div class="the-don text-center py-5 mt-3"><i class="bi bi-cup-hot fs-1 text-cam"></i><div class="mt-2">Hiện chưa có đơn nào được phân cho bạn.</div></div>
+}
+
+@if (Model.GiuSauThatBai.Count > 0)
+{
+    <div class="nhom-cong-viec"><i class="bi bi-exclamation-octagon text-danger"></i> Giao không thành công – đang giữ hàng <span class="so">@Model.GiuSauThatBai.Count</span></div>
+    @foreach (var d in Model.GiuSauThatBai)
+    {
+        int lan = DonHangXuLy.SoLanThatBai(d);
+        bool conLuot = lan < DonHangXuLy.SoLanGiaoToiDa;
+        <div class="the-don">
+            <div class="d-flex justify-content-between"><b class="ma">@d.MaHienThi</b><span class="tt tt-thatbai">Lỗi @lan/@DonHangXuLy.SoLanGiaoToiDa lần</span></div>
+            <div class="fw-semibold"><i class="bi bi-person text-cam"></i> @d.TenNguoiNhan · <a href="tel:@d.SoDienThoaiNguoiNhan">@DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</a></div>
+            <div class="nho mb-2"><i class="bi bi-geo-alt text-cam"></i> @d.DiaChiNhan</div>
+            @if (conLuot)
+            {
+                <form asp-action="HenGiaoLai" method="post" class="row g-2 mb-2">
+                    <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
+                    <div class="col-6"><input type="date" name="ngayHen" class="form-control" value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" min="@DateTime.Today.ToString("yyyy-MM-dd")" /></div>
+                    <div class="col-6"><button class="btn btn-cam w-100"><i class="bi bi-calendar-event"></i> Hẹn giao lại</button></div>
+                    <div class="col-12"><input name="ghiChu" maxlength="300" class="form-control" placeholder="Ghi chú hẹn (giờ, nơi để hàng…)" maxlength="200" /></div>
+                </form>
+            }
+            <div class="nho mo"><i class="bi bi-arrow-return-left"></i> @(conLuot ? "Hoặc" : "Hết lượt giao –") mang hàng về <b>@d.BuuCucNhan?.TenBuuCuc</b>: nhân viên bưu cục quét mã nhận lại.</div>
+        </div>
+    }
+}
+@foreach (var (tieuDe, icon, ds) in new[]
+{
+    (lienTinh ? "Đang vận chuyển" : "Đang giao", lienTinh ? "bi-truck-front" : "bi-truck", Model.DangGiao),
+    (lienTinh ? "Đã nhận – chờ xuất bến" : "Đã nhận hàng", "bi-box-seam", Model.DaNhanHang),
+    ("Cần nhận / lấy hàng", "bi-box-arrow-in-down", Model.CanNhanHang)
+})
+{
+    if (ds.Count == 0) { continue; }
+    <div class="nhom-cong-viec"><i class="bi @icon text-cam"></i> @tieuDe <span class="so">@ds.Count</span></div>
+    @foreach (var pc in ds) { <partial name="_TheDon" model="pc" /> }
+}
