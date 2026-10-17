@@ -1,0 +1,14 @@
+﻿@model DonGiaoHang
+@{ int lan = DonHangXuLy.SoLanThatBai(Model); }
+@if (Model.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.HenGiaoLai && lan > 0)
+{
+    if (lan >= DonHangXuLy.SoLanGiaoToiDa)
+    {
+        <div class="alert alert-danger"><i class="bi bi-exclamation-octagon"></i> Đơn đã giao không thành công <b>@lan lần</b> – không giao lại nữa.
+            @(Model.TrangThai == TrangThaiDon.GiaoKhongThanhCong ? "Shipper trả hàng về bưu cục, sau đó liên hệ người gửi để hủy / chuyển hoàn." : "Liên hệ người gửi để hủy / chuyển hoàn.")</div>
+    }
+    else if (Model.TrangThai == TrangThaiDon.GiaoKhongThanhCong)
+    {
+        <div class="alert alert-warning"><i class="bi bi-arrow-repeat"></i> Giao không thành công @lan / @DonHangXuLy.SoLanGiaoToiDa lần – shipper đang giữ hàng: hẹn giao lại hoặc trả về bưu cục để phân shipper khác.</div>
+    }
+}
