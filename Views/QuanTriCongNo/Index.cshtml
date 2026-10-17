@@ -1,0 +1,230 @@
+﻿@model List<DonGiaoHang>
+@{
+    ViewData["Title"] = "Phê duyệt công nợ cước khách hàng";
+    string tabHienTai = ViewBag.Tab ?? "choduyet";
+    int soChoDuyet = ViewBag.SoChoDuyet ?? 0;
+    decimal tienChoDuyet = ViewBag.TienChoDuyet ?? 0m;
+    int soChuaYeuCau = ViewBag.SoChuaYeuCau ?? 0;
+    decimal tienChuaYeuCau = ViewBag.TienChuaYeuCau ?? 0m;
+    int soDaThu = ViewBag.SoDaThu ?? 0;
+    decimal tienDaThu = ViewBag.TienDaThu ?? 0m;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="the-mem p-3 h-100 d-flex align-items-center justify-content-between" style="border-left: 5px solid #EA580C !important;">
+            <div>
+                <div class="nho mo fw-semibold">ĐANG CHỜ ADMIN XÉT DUYỆT</div>
+                <div class="h3 fw-bold text-cam mb-0 mt-1">@DinhDang.Tien(tienChoDuyet)</div>
+                <div class="small text-muted mt-1"><b>@soChoDuyet</b> đơn khách đã báo chuyển khoản</div>
+            </div>
+            <div class="rounded-circle p-3 bg-warning-subtle text-warning-emphasis fs-3">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="the-mem p-3 h-100 d-flex align-items-center justify-content-between" style="border-left: 5px solid #DC2626 !important;">
+            <div>
+                <div class="nho mo fw-semibold">KHÁCH CHƯA GỬI THANH TOÁN</div>
+                <div class="h3 fw-bold text-danger mb-0 mt-1">@DinhDang.Tien(tienChuaYeuCau)</div>
+                <div class="small text-muted mt-1"><b>@soChuaYeuCau</b> đơn nợ chưa bấm thanh toán</div>
+            </div>
+            <div class="rounded-circle p-3 bg-danger-subtle text-danger fs-3">
+                <i class="bi bi-exclamation-circle"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="the-mem p-3 h-100 d-flex align-items-center justify-content-between" style="border-left: 5px solid #16A34A !important;">
+            <div>
+                <div class="nho mo fw-semibold">ĐÃ THU / ĐÃ GẠCH NỢ GẦN ĐÂY</div>
+                <div class="h3 fw-bold text-success mb-0 mt-1">@DinhDang.Tien(tienDaThu)</div>
+                <div class="small text-muted mt-1"><b>@soDaThu</b> đơn đã hoàn tất thu cước</div>
+            </div>
+            <div class="rounded-circle p-3 bg-success-subtle text-success fs-3">
+                <i class="bi bi-check-circle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="the-mem p-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+        <ul class="nav nav-pills flex-wrap gap-2">
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-4 @(tabHienTai == "choduyet" ? "active bg-cam text-white" : "text-dark bg-light")" asp-action="Index" asp-route-tab="choduyet">
+                    <i class="bi bi-hourglass-split me-1"></i> Chờ duyệt
+                    @if (soChoDuyet > 0)
+                    {
+                        <span class="badge rounded-pill bg-white text-dark ms-2 fw-bold">@soChoDuyet</span>
+                    }
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-4 @(tabHienTai == "chuayeucau" ? "active bg-cam text-white" : "text-dark bg-light")" asp-action="Index" asp-route-tab="chuayeucau">
+                    <i class="bi bi-x-circle me-1"></i> Chưa gửi yêu cầu
+                    @if (soChuaYeuCau > 0)
+                    {
+                        <span class="badge rounded-pill bg-danger text-white ms-2">@soChuaYeuCau</span>
+                    }
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-4 @(tabHienTai == "dathu" ? "active bg-cam text-white" : "text-dark bg-light")" asp-action="Index" asp-route-tab="dathu">
+                    <i class="bi bi-check2-all me-1"></i> Lịch sử đã gạch nợ (@soDaThu)
+                </a>
+            </li>
+        </ul>
+
+        @if (tabHienTai == "choduyet" && soChoDuyet > 0)
+        {
+            <form asp-action="DuyetTatCa" method="post" data-xac-nhan="Bạn có chắc chắn muốn duyệt và gạch nợ cho TẤT CẢ @soChoDuyet đơn chờ duyệt (tổng @DinhDang.Tien(tienChoDuyet))?">
+                <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold shadow-sm">
+                    <i class="bi bi-check2-all me-1"></i> Duyệt tất cả (@DinhDang.Tien(tienChoDuyet))
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="text-center py-5">
+            <span class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle text-muted p-4 fs-1 mb-3">
+                <i class="bi bi-inbox"></i>
+            </span>
+            <h5 class="fw-bold">Không có đơn hàng nào trong mục này</h5>
+            <p class="text-muted small">
+                @(tabHienTai == "choduyet" ? "Hiện tại không có khoản cước nào đang chờ duyệt từ khách hàng." :
+                  tabHienTai == "chuayeucau" ? "Không có đơn nợ cước nào chưa thanh toán." : "Chưa có lịch sử gạch nợ.")
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng gửi</th>
+                        <th>Tuyến giao nhận</th>
+                        <th>Thời gian</th>
+                        <th class="text-end">Cước nợ</th>
+                        <th>Cú pháp CK ngân hàng</th>
+                        <th class="text-center" style="width: 220px;">Thao tác phê duyệt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@d.MaDon" class="fw-bold text-decoration-none">@d.MaHienThi</a>
+                                <div class="text-muted small">@d.LoaiHang?.TenLoaiHang · @DinhDang.KhoiLuong(d.KhoiLuong)</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@d.KhachHang?.HoTen</div>
+                                <div class="text-muted small"><i class="bi bi-telephone"></i> @DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)</div>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold text-truncate" style="max-width: 220px;">
+                                    <i class="bi bi-box-arrow-up text-primary me-1"></i>@(d.BuuCucGui?.TenBuuCuc ?? "Bưu cục gửi")
+                                </div>
+                                <div class="small text-muted text-truncate" style="max-width: 220px;">
+                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>@d.DiaChiNhan
+                                </div>
+                            </td>
+                            <td>
+                                @if (d.NgayYeuCauThanhToan.HasValue)
+                                {
+                                    <div class="fw-bold text-cam">@DinhDang.NgayGio(d.NgayYeuCauThanhToan)</div>
+                                    <div class="text-muted small">Khách báo chuyển khoản</div>
+                                }
+                                else if (d.NgayThuPhiNguoiGui.HasValue)
+                                {
+                                    <div class="fw-bold text-success">@DinhDang.NgayGio(d.NgayThuPhiNguoiGui)</div>
+                                    <div class="text-muted small">Đã duyệt gạch nợ</div>
+                                }
+                                else
+                                {
+                                    <div class="fw-semibold">@DinhDang.Ngay(d.NgayHoanTat ?? d.NgayHoanHang ?? d.NgayTao)</div>
+                                    <div class="text-muted small">@d.TrangThai.TenHienThi()</div>
+                                }
+                            </td>
+                            <td class="text-end fw-bold text-danger fs-6">
+                                @DinhDang.Tien(d.PhiNguoiGuiPhaiTra)
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-danger border font-monospace px-2 py-1">CUOC @d.MaHienThi</span>
+                            </td>
+                            <td class="text-center">
+                                @if (tabHienTai == "choduyet")
+                                {
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <form asp-action="Duyet" method="post" data-xac-nhan="Xác nhận tài khoản đã nhận @DinhDang.Tien(d.PhiNguoiGuiPhaiTra) từ khách @d.KhachHang?.HoTen để gạch nợ cho đơn @d.MaHienThi?">
+                                            <input type="hidden" name="id" value="@d.MaDon" />
+                                            <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold shadow-sm">
+                                                <i class="bi bi-check-lg me-1"></i>Duyệt
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalTuChoi_@d.MaDon">
+                                            <i class="bi bi-x-lg me-1"></i>Từ chối
+                                        </button>
+                                    </div>
+
+                                    @* Modal từ chối duyệt *@
+                                    <div class="modal fade" id="modalTuChoi_@d.MaDon" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content rounded-4 border-0 shadow">
+                                                <form asp-action="TuChoi" method="post">
+                                                    <input type="hidden" name="id" value="@d.MaDon" />
+                                                    <div class="modal-header border-0 pb-0">
+                                                        <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-1"></i>Từ chối duyệt thanh toán</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-start p-4">
+                                                        <p class="small text-muted mb-3">
+                                                            Đơn <b>@d.MaHienThi</b> (Khách hàng: <b>@d.KhachHang?.HoTen</b>) - Số tiền cước: <b class="text-danger">@DinhDang.Tien(d.PhiNguoiGuiPhaiTra)</b>
+                                                        </p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small">Lý do từ chối:</label>
+                                                            <input type="text" name="lyDo" class="form-control" placeholder="VD: Chưa thấy tiền vào tài khoản, sai số tiền..." value="Chưa nhận được tiền vào tài khoản ngân hàng" required />
+                                                        </div>
+                                                        <div class="alert alert-warning small py-2 mb-0">
+                                                            <i class="bi bi-info-circle me-1"></i>Đơn hàng sẽ được chuyển lại trạng thái Chưa thanh toán trên tài khoản khách hàng.
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-0 pt-0">
+                                                        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Xác nhận từ chối</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else if (tabHienTai == "chuayeucau")
+                                {
+                                    <form asp-action="Duyet" method="post" data-xac-nhan="Xác nhận đã thu trực tiếp @DinhDang.Tien(d.PhiNguoiGuiPhaiTra) của khách để gạch nợ cho đơn @d.MaHienThi?">
+                                        <input type="hidden" name="id" value="@d.MaDon" />
+                                        <button type="submit" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold">
+                                            <i class="bi bi-cash-stack me-1"></i>Thu cước trực tiếp
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success py-2 px-3 rounded-pill fw-semibold">
+                                        <i class="bi bi-check2-circle me-1"></i>Đã gạch nợ
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
