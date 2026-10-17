@@ -1,0 +1,206 @@
+@model List<DonGiaoHang>
+@{
+    var bc = (BuuCuc)ViewBag.BuuCuc;
+    ViewData["Title"] = "Bàn làm việc vận hành · " + bc.TenBuuCuc;
+}
+
+<partial name="_ChonBuuCuc" />
+
+<!-- Thẻ tác vụ nhanh & 2 nhiệm vụ cốt lõi -->
+<div class="row g-4 mb-4">
+    <!-- CỘT 1: DUYỆT ĐƠN & KHO BƯU CỤC -->
+    <div class="col-lg-6">
+        <div class="the-mem p-4 h-100 border-start border-4 border-warning">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <span class="badge bg-warning bg-opacity-10 text-dark fw-semibold px-2 py-1 mb-1">
+                        <i class="bi bi-box-seam me-1"></i> NHIỆM VỤ 1
+                    </span>
+                    <h5 class="fw-bold mb-0">Duyệt đơn tại bưu cục</h5>
+                </div>
+                <a asp-controller="BuuCuc" asp-action="Quet" asp-route-maBuuCuc="@bc.MaBuuCuc" class="btn btn-cam btn-sm d-flex align-items-center gap-1 shadow-sm">
+                    <i class="bi bi-qr-code-scan"></i> Mở máy quét
+                </a>
+            </div>
+            <p class="nho mo mb-3">Quét mã kiểm đếm tiếp nhận hàng khách gửi, hàng shipper lấy về và xuất kho bàn giao.</p>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <a asp-controller="BuuCuc" asp-action="Index" asp-route-tab="cho" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-3 text-reset text-decoration-none bg-light border-0 h-100">
+                        <div class="nho mo">Khách mang tới gửi</div>
+                        <div class="fs-4 fw-bold text-cam">@ViewBag.SoChoKhachMangToi</div>
+                        <small class="text-muted" style="font-size: .75rem">Chờ tiếp nhận tại quầy</small>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a asp-controller="BuuCuc" asp-action="Index" asp-route-tab="layhang" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-3 text-reset text-decoration-none bg-light border-0 h-100">
+                        <div class="nho mo">Shipper lấy về</div>
+                        <div class="fs-4 fw-bold text-primary">@ViewBag.SoChoShipperLayVe</div>
+                        <small class="text-muted" style="font-size: .75rem">Chờ duyệt nhập kho</small>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="BuuCuc" asp-action="Index" asp-route-tab="taibc" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-2 text-reset text-decoration-none bg-light border-0 text-center">
+                        <div class="nho mo">Đang ở bưu cục</div>
+                        <div class="fs-5 fw-bold text-dark">@ViewBag.SoDangOBuuCuc</div>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="BuuCuc" asp-action="Index" asp-route-tab="dangden" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-2 text-reset text-decoration-none bg-light border-0 text-center">
+                        <div class="nho mo">Đang chuyển đến</div>
+                        <div class="fs-5 fw-bold text-info">@ViewBag.SoDangChuyenDen</div>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="BuuCuc" asp-action="Index" asp-route-tab="hoanhang" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-2 text-reset text-decoration-none bg-light border-0 text-center">
+                        <div class="nho mo">Chờ chuyển hoàn</div>
+                        <div class="fs-5 fw-bold text-danger">@ViewBag.SoChoHoanHang</div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                <span class="nho text-muted">Kho bưu cục: <b>@(ViewBag.SoDangOBuuCuc + ViewBag.SoChoHoanHang)</b> kiện</span>
+                <a asp-controller="BuuCuc" asp-action="Index" asp-route-maBuuCuc="@bc.MaBuuCuc" class="btn btn-outline-dark btn-sm">
+                    Quản lý kho hàng <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT 2: ĐIỀU HÀNH & PHÂN CÔNG SHIPPER -->
+    <div class="col-lg-6">
+        <div class="the-mem p-4 h-100 border-start border-4 border-primary">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 mb-1">
+                        <i class="bi bi-diagram-3 me-1"></i> NHIỆM VỤ 2
+                    </span>
+                    <h5 class="fw-bold mb-0">Điều hành & Phân công</h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@bc.MaBuuCuc" class="btn btn-warning btn-sm d-flex align-items-center gap-1 shadow-sm text-dark fw-semibold">
+                        <i class="bi bi-truck"></i> Chuyến liên tỉnh
+                    </a>
+                    <a asp-controller="QuanTriPhanCong" asp-action="Index" asp-route-maBuuCuc="@bc.MaBuuCuc" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+                        <i class="bi bi-diagram-3"></i> Bảng điều phối
+                    </a>
+                </div>
+            </div>
+            <p class="nho mo mb-3">Chỉ định shipper đi lấy hàng tận nơi, chạy tuyến trung chuyển và giao hàng tới người nhận.</p>
+
+            <div class="row g-2 mb-3">
+                <div class="col-4">
+                    <a asp-controller="QuanTriPhanCong" asp-action="Index" asp-route-tab="layhang" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-2 text-reset text-decoration-none bg-light border-0 text-center">
+                        <div class="nho mo">Chờ lấy tận nơi</div>
+                        <div class="fs-5 fw-bold text-cam">@ViewBag.SoChoPhanLayHang</div>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-2 text-reset text-decoration-none bg-light border-0 text-center">
+                        <div class="nho mo">Chờ xe liên tỉnh</div>
+                        <div class="fs-5 fw-bold text-purple" style="color: #6f42c1">@ViewBag.SoChoPhanLienTinh</div>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="QuanTriPhanCong" asp-action="Index" asp-route-tab="khuvuc" asp-route-maBuuCuc="@bc.MaBuuCuc" class="card p-2 text-reset text-decoration-none bg-light border-0 text-center">
+                        <div class="nho mo">Chờ phát khu vực</div>
+                        <div class="fs-5 fw-bold text-success">@ViewBag.SoChoPhanKhuVuc</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <div class="card p-3 bg-light border-0">
+                        <div class="nho mo">Đang trên đường giao / trung chuyển</div>
+                        <div class="fs-4 fw-bold text-dark">@ViewBag.SoDangVanChuyen <span class="nho fw-normal text-muted">chặng</span></div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card p-3 bg-light border-0">
+                        <div class="nho mo">Đội ngũ Shipper bưu cục</div>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <span class="fs-4 fw-bold text-success">@ViewBag.SoShipperSanSang</span> <span class="nho text-muted">sẵn sàng</span>
+                            <span class="fs-5 fw-bold text-primary ms-2">@ViewBag.SoShipperDangGiao</span> <span class="nho text-muted">đang giao</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                <span class="nho text-muted">Cần điều phối: <b>@(ViewBag.SoChoPhanLayHang + ViewBag.SoChoPhanLienTinh + ViewBag.SoChoPhanKhuVuc)</b> đơn</span>
+                <a asp-controller="QuanTriNhanVien" asp-action="Index" class="btn btn-outline-dark btn-sm">
+                    Danh sách Shipper <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DANH SÁCH ĐƠN HÀNG CẦN XỬ LÝ GẤP -->
+<div class="the-mem p-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h5 class="fw-bold mb-0">Đơn hàng cần xử lý tại bưu cục</h5>
+            <small class="text-muted">Các đơn chờ tiếp nhận, chờ điều phối shipper hoặc gặp sự cố cần hỗ trợ</small>
+        </div>
+        <a asp-controller="QuanTriDonGiaoHang" asp-action="Index" class="btn btn-light btn-sm">
+            Xem tất cả đơn hàng <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="p-4 text-center text-muted">
+            <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+            Tất cả đơn hàng tại bưu cục hiện đã được xử lý xong!
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Trạng thái</th>
+                        <th>Người gửi / Địa chỉ lấy</th>
+                        <th>Người nhận / Điểm giao</th>
+                        <th>Khối lượng</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="BuuCuc" asp-action="Don" asp-route-id="@d.MaDon" class="fw-bold text-cam">
+                                    @d.MaHienThi
+                                </a>
+                                <div class="nho text-muted">@DinhDang.Ngay(d.NgayTao)</div>
+                            </td>
+                            <td>
+                                <span class="tt @d.TrangThai.LopBadge()">@d.TrangThai.TenHienThi()</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@d.KhachHang?.HoTen</div>
+                                <div class="nho text-muted text-truncate" style="max-width: 220px">@(d.DiaChiLayHang ?? d.KhachHang?.DiaChi)</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@d.TenNguoiNhan</div>
+                                <div class="nho text-muted text-truncate" style="max-width: 220px">@d.DiaChiNhan, @d.KhuVuc?.TenKhuVuc</div>
+                            </td>
+                            <td>
+                                <b>@DinhDang.KhoiLuong(d.KhoiLuong)</b>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-controller="BuuCuc" asp-action="Don" asp-route-id="@d.MaDon" class="btn btn-sm btn-light" title="Chi tiết & Xử lý">
+                                    <i class="bi bi-arrow-right-circle text-primary"></i> Xử lý
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
