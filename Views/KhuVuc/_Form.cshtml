@@ -1,0 +1,39 @@
+@* Họ và tên: Vũ Thị Vân Anh
+   Mã sinh viên: 23103100194
+   Nội dung thực hiện: Form tạo/cập nhật khu vực giao, phí cơ bản và trạng thái hoạt động. *@
+@model KhuVuc
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3">
+</div>
+<div class="mb-3">
+<label asp-for="TenKhuVuc" class="form-label">
+</label>
+<input asp-for="TenKhuVuc" class="form-control" />
+<span asp-validation-for="TenKhuVuc" class="text-danger">
+</span>
+</div>
+<div class="mb-3">
+<label asp-for="PhiCoBan" class="form-label">
+</label>
+<input asp-for="PhiCoBan" type="number" min="0" step="1000" class="form-control" />
+<span asp-validation-for="PhiCoBan" class="text-danger">
+</span>
+</div>
+<div class="mb-3">
+<label asp-for="MoTa" class="form-label">
+</label>
+<textarea asp-for="MoTa" class="form-control" rows="3">
+</textarea>
+<span asp-validation-for="MoTa" class="text-danger">
+</span>
+</div>
+<div class="mb-3">
+<label asp-for="TrangThai" class="form-label">
+</label>
+<select asp-for="TrangThai" class="form-select">
+<option value="Hoạt động">Hoạt động</option>
+<option value="Ngừng hoạt động">Ngừng hoạt động</option>
+</select>
+<span asp-validation-for="TrangThai" class="text-danger">
+</span>
+</div>
+<button class="btn btn-primary" type="submit">Lưu thông tin</button> <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>

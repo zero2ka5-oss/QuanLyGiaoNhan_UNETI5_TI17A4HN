@@ -1,41 +1,32 @@
-// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@* Họ và tên: Vũ Thị Vân Anh
+   Mã sinh viên: 23103100194
+   Nội dung thực hiện: Module 1 - Giao diện tài khoản, đăng nhập, phân quyền, quản lý loại hàng và khu vực giao. *@
 @model IEnumerable<LoaiHang>
-
 @{
     ViewData["Title"] = "Loại hàng";
 }
-
 <h1>Loại hàng</h1>
-
+@if (TempData["ErrorMessage"] is string errorMessage) { <div class="alert alert-danger" role="alert">@errorMessage</div> }
+@if (TempData["SuccessMessage"] is string successMessage) { <div class="alert alert-success" role="status">@successMessage</div> }
 <p>
-    <a asp-action="Create" class="btn btn-primary">Thêm loại hàng</a>
+<a asp-action="Create" class="btn btn-primary">Thêm</a>
 </p>
-
-<table class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th>Tên loại hàng</th>
-            <th>Hệ số phụ thu</th>
-            <th>Mô tả</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach (var x in Model)
-        {
-            <tr>
-                <td>@x.TenLoaiHang</td>
-                <td>@x.HeSoPhuThu</td>
-                <td>@x.MoTa</td>
-                <td>@x.TrangThai</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@x.MaLoaiHang" class="btn btn-sm btn-info">Chi tiết</a>
-                    <a asp-action="Edit" asp-route-id="@x.MaLoaiHang" class="btn btn-sm btn-warning">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@x.MaLoaiHang" class="btn btn-sm btn-danger">Xóa</a>
-                </td>
-            </tr>
-        }
-    </tbody>
+<div class="table-responsive">
+<table class="table table-striped table-hover align-middle">
+<tr>
+<th>Tên</th>
+<th>Hệ số</th>
+<th>Trạng thái</th>
+<th>
+</th>
+</tr>
+@foreach (var x in Model) {<tr>
+<td>@x.TenLoaiHang</td>
+<td>@x.HeSoPhuThu</td>
+<td>@x.TrangThai</td>
+<td>
+<a asp-action="Details" asp-route-id="@x.MaLoaiHang">Chi tiết</a> | <a asp-action="Edit" asp-route-id="@x.MaLoaiHang">Sửa</a> | <a asp-action="Delete" asp-route-id="@x.MaLoaiHang">Xóa</a>
+</td>
+</tr>}
 </table>
+</div>

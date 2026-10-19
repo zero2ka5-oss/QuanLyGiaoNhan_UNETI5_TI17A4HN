@@ -1,0 +1,36 @@
+@* Họ và tên: Vũ Thị Vân Anh
+   Mã sinh viên: 23103100194
+   Nội dung thực hiện: Module 1 - Giao diện tài khoản, đăng nhập, phân quyền, quản lý loại hàng và khu vực giao. *@
+@model IEnumerable<TaiKhoan>
+@{ ViewData["Title"] = "Tài khoản"; }
+<h1>Tài khoản</h1>
+@if (TempData["ErrorMessage"] is string errorMessage) { <div class="alert alert-danger" role="alert">@errorMessage</div> }
+@if (TempData["SuccessMessage"] is string successMessage) { <div class="alert alert-success" role="status">@successMessage</div> }
+<p>
+<a class="btn btn-primary" asp-action="Create">Thêm tài khoản</a>
+</p>
+<div class="table-responsive">
+<table class="table table-striped table-hover align-middle">
+<thead>
+<tr>
+<th>Tên đăng nhập</th>
+<th>Họ tên</th>
+<th>Email</th>
+<th>Vai trò</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+@foreach (var item in Model) { <tr>
+<td>@item.TenDangNhap</td>
+<td>@item.HoTen</td>
+<td>@item.Email</td>
+<td>@item.VaiTro</td>
+<td>
+<a asp-action="Details" asp-route-id="@item.MaTaiKhoan">Chi tiết</a> | <a asp-action="Edit" asp-route-id="@item.MaTaiKhoan">Sửa</a> | <a asp-action="Delete" asp-route-id="@item.MaTaiKhoan">Xóa</a>
+</td>
+</tr> }
+</tbody>
+</table>
+</div>

@@ -1,0 +1,35 @@
+@model IEnumerable<DonGiaoHang>
+@{ ViewData["Title"] = "Đơn giao hàng"; }
+<h1>Đơn giao hàng</h1>
+<form class="row mb-3">
+<div class="col-md-4">
+<input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm người nhận/địa chỉ" />
+</div>
+<div class="col-auto">
+<button class="btn btn-outline-primary">Tìm kiếm</button>
+</div>
+<div class="col-auto">
+<a asp-action="Create" class="btn btn-primary">Tạo đơn</a>
+</div>
+</form>
+<table class="table">
+<tr>
+<th>Mã</th>
+<th>Người nhận</th>
+<th>Địa chỉ</th>
+<th>Khối lượng</th>
+<th>Trạng thái</th>
+<th>
+</th>
+</tr>
+@foreach (var x in Model) {<tr>
+<td>@x.MaDon</td>
+<td>@x.TenNguoiNhan</td>
+<td>@x.DiaChiNhan</td>
+<td>@x.KhoiLuong</td>
+<td>@x.TrangThai</td>
+<td>
+<a asp-action="Details" asp-route-id="@x.MaDon">Chi tiết</a> | <a asp-action="Edit" asp-route-id="@x.MaDon">Sửa</a> | <a asp-action="Delete" asp-route-id="@x.MaDon">Xóa</a>
+</td>
+</tr>}
+</table>

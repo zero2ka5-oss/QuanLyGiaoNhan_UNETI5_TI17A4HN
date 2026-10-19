@@ -1,27 +1,9 @@
-// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@* Họ và tên: Vũ Thị Vân Anh
+   Mã sinh viên: 23103100194
+   Nội dung thực hiện: Module 1 - Giao diện tài khoản, đăng nhập, phân quyền, quản lý loại hàng và khu vực giao. *@
 @model LoaiHang
-
-@{
-    ViewData["Title"] = "Chi tiết loại hàng";
-}
-
-<h1>Chi tiết loại hàng</h1>
-
-<hr />
-
-<dl class="row">
-    <dt class="col-sm-3">Tên loại hàng</dt>
-    <dd class="col-sm-9">@Model.TenLoaiHang</dd>
-
-    <dt class="col-sm-3">Hệ số phụ thu</dt>
-    <dd class="col-sm-9">@Model.HeSoPhuThu</dd>
-
-    <dt class="col-sm-3">Mô tả</dt>
-    <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "Không có" : Model.MoTa)</dd>
-
-    <dt class="col-sm-3">Trạng thái</dt>
-    <dd class="col-sm-9">@Model.TrangThai</dd>
-</dl>
-
-<a asp-action="Edit" asp-route-id="@Model.MaLoaiHang" class="btn btn-warning">Sửa</a>
-<a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+@{ ViewData["Title"] = "Chi tiết loại hàng"; }
+<h1>@Model.TenLoaiHang</h1>
+<p>Hệ số phụ thu: @Model.HeSoPhuThu</p>
+<p>@Model.MoTa</p>
+<a asp-action="Index">Quay lại</a>

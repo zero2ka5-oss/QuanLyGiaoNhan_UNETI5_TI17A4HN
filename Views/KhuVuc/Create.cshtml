@@ -1,0 +1,11 @@
+@* Họ và tên: Vũ Thị Vân Anh
+   Mã sinh viên: 23103100194
+   Nội dung thực hiện: Module 1 - Giao diện tài khoản, đăng nhập, phân quyền, quản lý loại hàng và khu vực giao. *@
+@model KhuVuc
+@{ ViewData["Title"] = "Thêm khu vực"; }
+<h1>Thêm khu vực</h1>
+<form asp-action="Create">
+<partial name="_Form" model="Model" />
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

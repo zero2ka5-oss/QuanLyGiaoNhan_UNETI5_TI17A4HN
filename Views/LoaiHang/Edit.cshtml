@@ -1,30 +1,12 @@
-// Họ và tên: Vũ Thị Vân Anh MSSV: 23103100194
+@* Họ và tên: Vũ Thị Vân Anh
+   Mã sinh viên: 23103100194
+   Nội dung thực hiện: Module 1 - Giao diện tài khoản, đăng nhập, phân quyền, quản lý loại hàng và khu vực giao. *@
 @model LoaiHang
-
-@{
-    ViewData["Title"] = "Sửa loại hàng";
-}
-
+@{ ViewData["Title"] = "Sửa loại hàng"; }
 <h1>Sửa loại hàng</h1>
-
-<hr />
-
-<form asp-action="Edit" method="post">
-    <input asp-for="MaLoaiHang" type="hidden" />
-
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <partial name="_Form" model="Model" />
-
-    <button type="submit" class="btn btn-primary">
-        Lưu thay đổi
-    </button>
-
-    <a asp-action="Index" class="btn btn-secondary">
-        Quay lại
-    </a>
+<form asp-action="Edit">
+<input asp-for="MaLoaiHang" type="hidden" />
+<partial name="_Form" model="Model" />
 </form>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

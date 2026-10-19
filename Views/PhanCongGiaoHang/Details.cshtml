@@ -1,0 +1,6 @@
+@model PhanCongGiaoHang
+@{ ViewData["Title"] = "Chi tiết phân công"; }
+<h1>Phân công #@Model.MaPhanCong</h1>
+<p>Đơn: #@Model.MaDon; nhân viên: @Model.NhanVienGiaoHang?.HoTen; phương tiện: @Model.PhuongTien?.BienSo</p>
+<p>Trạng thái: @Model.TrangThai</p>
+<a asp-action="Index">Quay lại</a>
