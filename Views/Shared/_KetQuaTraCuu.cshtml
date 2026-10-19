@@ -1,12 +1,20 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Kết quả tra cứu một đơn: thẻ trạng thái + thanh hành trình 5 bước, lịch sử giao nhận (mô tả công khai),
-                       thông tin đơn (che tên / số điện thoại người nhận), số tiền thanh toán khi nhận, hỗ trợ.
-                       Dùng chung cho trang Tra cứu công khai và trang Tra cứu của khách hàng. *@
-@model DonGiaoHang
+﻿@model DonGiaoHang
 @{
     var d = Model;
     var lichSu = d.LichSus.OrderByDescending(l => l.ThoiGian).ThenByDescending(l => l.MaLichSu).ToList();
-    bool dung = d.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.DaHuy;
+    bool dung = d.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong;
+    // Trang công khai: vị trí chỉ ở mức bưu cục / "đang vận chuyển" – không lộ GPS, tên shipper
+    string viTri = d.BuuCucHienTai is { } bcHt ? $"Tại {bcHt.TenBuuCuc} ({bcHt.TinhThanh})"
+        : d.TrangThai switch
+        {
+            TrangThaiDon.DaTao => $"Chờ người gửi mang tới {d.BuuCucGui?.TenBuuCuc}",
+            TrangThaiDon.ChoLayTanNoi => "Chờ shipper đến lấy hàng tại địa chỉ gửi",
+            TrangThaiDon.DaLayTanNoi => $"Shipper đang chuyển hàng về {d.BuuCucGui?.TenBuuCuc}",
+            TrangThaiDon.DaLayLienTinh or TrangThaiDon.DangTrungChuyen => $"Đang trung chuyển tới {d.BuuCucNhan?.TenBuuCuc}",
+            TrangThaiDon.DaLayGiaoHang or TrangThaiDon.DangGiao or TrangThaiDon.HenGiaoLai or TrangThaiDon.GiaoKhongThanhCong => $"Shipper khu vực của {d.BuuCucNhan?.TenBuuCuc} đang giữ",
+            TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat => "Đã giao tới người nhận",
+            _ => "—"
+        };
     bool xong = d.TrangThai is TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat;
     var capNhat = lichSu.FirstOrDefault()?.ThoiGian ?? d.NgayTao;
 }
@@ -44,16 +52,19 @@
                 <span class="avt">@HienThi.ChuCaiDau(d.TenNguoiNhan)</span>
                 <div class="min-w-0"><div class="fw-semibold text-truncate">@DinhDang.CheTen(d.TenNguoiNhan)</div><div class="nho mo">@DinhDang.CheSoDienThoai(d.SoDienThoaiNguoiNhan)</div></div>
             </div>
+            <div class="dong-tt"><span><i class="bi bi-pin-map"></i> Vị trí hiện tại</span><span class="text-end">@viTri</span></div>
+            <div class="dong-tt"><span><i class="bi bi-signpost-split"></i> Tuyến</span><span class="text-end">@d.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") → @d.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")</span></div>
             <div class="dong-tt"><span><i class="bi bi-geo-alt"></i> Khu vực</span><span>@d.KhuVuc?.TenKhuVuc</span></div>
             <div class="dong-tt"><span><i class="bi bi-tag"></i> Loại hàng</span><span>@d.LoaiHang?.TenLoaiHang</span></div>
             <div class="dong-tt"><span><i class="bi bi-box"></i> Khối lượng</span><span>@DinhDang.KhoiLuong(d.KhoiLuong)</span></div>
+            <div class="dong-tt"><span><i class="bi bi-send"></i> Hình thức gửi</span><span>@d.HinhThucGui.TenHienThi()</span></div>
             <div class="dong-tt"><span><i class="bi bi-calendar3"></i> Ngày tạo</span><span>@DinhDang.Ngay(d.NgayTao)</span></div>
             <div class="dong-tt"><span><i class="bi bi-calendar-check"></i> Giao dự kiến</span><span>@DinhDang.Ngay(d.NgayGiaoDuKien)</span></div>
         </div>
         <div class="tc-thanh-toan mb-4">
             <div class="nho" style="opacity:.85">Người nhận thanh toán khi nhận hàng</div>
             <div class="tc-so-tien">@DinhDang.Tien(d.TongThuNguoiNhan)</div>
-            <div class="nho" style="opacity:.85">@(d.TongThuNguoiNhan > 0 ? "Thanh toán tiền mặt cho nhân viên giao hàng" : "Không cần thanh toán thêm")</div>
+            <div class="nho" style="opacity:.85">@(d.TongThuNguoiNhan > 0 ? "Thanh toán tiền mặt cho shipper khi nhận hàng" : "Không cần thanh toán thêm")</div>
             <i class="bi bi-wallet2 tc-thanh-toan-icon"></i>
         </div>
         <div class="the-mem p-4 d-flex align-items-center gap-3">

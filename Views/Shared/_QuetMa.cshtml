@@ -1,0 +1,19 @@
+﻿@model string?
+@* Khung quét mã vận đơn: camera (QR / barcode) + ô nhập tay. Gửi GET ?ma=... về action hiện tại (ViewData["UrlQuet"]). *@
+@{ string url = ViewData["UrlQuet"] as string ?? Context.Request.Path; string? goiY = ViewData["GoiYQuet"] as string; }
+<div class="the-mem p-3 mb-3">
+    <form id="formQuet" method="get" action="@url">
+        @if (ViewData["ThamSoQuet"] is IDictionary<string, string?> thamSo)
+        {
+            foreach (var (k, v) in thamSo) { <input type="hidden" name="@k" value="@v" /> }
+        }
+        <label class="form-label fw-semibold" for="oMaQuet"><i class="bi bi-qr-code-scan text-cam"></i> Quét hoặc nhập mã vận đơn</label>
+        <div class="input-group input-group-lg">
+            <input id="oMaQuet" name="ma" value="@Model" class="form-control text-uppercase" placeholder="VD: DH202610060041" autocomplete="off" autofocus />
+            <button class="btn btn-cam px-4"><i class="bi bi-search"></i></button>
+        </div>
+        @if (goiY is not null) { <div class="nho mo mt-1">@goiY</div> }
+        <button type="button" id="nutCamera" class="btn btn-outline-dark w-100 mt-2"><i class="bi bi-camera"></i> Bật camera quét mã</button>
+        <div id="vungQuet" class="vung-quet d-none mt-2"></div>
+    </form>
+</div>

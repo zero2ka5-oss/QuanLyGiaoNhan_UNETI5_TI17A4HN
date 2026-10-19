@@ -1,0 +1,184 @@
+@* THÔNG BÁO FLASH HỆ THỐNG HIỆN ĐẠI (SUCCESS / WARNING / ERROR / INFO) *@
+@if (TempData["Success"] is string thanhCong)
+{
+    <div class="thong-bao-banner tb-thanh-cong alert alert-dismissible fade show" role="alert">
+        <div class="tb-trai">
+            <div class="tb-bieu-tuong">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="tb-noi-dung">
+                <div class="tb-tieu-de">Thành công</div>
+                <div class="tb-thong-diep">@thanhCong</div>
+            </div>
+        </div>
+        <button type="button" class="tb-nut-dong" data-bs-dismiss="alert" aria-label="Đóng thông báo">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="tb-thanh-chay"></div>
+    </div>
+}
+@if (TempData["Warning"] is string canhBao)
+{
+    <div class="thong-bao-banner tb-canh-bao alert alert-dismissible fade show" role="alert">
+        <div class="tb-trai">
+            <div class="tb-bieu-tuong">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div class="tb-noi-dung">
+                <div class="tb-tieu-de">Lưu ý / Cảnh báo</div>
+                <div class="tb-thong-diep">@canhBao</div>
+            </div>
+        </div>
+        <button type="button" class="tb-nut-dong" data-bs-dismiss="alert" aria-label="Đóng thông báo">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="tb-thanh-chay"></div>
+    </div>
+}
+@if (TempData["Error"] is string loi)
+{
+    <div class="thong-bao-banner tb-that-bai alert alert-dismissible fade show" role="alert">
+        <div class="tb-trai">
+            <div class="tb-bieu-tuong">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <div class="tb-noi-dung">
+                <div class="tb-tieu-de">Có lỗi xảy ra</div>
+                <div class="tb-thong-diep">@loi</div>
+            </div>
+        </div>
+        <button type="button" class="tb-nut-dong" data-bs-dismiss="alert" aria-label="Đóng thông báo">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="tb-thanh-chay"></div>
+    </div>
+}
+@if (TempData["Info"] is string thongTin)
+{
+    <div class="thong-bao-banner tb-thong-tin alert alert-dismissible fade show" role="alert">
+        <div class="tb-trai">
+            <div class="tb-bieu-tuong">
+                <i class="bi bi-info-circle-fill"></i>
+            </div>
+            <div class="tb-noi-dung">
+                <div class="tb-tieu-de">Thông báo</div>
+                <div class="tb-thong-diep">@thongTin</div>
+            </div>
+        </div>
+        <button type="button" class="tb-nut-dong" data-bs-dismiss="alert" aria-label="Đóng thông báo">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="tb-thanh-chay"></div>
+    </div>
+}
+
+
+@* POPUP CHÀO MỪNG ĐĂNG NHẬP GÓC MÀN HÌNH *@
+@if (TempData["PopupChaoMung"] is string chaoMung)
+{
+    var vaiTroPopup = TempData["PopupVaiTro"] as string ?? "";
+    var moTaPopup = TempData["PopupMoTa"] as string ?? "";
+    var hoTenPopup = TempData["PopupHoTen"] as string ?? "";
+    var anhPopup = TempData["PopupAnh"] as string;
+    var laQuanTri = vaiTroPopup == VaiTroNguoiDung.QuanTri;
+    var laShipper = vaiTroPopup == VaiTroNguoiDung.GiaoHang;
+    var laNhanVien = vaiTroPopup is VaiTroNguoiDung.NhanVien or "DieuPhoi" or "BuuCuc";
+    var tenVaiTroHienThi = laQuanTri ? "Quản trị viên" : (laShipper ? "Shipper giao hàng" : (laNhanVien ? "Nhân viên vận hành" : "Khách hàng"));
+
+    <div id="popupChaoMungDangNhap" class="popup-chao-mung @(laQuanTri ? "popup-quantri" : (laShipper ? "popup-shipper" : (laNhanVien ? "popup-nhanvien" : "popup-khachhang")))" role="alert" aria-live="polite">
+        <div class="popup-chao-mung-card">
+            <button type="button" class="popup-nut-dong" onclick="dongPopupChaoMung(this)" aria-label="Đóng thông báo">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="popup-noi-dung">
+                <div class="popup-khung-icon">
+                    @if (!string.IsNullOrEmpty(anhPopup))
+                    {
+                        <img src="@anhPopup" alt="@hoTenPopup" class="popup-anh-avt" />
+                    }
+                    else if (laQuanTri)
+                    {
+                        <div class="popup-icon-tron icon-quantri">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                    }
+                    else if (laShipper)
+                    {
+                        <div class="popup-icon-tron icon-shipper">
+                            <i class="bi bi-bicycle"></i>
+                        </div>
+                    }
+                    else if (laNhanVien)
+                    {
+                        <div class="popup-icon-tron icon-nhanvien">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="popup-icon-tron icon-khachhang">
+                            <i class="bi bi-person-heart"></i>
+                        </div>
+                    }
+                    <span class="popup-cham-online" title="Trạng thái trực tuyến"></span>
+                </div>
+                <div class="popup-thong-tin">
+                    <div class="popup-the-vai-tro">
+                        <span class="popup-nhan-vai-tro">@tenVaiTroHienThi</span>
+                        <span class="popup-thoi-gian"><i class="bi bi-clock me-1"></i>Vừa xong</span>
+                    </div>
+                    <div class="popup-tieu-de">@chaoMung</div>
+                    @if (!string.IsNullOrEmpty(moTaPopup))
+                    {
+                        <div class="popup-mo-ta">@moTaPopup</div>
+                    }
+                </div>
+            </div>
+            <div class="popup-thanh-thoi-gian">
+                <div class="popup-tien-trinh"></div>
+            </div>
+        </div>
+    </div>
+}
+
+@* POPUP ĐĂNG XUẤT THÀNH CÔNG GÓC MÀN HÌNH *@
+@if (TempData["PopupDangXuat"] is string dangXuat)
+{
+    var hoTenDx = TempData["PopupDangXuatHoTen"] as string ?? "";
+    var moTaDx = TempData["PopupDangXuatMoTa"] as string ?? "Hẹn gặp lại bạn!";
+    var anhDx = TempData["PopupDangXuatAnh"] as string;
+
+    <div id="popupDangXuat" class="popup-chao-mung popup-dangxuat" role="alert" aria-live="polite">
+        <div class="popup-chao-mung-card">
+            <button type="button" class="popup-nut-dong" onclick="dongPopupChaoMung(this)" aria-label="Đóng thông báo">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="popup-noi-dung">
+                <div class="popup-khung-icon">
+                    @if (!string.IsNullOrEmpty(anhDx))
+                    {
+                        <img src="@anhDx" alt="@hoTenDx" class="popup-anh-avt" />
+                    }
+                    else
+                    {
+                        <div class="popup-icon-tron icon-dangxuat">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                    }
+                </div>
+                <div class="popup-thong-tin">
+                    <div class="popup-the-vai-tro">
+                        <span class="popup-nhan-vai-tro bg-secondary-subtle text-secondary">Đã đăng xuất</span>
+                        <span class="popup-thoi-gian"><i class="bi bi-clock me-1"></i>Vừa xong</span>
+                    </div>
+                    <div class="popup-tieu-de">@dangXuat</div>
+                    <div class="popup-mo-ta">@(string.IsNullOrEmpty(hoTenDx) ? moTaDx : $"{moTaDx} Tạm biệt, {hoTenDx}!")</div>
+                </div>
+            </div>
+            <div class="popup-thanh-thoi-gian">
+                <div class="popup-tien-trinh"></div>
+            </div>
+        </div>
+    </div>
+}
+

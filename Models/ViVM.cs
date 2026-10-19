@@ -1,21 +1,14 @@
-// Họ và tên: Nguyễn Minh Hướng
-// Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 4 - ViewModel ví shipper (số dư, tiền thu hộ đang giữ, lịch sử giao dịch) và trang quản trị ví.
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
-/// <summary>Các con số của ví một shipper – tính từ đơn đã giao và giao dịch, không lưu cứng.</summary>
+/// <summary>Các con số của ví một shipper – tính từ đơn đã giao và giao dịch.</summary>
 public class ViShipperVM
 {
     public NhanVienGiaoHang NhanVien { get; set; } = null!;
-    /// <summary>Tiền đã thu của người nhận (COD + phí ship người nhận trả), chưa nộp.</summary>
     public decimal TienDangGiu { get; set; }
     public int SoDonDangGiu { get; set; }
-    /// <summary>Tiền đã tạo lệnh nộp, chờ chủ quản xác nhận.</summary>
     public decimal TienChoXacNhanNop { get; set; }
-    /// <summary>Thu nhập = tiền ship các đơn giao thành công.</summary>
     public decimal ThuNhap { get; set; }
     public int SoDonThanhCong { get; set; }
     public decimal DaRut { get; set; }
@@ -35,12 +28,14 @@ public class NopTienVM
     [StringLength(100)]
     [Display(Name = "Mã giao dịch / biên nhận")]
     public string? MaThamChieu { get; set; }
+
+    public List<int>? MaDonChon { get; set; }
 }
 
 /// <summary>Yêu cầu rút tiền ship về tài khoản ngân hàng.</summary>
 public class RutTienVM
 {
-    [Range(1, 1_000_000_000, ErrorMessage = "Nhập số tiền cần rút")]
+    [Range(typeof(decimal), "1", "1000000000", ErrorMessage = "Nhập số tiền cần rút")]
     [Display(Name = "Số tiền rút")]
     public decimal SoTien { get; set; }
 

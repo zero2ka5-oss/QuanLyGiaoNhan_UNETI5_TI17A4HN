@@ -1,26 +1,33 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Khối ước lượng phí (nút Ước lượng → kết quả chi tiết) + bảng giá dạng thẻ. Dùng chung cho
-                       trang chủ công khai và trang Bảng giá của khách hàng; xử lý trong site.js (khoiTaoUocLuong). *@
 @model BangGiaVM
     @* ---------- Ước lượng phí: nhập thông tin → bấm Ước lượng → xem chi tiết ---------- *@
     <div class="uoc-luong" id="uocLuong">
         <form class="ul-nhap" id="formUocLuong" data-khach="@(Model.LaKhachHang ? "1" : "0")" novalidate>
-            <div class="ul-tieu-de"><span class="xt-icon cam"><i class="bi bi-calculator"></i></span><div><b>Ước lượng phí vận chuyển</b><small>Nhập thông tin hàng để xem chi phí chính xác</small></div></div>
+            <div class="ul-tieu-de"><span class="xt-icon cam"><i class="bi bi-calculator"></i></span><div><b>Ước lượng phí vận chuyển</b><small>Dựa trên khoảng cách giữa các tỉnh thành và khối lượng</small></div></div>
             <div class="row g-3">
-                <div class="col-md-6"><label class="form-label" for="utKhuVuc">Khu vực giao</label>
+                <div class="col-md-6"><label class="form-label" for="utBuuCucGui"><i class="bi bi-geo-alt-fill text-cam"></i> Bưu cục gửi (tỉnh gửi)</label>
+                    <select id="utBuuCucGui" class="form-select">
+                        <option value="">-- Chọn bưu cục gửi --</option>
+                        @if (Model.DsBuuCuc is not null)
+                        {
+                            @foreach (var bc in Model.DsBuuCuc) { <option value="@bc.MaBuuCuc">@bc.TenBuuCuc (@bc.TinhThanh)</option> }
+                        }
+                    </select></div>
+                <div class="col-md-6"><label class="form-label" for="utKhuVuc"><i class="bi bi-pin-map-fill text-success"></i> Khu vực nhận (tỉnh nhận)</label>
                     <select id="utKhuVuc" class="form-select" required>
-                        <option value="">-- Chọn khu vực giao --</option>
+                        <option value="">-- Chọn khu vực nhận --</option>
                         @foreach (var kv in Model.DsKhuVuc) { <option value="@kv.MaKhuVuc">@kv.TenKhuVuc</option> }
                     </select></div>
                 <div class="col-md-6"><label class="form-label" for="utLoaiHang">Loại hàng</label>
                     <select id="utLoaiHang" class="form-select">
                         @foreach (var l in Model.DsLoaiHang) { <option value="@l.MaLoaiHang">@l.TenLoaiHang</option> }
                     </select></div>
-                <div class="col-md-6"><label class="form-label" for="utKhoiLuong">Khối lượng</label>
+                <div class="col-md-3"><label class="form-label" for="utKhoiLuong">Khối lượng</label>
                     <div class="input-group"><input id="utKhoiLuong" type="number" min="0.1" max="@Model.KhoiLuongToiDa.ToString(System.Globalization.CultureInfo.InvariantCulture)" step="0.1" value="1" class="form-control" inputmode="decimal" /><span class="input-group-text">kg</span></div></div>
+                <div class="col-md-3"><label class="form-label" for="utKichThuoc">Kích thước</label>
+                    <div class="input-group"><input id="utKichThuoc" type="number" min="0.001" step="0.001" value="0.005" class="form-control" inputmode="decimal" /><span class="input-group-text">m³</span></div></div>
                 <div class="col-md-6"><label class="form-label" for="utThuHo">Tiền thu hộ <span class="mo fw-normal">(nếu có)</span></label>
                     <div class="input-group"><input id="utThuHo" type="text" class="form-control" placeholder="0" inputmode="numeric" autocomplete="off" /><span class="input-group-text">đ</span></div></div>
-                <div class="col-12"><label class="form-label">Người trả phí ship</label>
+                <div class="col-md-6"><label class="form-label">Người trả phí ship</label>
                     <div class="ul-chon">
                         <label><input type="radio" name="utNguoiTra" value="NguoiGui" checked /><span><i class="bi bi-person-up"></i> Người gửi trả</span></label>
                         <label><input type="radio" name="utNguoiTra" value="NguoiNhan" /><span><i class="bi bi-person-down"></i> Người nhận trả</span></label>
@@ -34,14 +41,17 @@
             <div class="ul-cho" id="utCho">
                 <div class="ul-cho-icon"><i class="bi bi-receipt"></i></div>
                 <b>Kết quả ước lượng</b>
-                <small>Chọn khu vực, loại hàng, khối lượng rồi bấm “Ước lượng phí”</small>
+                <small>Chọn bưu cục gửi, khu vực nhận, loại hàng rồi bấm “Ước lượng phí”</small>
             </div>
             <div class="ul-chi-tiet d-none" id="utChiTiet">
                 <div class="ul-nhan">Phí vận chuyển</div>
                 <div class="ul-tong" id="utTong">0 đ</div>
                 <div class="ul-tom-tat" id="utTomTat"></div>
-                <div class="ul-dong"><span>Phí cơ bản theo khu vực</span><b id="utCoBan"></b></div>
+                <div class="ul-dong d-none" id="utDongCuLy"><span>Cự ly & thời gian</span><b id="utCuLy" class="text-cam"></b></div>
+                <div class="ul-dong d-none" id="utDongDuKien"><span>Ngày giao dự kiến</span><b id="utDuKien" class="text-success"></b></div>
+                <div class="ul-dong"><span>Phí cơ bản theo cự ly</span><b id="utCoBan"></b></div>
                 <div class="ul-dong"><span id="utNhanKl">Phụ phí khối lượng</span><b id="utPhuKl"></b></div>
+                <div class="ul-dong d-none" id="utDongPhuKt"><span id="utNhanKt">Phụ phí cồng kềnh</span><b id="utPhuKt" class="text-warning-emphasis"></b></div>
                 <div class="ul-dong"><span id="utNhanLoai">Phụ phí loại hàng</span><b id="utPhuLoai"></b></div>
                 <div class="ul-thu" id="utKhoiThu">
                     <div class="ul-dong"><span>Người nhận thanh toán khi nhận</span><b id="utNguoiNhan"></b></div>
@@ -55,20 +65,37 @@
     @* ---------- Bảng giá dạng thẻ ---------- *@
     <div class="row g-4 mt-1">
         <div class="col-lg-7">
-            <h3 class="bg-tieu-de"><i class="bi bi-geo-alt text-cam"></i> Phí cơ bản theo khu vực</h3>
+            <h3 class="bg-tieu-de"><i class="bi bi-signpost-2 text-cam"></i> Bảng giá cước theo cự ly khoảng cách</h3>
             <div class="bg-khu-vuc">
-                @foreach (var kv in Model.DsKhuVuc)
+                @if (Model.DsCuLy is not null && Model.DsCuLy.Count > 0)
                 {
-                    <div class="bg-kv">
-                        <span class="bg-kv-icon"><i class="bi bi-geo-alt-fill"></i></span>
-                        <div class="min-w-0 flex-grow-1"><div class="fw-bold">@kv.TenKhuVuc</div><div class="nho mo bg-kv-mo-ta">@kv.MoTa</div></div>
-                        <div class="bg-gia">@DinhDang.Tien(kv.PhiCoBan)</div>
-                    </div>
+                    @foreach (var cl in Model.DsCuLy)
+                    {
+                        <div class="bg-kv">
+                            <span class="bg-kv-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                            <div class="min-w-0 flex-grow-1">
+                                <div class="fw-bold">@cl.TenKhung</div>
+                                <div class="nho mo bg-kv-mo-ta">@(cl.DenKm >= 90000 ? $"> {cl.TuKm} km" : $"{cl.TuKm} – {cl.DenKm} km") · @cl.MoTa</div>
+                            </div>
+                            <div class="bg-gia">@DinhDang.Tien(cl.PhiCoBan)</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    @foreach (var kv in Model.DsKhuVuc.Take(6))
+                    {
+                        <div class="bg-kv">
+                            <span class="bg-kv-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                            <div class="min-w-0 flex-grow-1"><div class="fw-bold">@kv.TenKhuVuc</div><div class="nho mo bg-kv-mo-ta">@kv.MoTa</div></div>
+                            <div class="bg-gia">@DinhDang.Tien(kv.PhiCoBan)</div>
+                        </div>
+                    }
                 }
             </div>
         </div>
         <div class="col-lg-5">
-            <h3 class="bg-tieu-de"><i class="bi bi-tags text-cam"></i> Phụ phí theo loại hàng</h3>
+            <h3 class="bg-tieu-de"><i class="bi bi-tags text-cam"></i> Phụ phí theo loại hàng & khối lượng</h3>
             <div class="bg-loai">
                 @foreach (var l in Model.DsLoaiHang)
                 {
@@ -78,6 +105,8 @@
                     </div>
                 }
                 <div class="bg-ghi"><i class="bi bi-box"></i> Hàng trên @DinhDang.KhoiLuong(TinhPhiXuLy.NguongKhoiLuongKg): cộng @DinhDang.Tien(TinhPhiXuLy.DonGiaVuotMoiKg) cho mỗi kg vượt</div>
+                <div class="bg-ghi mt-2"><i class="bi bi-box-seam"></i> Hàng cồng kềnh: 0,01–0,03 m³ (+10.000 đ); 0,03–0,08 m³ (+20.000 đ); trên 0,08 m³ (+35.000 đ + 5.000 đ/0,01 m³).</div>
+                <div class="bg-ghi mt-2"><i class="bi bi-buildings"></i> Mạng lưới: phủ sóng <b>34 tỉnh thành</b> với 34 bưu cục giao nhận trên toàn quốc.</div>
             </div>
         </div>
     </div>

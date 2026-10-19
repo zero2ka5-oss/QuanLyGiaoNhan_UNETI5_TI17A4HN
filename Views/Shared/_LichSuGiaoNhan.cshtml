@@ -1,8 +1,4 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Module 5 - Timeline lịch sử giao nhận của một đơn (mới nhất trên cùng).
-                       ViewData["CongKhai"] = true (trang tra cứu công khai): chỉ hiện mô tả chung của từng mốc,
-                       ẩn nội dung nội bộ và người thực hiện. *@
-@model IEnumerable<LichSuGiaoNhan>
+﻿@model IEnumerable<LichSuGiaoNhan>
 @{
     bool congKhai = ViewData["CongKhai"] is true;
     // Trang công khai: bỏ các dòng "cập nhật thông tin" nội bộ (trạng thái không đổi)
@@ -25,11 +21,27 @@ else
                 @if (congKhai)
                 {
                     <div class="ls-noi-dung">@DinhDang.MoTaCongKhai(ls.TrangThaiMoi)</div>
+                    @if (ls.BuuCuc is not null) { <div class="ls-meta"><span class="ls-chip"><i class="bi bi-building"></i> @ls.BuuCuc.TenBuuCuc</span></div> }
                 }
                 else
                 {
                     var (ten, vaiTro, thamChieu) = DinhDang.TachNguoiThucHien(ls.NguoiThucHien);
                     <div class="ls-noi-dung">@ls.NoiDung</div>
+                    @* Tracking event: bưu cục, shipper + phương tiện, quét mã, toạ độ lúc thao tác *@
+                    @if (ls.BuuCuc is not null || ls.NhanVien is not null || ls.QuetMa || ls.ViDo is not null)
+                    {
+                        <div class="ls-meta">
+                            <span class="ls-chip ma" title="Mã sự kiện">@ls.TrangThaiMoi.MaSuKien()</span>
+                            @if (ls.BuuCuc is not null) { <span class="ls-chip"><i class="bi bi-building"></i> @ls.BuuCuc.TenBuuCuc</span> }
+                            @if (ls.NhanVien is not null) { <span class="ls-chip"><i class="bi bi-person-badge"></i> @ls.NhanVien.HoTen@(ls.PhuongTien is null ? "" : $" · {ls.PhuongTien.BienSo}")</span> }
+                            @if (ls.QuetMa) { <span class="ls-chip"><i class="bi bi-qr-code-scan"></i> Quét mã</span> }
+                            @if (ls.ViDo is not null && ls.KinhDo is not null)
+                            {
+                                <a class="ls-chip" target="_blank" rel="noopener" title="Vị trí lúc thao tác"
+                                   href="https://www.openstreetmap.org/?mlat=@ls.ViDo.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)&mlon=@ls.KinhDo.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)#map=16/@ls.ViDo.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)/@ls.KinhDo.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)"><i class="bi bi-geo-alt"></i> Vị trí</a>
+                            }
+                        </div>
+                    }
                     <div class="ls-meta">
                         <span class="ls-nguoi @DinhDang.LopVaiTro(vaiTro)">
                             <span class="ls-avt">@HienThi.ChuCaiDau(ten)</span>@ten

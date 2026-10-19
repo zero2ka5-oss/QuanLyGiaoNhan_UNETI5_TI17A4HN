@@ -1,0 +1,18 @@
+﻿@model DonGiaoHang
+@* Tuyến vận chuyển: bưu cục gửi → (liên tỉnh) → bưu cục nhận → khu vực giao. Dạng dọc để vừa cả cột hẹp. *@
+@{ bool noiVung = Model.MaBuuCucGui is not null && Model.MaBuuCucGui == Model.MaBuuCucNhan; }
+<div class="the-mem p-4 @(ViewData["KhoangCach"] as string ?? "mb-3")">
+    <div class="vc-tieu-de"><i class="bi bi-signpost-split"></i> Tuyến vận chuyển
+        @if (noiVung) { <span class="tt tt-xuly ms-auto">Nội vùng</span> } else { <span class="tt tt-dang ms-auto">Liên tỉnh</span> }</div>
+    <div class="tuyen-buu-cuc">
+        <div class="tuyen-diem">
+            <span class="tuyen-cham"><i class="bi bi-box-arrow-up"></i></span>
+            <div class="min-w-0"><small>Bưu cục gửi</small><b>@(Model.BuuCucGui?.TenBuuCuc ?? "—")</b><small>@Model.BuuCucGui?.DiaChi</small></div>
+        </div>
+        <div class="tuyen-chang">@(noiVung ? "Chuyển nội bộ bưu cục" : "Shipper liên tỉnh vận chuyển")</div>
+        <div class="tuyen-diem">
+            <span class="tuyen-cham nhan"><i class="bi bi-box-arrow-in-down"></i></span>
+            <div class="min-w-0"><small>Bưu cục nhận</small><b>@(Model.BuuCucNhan?.TenBuuCuc ?? "—")</b><small>Phát tới khu vực @Model.KhuVuc?.TenKhuVuc</small></div>
+        </div>
+    </div>
+</div>

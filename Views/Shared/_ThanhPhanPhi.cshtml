@@ -1,20 +1,51 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Module 5 - Hiển thị rõ các thành phần phí vận chuyển, tiền thu hộ (COD), số tiền thu người nhận
-                       và trạng thái đối soát của đơn. *@
 @model DonGiaoHang
 <div class="bang-phi">
     <div class="dong"><span>Phí cơ bản (@Model.KhuVuc?.TenKhuVuc)</span><span>@DinhDang.Tien(Model.PhiCoBan)</span></div>
     <div class="dong"><span>Phụ phí khối lượng (@DinhDang.KhoiLuong(Model.KhoiLuong))</span><span>@DinhDang.Tien(Model.PhuPhiKhoiLuong)</span></div>
+    @if (Model.PhuPhiKichThuoc > 0)
+    {
+        <div class="dong text-warning-emphasis"><span>Phụ phí cồng kềnh (@Model.KichThuocM3.ToString("0.####") m³)</span><span>+@DinhDang.Tien(Model.PhuPhiKichThuoc)</span></div>
+    }
     <div class="dong"><span>Phụ phí loại hàng (@Model.LoaiHang?.TenLoaiHang)</span><span>@DinhDang.Tien(Model.PhuPhiLoaiHang)</span></div>
-    <div class="dong tong"><span>Phí vận chuyển</span><span>@DinhDang.Tien(Model.PhiVanChuyen)</span></div>
+    <div class="dong @(Model.PhiChuyenHoan > 0 ? "" : "tong")"><span>Phí vận chuyển (chiều đi)</span><span>@DinhDang.Tien(Model.PhiVanChuyen)</span></div>
+    @if (Model.PhiChuyenHoan > 0)
+    {
+        <div class="dong text-danger"><span>Phí chuyển hoàn (50% cước đi)</span><span class="fw-semibold">+@DinhDang.Tien(Model.PhiChuyenHoan)</span></div>
+        <div class="dong tong"><span>Tổng cước vận chuyển 2 chiều</span><span class="text-danger fw-bold">@DinhDang.Tien(Model.PhiVanChuyen + Model.PhiChuyenHoan)</span></div>
+    }
 </div>
 <div class="bang-phi mt-3 pt-3 border-top">
     <div class="dong"><span>Người trả phí ship</span><span>@Model.NguoiTraPhi.TenHienThi()</span></div>
     <div class="dong"><span>Tiền thu hộ</span><span>@(Model.TienThuHo > 0 ? DinhDang.Tien(Model.TienThuHo) : "Không thu hộ")</span></div>
     <div class="dong fw-bold"><span>Shipper thu người nhận</span><span class="text-cam">@DinhDang.Tien(Model.TongThuNguoiNhan)</span></div>
+    @if (Model.TienThuHo > 0)
+    {
+        <div class="dong"><span>Trả người gửi khi đối soát</span><span class="fw-semibold">@DinhDang.Tien(Model.TienTraNguoiGui)</span></div>
+    }
+    @if (Model.PhiNguoiGuiPhaiTra > 0)
+    {
+        <div class="dong"><span>Người gửi thanh toán@(Model.PhiChuyenHoan > 0 ? " (cước 2 chiều / cước hoàn)" : Model.TienThuHo > 0 ? " (phần thu hộ không đủ trừ)" : " phí")</span><span class="fw-semibold text-danger">@DinhDang.Tien(Model.PhiNguoiGuiPhaiTra)</span></div>
+        <div class="mt-1 d-flex flex-wrap gap-1">
+            @if (Model.DangChoDuyetCuoc)
+            {
+                <span class="tt tt-cho"><i class="bi bi-hourglass-split"></i> Đã nộp BIDV – Chờ Admin duyệt</span>
+            }
+            else if (Model.NgayThuPhiNguoiGui.HasValue && (!Model.LaDonHoan || Model.NgayThuPhiHoan.HasValue))
+            {
+                <span class="tt tt-hoantat"><i class="bi bi-check2"></i> Đã thanh toán @DinhDang.Ngay(Model.NgayThuPhiHoan ?? Model.NgayThuPhiNguoiGui)</span>
+            }
+            else if (Model.ConNoPhi)
+            {
+                <span class="tt tt-thatbai"><i class="bi bi-receipt"></i> Chưa thanh toán – nợ @DinhDang.Tien(Model.PhiNguoiGuiPhaiTra)</span>
+            }
+            else if (Model.TrangThai != TrangThaiDon.DaHuy)
+            {
+                <span class="tt tt-cho"><i class="bi bi-clock"></i> Thanh toán khi đối soát</span>
+            }
+        </div>
+    }
     @if (Model.TienThuHo > 0 || Model.NguoiTraPhi == NguoiTraPhi.NguoiNhan)
     {
-        <div class="dong"><span>@(Model.TienTraNguoiGui >= 0 ? "Trả người gửi khi đối soát" : "Người gửi thanh toán phí")</span><span class="fw-semibold">@DinhDang.Tien(Math.Abs(Model.TienTraNguoiGui))</span></div>
         <div class="mt-2">
             @if (Model.NgayDoiSoat.HasValue)
             {

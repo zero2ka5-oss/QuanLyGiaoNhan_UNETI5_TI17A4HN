@@ -1,7 +1,4 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Cổng khách hàng - Tra cứu đơn theo mã + số điện thoại người nhận ngay trong trang khách hàng;
-                       lối tắt các đơn đang vận chuyển của chính khách hàng. *@
-@model DonGiaoHang?
+﻿@model DonGiaoHang?
 @{
     ViewData["Title"] = "Tra cứu đơn hàng";
     var donCuaToi = (List<DonGiaoHang>)ViewBag.DonCuaToi;
@@ -12,7 +9,7 @@
         <h2 class="h4 fw-bold mb-1">Theo dõi hành trình đơn hàng</h2>
         <p class="mb-3">Tra cứu cả đơn người khác gửi cho bạn bằng mã đơn và số điện thoại người nhận</p>
         <form method="get" class="tc-hop kh-tim">
-            <div class="o-nhap flex-grow-1"><i class="bi bi-upc-scan"></i><input name="ma" value="@ViewBag.Ma" class="form-control" placeholder="Mã đơn, vd: DH000012" autocomplete="off" required /></div>
+            <div class="o-nhap flex-grow-1"><i class="bi bi-upc-scan"></i><input name="ma" value="@ViewBag.Ma" class="form-control" placeholder="Mã vận đơn, vd: DH202610060041" autocomplete="off" required /></div>
             <div class="o-nhap flex-grow-1"><i class="bi bi-telephone"></i><input name="sdt" value="@ViewBag.Sdt" class="form-control" placeholder="Số điện thoại người nhận" inputmode="tel" required /></div>
             <button class="btn btn-cam xt-nut px-4"><i class="bi bi-search"></i> Tra cứu</button>
         </form>

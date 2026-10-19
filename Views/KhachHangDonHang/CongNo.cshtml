@@ -1,0 +1,272 @@
+@model List<DonGiaoHang>
+@{
+    ViewData["Title"] = "Công nợ cước vận chuyển";
+    var kh = (KhachHang)ViewBag.KhachHang;
+    decimal tongNo = ViewBag.TongNo ?? 0m;
+    int soChoDuyet = Model.Count(d => d.DangChoDuyetCuoc);
+    decimal tongChoDuyet = Model.Where(d => d.DangChoDuyetCuoc).Sum(d => d.PhiNguoiGuiPhaiTra);
+    int soChuaThanhToan = Model.Count(d => !d.DangChoDuyetCuoc);
+    decimal tongChuaThanhToan = Model.Where(d => !d.DangChoDuyetCuoc).Sum(d => d.PhiNguoiGuiPhaiTra);
+}
+
+<div class="row g-4">
+    <div class="col-12">
+        @if (Model.Count > 0)
+        {
+            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border-left: 6px solid #EA580C !important;">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 text-danger fw-bold mb-1">
+                                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                                <span>TÀI KHOẢN ĐANG CÓ CÔNG NỢ CƯỚC VẬN CHUYỂN</span>
+                            </div>
+                            <h2 class="h4 fw-bold text-dark mb-1">
+                                Tổng nợ cước: <span class="text-danger">@DinhDang.Tien(tongNo)</span> (@Model.Count đơn)
+                            </h2>
+                            <div class="d-flex flex-wrap gap-2 my-2">
+                                @if (soChoDuyet > 0)
+                                {
+                                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="bi bi-hourglass-split me-1"></i>Đang chờ Admin duyệt: @DinhDang.Tien(tongChoDuyet) (@soChoDuyet đơn)</span>
+                                }
+                                @if (soChuaThanhToan > 0)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill"><i class="bi bi-x-circle me-1"></i>Chưa thanh toán: @DinhDang.Tien(tongChuaThanhToan) (@soChuaThanhToan đơn)</span>
+                                }
+                            </div>
+                            <p class="text-muted small mb-0">
+                                @if (soChuaThanhToan == 0)
+                                {
+                                    <span>Tất cả đơn nợ của bạn đã được gửi yêu cầu thanh toán và đang đợi Admin xét duyệt tiền vào tài khoản.</span>
+                                }
+                                else
+                                {
+                                    <span>Vui lòng thanh toán các đơn nợ để Admin duyệt gạch nợ và mở khóa quyền tạo đơn mới cho bạn.</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="text-nowrap">
+                            @if (soChuaThanhToan > 0)
+                            {
+                                <button type="button" class="btn btn-warning btn-lg rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalThanhToanTatCa">
+                                    <i class="bi bi-qr-code-scan me-1"></i> Thanh toán tất cả (@DinhDang.Tien(tongChuaThanhToan))
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-semibold" disabled>
+                                    <i class="bi bi-clock-history me-1"></i> Đang chờ Admin duyệt
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (soChoDuyet > 0)
+            {
+                <div class="alert alert-info d-flex align-items-center gap-3 mb-4 rounded-4 shadow-sm border-0">
+                    <span class="fs-4 text-primary"><i class="bi bi-info-circle-fill"></i></span>
+                    <div class="small">
+                        Bạn có <b>@soChoDuyet đơn hàng (@DinhDang.Tien(tongChoDuyet))</b> đã gửi yêu cầu thanh toán chuyển khoản và đang ở trạng thái <b>Chờ Admin duyệt (Pending)</b>. Quản trị viên đang kiểm tra tài khoản nhận tiền. Ngay khi Admin xác nhận, công nợ sẽ được gạch trừ thành công!
+                    </div>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-receipt text-cam me-2"></i>Danh sách các đơn nợ cước</h5>
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">@Model.Count đơn cần xử lý</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đối soát / hoàn</th>
+                                <th>Người nhận & Khu vực</th>
+                                <th>Lý do nợ cước</th>
+                                <th class="text-end">Tiền cước nợ</th>
+                                <th class="text-center" style="width: 190px;">Trạng thái & Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="ChiTiet" asp-route-id="@d.MaDon" class="fw-bold text-decoration-none">@d.MaHienThi</a>
+                                        <div class="text-muted small">@d.LoaiHang?.TenLoaiHang · @DinhDang.KhoiLuong(d.KhoiLuong)</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@DinhDang.Ngay(d.NgayHoanTat ?? d.NgayHoanHang ?? d.NgayTao)</div>
+                                        <div class="text-muted small">@d.TrangThai.TenHienThi()</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@d.TenNguoiNhan (@DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan))</div>
+                                        <div class="text-muted small text-truncate" style="max-width: 250px;">@d.DiaChiNhan</div>
+                                    </td>
+                                    <td>
+                                        @if (d.LaDonHoan || d.TrangThai == TrangThaiDon.DaHoanHang || d.PhiChuyenHoan > 0 || (d.TrangThai == TrangThaiDon.DaHuy && d.NgayHoanHang != null))
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger"><i class="bi bi-arrow-return-left me-1"></i>Đơn chuyển hoàn @(d.PhiChuyenHoan > 0 ? $"(cước hoàn {DinhDang.Tien(d.PhiChuyenHoan)})" : "")</span>
+                                        }
+                                        else if (d.TienThuHo == 0)
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-person-check me-1"></i>Người gửi trả phí (không thu hộ)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info-subtle text-info-emphasis"><i class="bi bi-cash-stack me-1"></i>Tiền thu hộ không đủ cấn trừ cước</span>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold text-danger fs-6">
+                                        @DinhDang.Tien(d.PhiNguoiGuiPhaiTra)
+                                    </td>
+                                    <td class="text-center">
+                                        @if (d.DangChoDuyetCuoc)
+                                        {
+                                            <span class="badge bg-warning text-dark py-2 px-3 rounded-pill fw-semibold shadow-sm">
+                                                <i class="bi bi-hourglass-split me-1"></i>Chờ Admin duyệt
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalThanhToan_@d.MaDon">
+                                                <i class="bi bi-credit-card me-1"></i>Thanh toán
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+
+                                @* Modal thanh toán từng đơn *@
+                                <div class="modal fade" id="modalThanhToan_@d.MaDon" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content rounded-4 border-0 shadow">
+                                            <div class="modal-header border-0 pb-0">
+                                                <h5 class="modal-title fw-bold">Thanh toán cước đơn @d.MaHienThi</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center p-4">
+                                                <div class="mb-3">
+                                                    <div class="text-muted small">Số tiền cần thanh toán</div>
+                                                    <div class="display-6 fw-bold text-danger">@DinhDang.Tien(d.PhiNguoiGuiPhaiTra)</div>
+                                                </div>
+
+                                                <div class="card bg-light border-0 p-3 mb-3 text-start rounded-3">
+                                                    <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Ngân hàng:</span><span class="fw-bold text-primary">BIDV (CN Nam Hà Nội)</span></div>
+                                                    <div class="d-flex justify-content-between mb-1 small align-items-center">
+                                                        <span class="text-muted">Số tài khoản:</span>
+                                                        <span>
+                                                            <span class="fw-bold text-dark font-monospace fs-6">8800707908</span>
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ms-1 text-cam" data-chep="8800707908" title="Sao chép số tài khoản"><i class="bi bi-copy"></i></button>
+                                                        </span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Chủ tài khoản:</span><span class="fw-bold">NGUYEN DINH DAT</span></div>
+                                                    <div class="d-flex justify-content-between small align-items-center">
+                                                        <span class="text-muted">Nội dung CK:</span>
+                                                        <span>
+                                                            <span class="fw-bold text-danger font-monospace">CUOC @d.MaHienThi</span>
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ms-1 text-cam" data-chep="CUOC @d.MaHienThi" title="Sao chép nội dung chuyển khoản"><i class="bi bi-copy"></i></button>
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="p-2 border rounded-3 bg-white mb-3 d-inline-block shadow-sm">
+                                                    <img src="https://img.vietqr.io/image/BIDV-8800707908-compact.png?amount=@Convert.ToInt64(d.PhiNguoiGuiPhaiTra)&addInfo=CUOC%20@d.MaHienThi&accountName=NGUYEN%20DINH%20DAT" 
+                                                         alt="Mã VietQR BIDV thanh toán cước" 
+                                                         style="max-width: 240px; height: auto; border-radius: 8px;"
+                                                         onerror="this.src='/img/qr-thanh-toan.jpg'" />
+                                                    <div class="small text-muted mt-1"><i class="bi bi-qr-code"></i> Quét App Ngân hàng bất kỳ (Napas 24/7)</div>
+                                                </div>
+
+                                                <form asp-action="ThanhToanCuoc" method="post">
+                                                    <input type="hidden" name="id" value="@d.MaDon" />
+                                                    <button type="submit" class="btn btn-warning w-100 py-2 rounded-pill fw-bold">
+                                                        <i class="bi bi-send-check me-1"></i> Tôi đã chuyển khoản xong (Gửi Admin duyệt)
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @* Modal thanh toán tất cả *@
+            @if (soChuaThanhToan > 0)
+            {
+                <div class="modal fade" id="modalThanhToanTatCa" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content rounded-4 border-0 shadow">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold">Thanh toán tất cả công nợ</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="text-muted small">Tổng số tiền @soChuaThanhToan đơn chưa gửi</div>
+                                    <div class="display-6 fw-bold text-danger">@DinhDang.Tien(tongChuaThanhToan)</div>
+                                </div>
+
+                                <div class="card bg-light border-0 p-3 mb-3 text-start rounded-3">
+                                    <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Ngân hàng:</span><span class="fw-bold text-primary">BIDV (CN Nam Hà Nội)</span></div>
+                                    <div class="d-flex justify-content-between mb-1 small align-items-center">
+                                        <span class="text-muted">Số tài khoản:</span>
+                                        <span>
+                                            <span class="fw-bold text-dark font-monospace fs-6">8800707908</span>
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-1 text-cam" data-chep="8800707908" title="Sao chép số tài khoản"><i class="bi bi-copy"></i></button>
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Chủ tài khoản:</span><span class="fw-bold">NGUYEN DINH DAT</span></div>
+                                    <div class="d-flex justify-content-between small align-items-center">
+                                        <span class="text-muted">Nội dung CK:</span>
+                                        <span>
+                                            <span class="fw-bold text-danger font-monospace">CUOC KH@(kh?.MaKhachHang)</span>
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-1 text-cam" data-chep="CUOC KH@(kh?.MaKhachHang)" title="Sao chép nội dung chuyển khoản"><i class="bi bi-copy"></i></button>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="p-2 border rounded-3 bg-white mb-3 d-inline-block shadow-sm">
+                                    <img src="https://img.vietqr.io/image/BIDV-8800707908-compact.png?amount=@Convert.ToInt64(tongChuaThanhToan)&addInfo=CUOC%20KH@(kh?.MaKhachHang)&accountName=NGUYEN%20DINH%20DAT" 
+                                         alt="Mã VietQR BIDV thanh toán cước" 
+                                         style="max-width: 240px; height: auto; border-radius: 8px;"
+                                         onerror="this.src='/img/qr-thanh-toan.jpg'" />
+                                    <div class="small text-muted mt-1"><i class="bi bi-qr-code"></i> Quét App Ngân hàng bất kỳ (Napas 24/7)</div>
+                                </div>
+
+                                <form asp-action="ThanhToanTatCaNo" method="post">
+                                    <button type="submit" class="btn btn-warning w-100 py-2 rounded-pill fw-bold">
+                                        <i class="bi bi-send-check me-1"></i> Xác nhận đã chuyển khoản toàn bộ (Gửi Admin duyệt)
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+                <div class="my-4">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle" style="width: 90px; height: 90px; font-size: 2.8rem;">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </span>
+                    <h3 class="fw-bold mt-4 mb-2">Không có công nợ cước vận chuyển!</h3>
+                    <p class="text-muted mx-auto" style="max-width: 500px;">
+                        Tất cả các đơn hàng của bạn đã hoàn tất đối soát và không có khoản nợ cước phí nào. Tài khoản của bạn hoàn toàn sẵn sàng để tạo đơn giao hàng mới.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a asp-action="TaoMoi" class="btn btn-cam btn-lg rounded-pill px-4"><i class="bi bi-plus-circle me-1"></i> Tạo đơn mới ngay</a>
+                        <a asp-action="Index" class="btn btn-light btn-lg rounded-pill px-4 border"><i class="bi bi-box-seam me-1"></i> Xem danh sách đơn</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

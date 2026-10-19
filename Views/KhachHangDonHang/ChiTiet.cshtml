@@ -1,0 +1,276 @@
+@model ChiTietDonVM
+@{
+    var d = Model.Don;
+    ViewData["Title"] = "Đơn " + d.MaHienThi;
+    var pc = Model.PhanCongHienTai;
+    var pcHienThi = pc ?? Model.DsPhanCong.FirstOrDefault();
+    int soLanGiao = Model.DsPhanCong.Count(p => p.KetQua is KetQuaGiao.GiaoThanhCong or KetQuaGiao.GiaoKhongThanhCong)
+                    + (pc is { LoaiChang: LoaiShipper.KhuVuc, TrangThai: TrangThaiPhanCong.DangGiao } ? 1 : 0);
+
+    bool xong = d.TrangThai is TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat;
+    bool treHan = !d.TrangThai.DaKetThuc() && d.NgayGiaoDuKien.Date < DateTime.Today;
+    ViewData["ThuVien"] = "ma,bando";
+    ViewData["KhoangCach"] = "mb-4";   // trang khách: các thẻ cách nhau mb-4
+    ViewData["UrlViTri"] = Url.Action("ViTri", new { id = d.MaDon });
+    ViewData["UrlInNhan"] = Url.Action("InNhan", new { id = d.MaDon });
+}
+@section Head { <partial name="_BanDoHead" /> }
+
+@* ---------- Thẻ trạng thái + hành trình ---------- *@
+<div class="tc-trang-thai @d.TrangThai.LopTheTrangThai() mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="tc-icon-lon"><i class="bi @d.TrangThai.BieuTuong()"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="ct-ma">@d.MaHienThi</span>
+                <button type="button" class="ct-chep" data-chep="@d.MaHienThi" title="Sao chép mã đơn"><i class="bi bi-copy"></i></button>
+                @if (treHan) { <span class="tt tt-thatbai"><i class="bi bi-alarm"></i> Trễ hẹn</span> }
+            </div>
+            <div class="tc-ten-trang-thai">@d.TrangThai.TenHienThi()</div>
+            @if (DonHangXuLy.ChoHoanHang(d))
+            {
+                <div class="nho fw-semibold text-danger"><i class="bi bi-arrow-return-left"></i> Hàng đang được chuyển hoàn về người gửi</div>
+            }
+            else if (d.NgayHoanHang.HasValue)
+            {
+                <div class="nho fw-semibold"><i class="bi bi-arrow-return-left"></i> Đã hoàn hàng về người gửi @DinhDang.NgayGio(d.NgayHoanHang)</div>
+            }
+            <div class="nho mo">@DinhDang.MoTaCongKhai(d.TrangThai)</div>
+        </div>
+        <div class="tc-ngay">
+            <small>@(xong ? "Hoàn thành" : "Giao dự kiến")</small>
+            <b>@((xong && d.NgayHoanTat.HasValue ? d.NgayHoanTat.Value : d.NgayGiaoDuKien).ToString("dd/MM"))</b>
+            <small>@((xong && d.NgayHoanTat.HasValue ? d.NgayHoanTat.Value : d.NgayGiaoDuKien).ToString("yyyy"))</small>
+        </div>
+    </div>
+
+    <partial name="_HanhTrinhDon" model="d" />
+
+    <div class="ct-chan">
+        <span><i class="bi bi-calendar-plus"></i> Tạo lúc @DinhDang.NgayGio(d.NgayTao)</span>
+        <div class="d-flex gap-2 flex-wrap ms-auto">
+            @if (Model.CoTheSua) { <a asp-action="ChinhSua" asp-route-id="@d.MaDon" class="btn btn-light btn-sm rounded-pill px-3"><i class="bi bi-pencil"></i> Sửa đơn</a> }
+            @if (Model.CoTheHuy) { <button class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#hopHuy"><i class="bi bi-x-circle"></i> Hủy đơn</button> }
+            <a asp-action="InNhan" asp-route-id="@d.MaDon" target="_blank" class="btn btn-light btn-sm rounded-pill px-3"><i class="bi bi-printer"></i> In nhãn</a>
+        </div>
+    </div>
+</div>
+
+@if (d.TrangThai == TrangThaiDon.ChoLayTanNoi)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4"><i class="bi bi-geo-alt-fill fs-5 text-cam"></i>
+        <div>Đơn hàng đã chọn <b>Lấy hàng tận nơi</b>. Shipper của bưu cục <b>@d.BuuCucGui?.TenBuuCuc</b> sẽ đến nhận kiện hàng tại: <b>@(d.DiaChiLayHang ?? d.KhachHang?.DiaChi)</b>. Quý khách vui lòng chuẩn bị sẵn hàng và giữ liên lạc điện thoại.</div></div>
+}
+else if (d.TrangThai == TrangThaiDon.DaLayTanNoi)
+{
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-4"><i class="bi bi-truck fs-5 text-primary"></i>
+        <div>Shipper <b>@(d.NhanVienDangGiu?.HoTen ?? "khu vực")</b> đã nhận kiện hàng từ bạn và đang vận chuyển về <b>@d.BuuCucGui?.TenBuuCuc</b> để nhập kho.</div></div>
+}
+else if (d.TrangThai == TrangThaiDon.DaTao)
+{
+    var hanGui = d.NgayTao.AddDays(7);
+    var conLai = hanGui - DateTime.Now;
+    int soNgayConLai = Math.Max(0, (int)Math.Ceiling(conLai.TotalDays));
+    <div class="alert alert-info d-flex align-items-start gap-3 mb-4">
+        <i class="bi bi-box-arrow-in-right fs-4 text-primary mt-1"></i>
+        <div>
+            <div class="fw-semibold">Mang kiện hàng đã dán nhãn tới bưu cục để gửi:</div>
+            <div>Vui lòng mang kiện hàng tới <b>@d.BuuCucGui?.TenBuuCuc</b> (@d.BuuCucGui?.DiaChi, @d.BuuCucGui?.TinhThanh) – nhân viên bưu cục sẽ quét mã để tiếp nhận.</div>
+            <div class="nho text-danger mt-1">
+                <i class="bi bi-clock-history me-1"></i>
+                Hạn gửi hàng: trước <b>@DinhDang.NgayGio(hanGui)</b> (còn khoảng @soNgayConLai ngày). Sau 7 ngày, hệ thống sẽ tự động hủy đơn để tránh làm tồn đọng dữ liệu.
+            </div>
+        </div>
+    </div>
+}
+else if (d.TrangThai == TrangThaiDon.DaHuy)
+{
+    var suKienHuy = Model.DsLichSu.FirstOrDefault(l => l.TrangThaiMoi == TrangThaiDon.DaHuy);
+    <div class="alert alert-danger d-flex align-items-start gap-3 mb-4">
+        <i class="bi bi-x-circle-fill fs-4 text-danger mt-1"></i>
+        <div>
+            <div class="fw-bold">Đơn hàng đã bị hủy</div>
+            <div class="small">@(suKienHuy?.NoiDung ?? "Đơn hàng đã được hủy trên hệ thống.")</div>
+            @if (suKienHuy != null)
+            {
+                <div class="nho text-muted mt-1"><i class="bi bi-clock me-1"></i>Thời gian: @DinhDang.NgayGio(suKienHuy.ThoiGian) · Thực hiện bởi: @suKienHuy.NguoiThucHien</div>
+            }
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <partial name="_ViTriDon" model="Model.ViTri" />
+        @* ---------- Lộ trình gửi → nhận ---------- *@
+        <div class="the-mem p-4 mb-4">
+            <h2 class="h6 fw-bold mb-3"><i class="bi bi-signpost-split text-cam"></i> Lộ trình</h2>
+            <div class="ct-lo-trinh">
+                <div class="ct-diem">
+                    <span class="ct-diem-icon gui"><i class="bi bi-box-arrow-up"></i></span>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="ct-nhan">Người gửi @(d.HinhThucGui == HinhThucGui.LayTanNoi ? "· Lấy tận nơi" : "· Gửi tại bưu cục")</div>
+                        <div class="fw-bold">@d.KhachHang?.HoTen</div>
+                        <div class="nho mo">@(d.HinhThucGui == HinhThucGui.LayTanNoi && !string.IsNullOrEmpty(d.DiaChiLayHang) ? d.DiaChiLayHang : d.KhachHang?.DiaChi)</div>
+                    </div>
+                    <span class="nho mo text-nowrap">@DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)</span>
+                </div>
+                <div class="ct-diem">
+                    <span class="ct-diem-icon nhan"><i class="bi bi-geo-alt-fill"></i></span>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="ct-nhan">Người nhận</div>
+                        <div class="fw-bold">@d.TenNguoiNhan</div>
+                        <div class="nho mo">@d.DiaChiNhan</div>
+                    </div>
+                    <a href="tel:@d.SoDienThoaiNguoiNhan" class="btn btn-light btn-sm rounded-pill px-3 text-nowrap"><i class="bi bi-telephone"></i> @DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</a>
+                </div>
+            </div>
+            <div class="ct-hang">
+                <div><i class="bi bi-tag"></i><span>Loại hàng</span><b>@d.LoaiHang?.TenLoaiHang</b></div>
+                <div><i class="bi bi-geo-alt"></i><span>Hình thức</span><b><span class="badge bg-light text-dark border">@d.HinhThucGui.TenHienThi()</span></b></div>
+                <div><i class="bi bi-map"></i><span>Khu vực giao</span><b>@d.KhuVuc?.TenKhuVuc</b></div>
+                <div><i class="bi bi-box"></i><span>Khối lượng</span><b>@DinhDang.KhoiLuong(d.KhoiLuong)</b></div>
+                <div><i class="bi bi-bounding-box-circles"></i><span>Kích thước</span><b>@d.KichThuocM3.ToString("0.####") m³</b></div>
+            </div>
+            @if (!string.IsNullOrEmpty(d.GhiChu))
+            {
+                <div class="ct-ghi-chu"><i class="bi bi-sticky"></i> @d.GhiChu</div>
+            }
+        </div>
+
+        @* ---------- Shipper vận chuyển ---------- *@
+        <div class="the-mem p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 fw-bold mb-0"><i class="bi bi-person-badge text-cam"></i> Shipper vận chuyển</h2>
+                @if (soLanGiao > 0) { <span class="nho mo">Lần giao thứ @soLanGiao / @DonHangXuLy.SoLanGiaoToiDa</span> }
+            </div>
+            @if (pcHienThi is not null)
+            {
+                <div class="ct-nhan-vien">
+                    @HienThi.AnhDaiDien(pcHienThi.NhanVien?.TaiKhoan?.AnhDaiDien, pcHienThi.NhanVien?.HoTen, "avt avt-md avt-xanh")
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="nho mo">@(pc is not null ? $"Đang phụ trách · {pc.LoaiChang.TenHienThi().ToLower()}" : $"{pcHienThi.LoaiChang.TenHienThi()} · " + DinhDang.NgayGio(pcHienThi.NgayKetThuc ?? pcHienThi.NgayPhanCong))</div>
+                        <div class="fw-bold fs-6">@pcHienThi.NhanVien?.HoTen</div>
+                        <div class="nho mo">Phương tiện @pcHienThi.PhuongTien?.MaHienThi · @pcHienThi.PhuongTien?.LoaiPhuongTien · @pcHienThi.PhuongTien?.BienSo</div>
+                    </div>
+                    @if (pcHienThi.PhuongTien is not null) { <partial name="_AnhXe" model="pcHienThi.PhuongTien" /> }
+                </div>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                    @if (pc is not null)
+                    {
+                        <span class="tt @pc.TrangThai.LopBadge()">@pc.TrangThai.TenHienThi()</span>
+                        <a href="tel:@pc.NhanVien?.SoDienThoai" class="btn btn-cam btn-sm rounded-pill px-3"><i class="bi bi-telephone"></i> Gọi @DinhDang.SoDienThoai(pc.NhanVien?.SoDienThoai)</a>
+                    }
+                    else if (pcHienThi.KetQua.HasValue)
+                    {
+                        <span class="tt @(pcHienThi.KetQua is KetQuaGiao.GiaoThanhCong or KetQuaGiao.DaBanGiaoBuuCuc ? "tt-thanhcong" : pcHienThi.KetQua == KetQuaGiao.GiaoKhongThanhCong ? "tt-thatbai" : "tt-huy")">@pcHienThi.KetQua.Value.TenHienThi()</span>
+                    }
+                </div>
+            }
+            else
+            {
+                @if (d.TrangThai == TrangThaiDon.DaHuy)
+                {
+                    <div class="kh-trong"><i class="bi bi-x-circle"></i><div><b>Đơn đã hủy</b><small>Đơn không còn được vận chuyển</small></div></div>
+                }
+                else if (d.TrangThai == TrangThaiDon.DaTao)
+                {
+                    <div class="kh-trong"><i class="bi bi-building"></i><div><b>Chờ gửi hàng tại bưu cục</b><small>Mang hàng tới @d.BuuCucGui?.TenBuuCuc để bắt đầu vận chuyển</small></div></div>
+                }
+                else
+                {
+                    <div class="kh-trong"><i class="bi bi-hourglass-split"></i><div><b>Hàng đang ở @(d.BuuCucHienTai?.TenBuuCuc ?? "bưu cục")</b><small>Bưu cục đang sắp xếp shipper cho chặng tiếp theo</small></div></div>
+                }
+            }
+        </div>
+
+        @* ---------- Lịch sử giao nhận ---------- *@
+        <div class="the-mem p-4">
+            <h2 class="h6 fw-bold mb-3"><i class="bi bi-clock-history text-cam"></i> Lịch sử giao nhận</h2>
+            <partial name="_LichSuGiaoNhan" model="Model.DsLichSu" />
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <partial name="_TuyenBuuCuc" model="d" />
+        <partial name="_MaVanDon" model="d" />
+        @* ---------- Thanh toán ---------- *@
+        <div class="ct-thanh-toan mb-4">
+            <div class="ct-tt-dau">
+                <div class="nho" style="opacity:.8">@(d.PhiChuyenHoan > 0 ? "Tổng phí 2 chiều" : "Phí vận chuyển")</div>
+                <div class="ct-tt-tong">@DinhDang.Tien(d.PhiVanChuyen + d.PhiChuyenHoan)</div>
+                <span class="ct-tt-nguoi-tra">
+                    @if (d.LaDonHoan || d.PhiChuyenHoan > 0)
+                    {
+                        <i class="bi bi-arrow-return-left"></i> <span>Chuyển hoàn</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-check"></i> @d.NguoiTraPhi.TenHienThi()
+                    }
+                </span>
+                <i class="bi bi-receipt ct-tt-icon"></i>
+            </div>
+            <div class="ct-tt-than">
+                <partial name="_ThanhPhanPhi" model="d" />
+            </div>
+        </div>
+
+        @if (d.DangChoDuyetCuoc)
+        {
+            <div class="alert alert-info p-3 mb-4 rounded-3 border-info shadow-sm">
+                <div class="fw-bold mb-1 text-primary"><i class="bi bi-hourglass-split me-1"></i> Đã gửi xác nhận thanh toán</div>
+                <div class="small text-muted mb-2">Đang chờ Admin đối soát tài khoản BIDV và phê duyệt gạch nợ (@DinhDang.Tien(d.PhiNguoiGuiPhaiTra)).</div>
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="bi bi-clock-history me-1"></i> Trạng thái: Pending</span>
+            </div>
+        }
+        else if (d.ConNoPhi)
+        {
+            <div class="alert alert-warning p-3 mb-4 rounded-3 border-warning shadow-sm">
+                <div class="fw-bold mb-1 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Đơn nợ cước: @DinhDang.Tien(d.PhiNguoiGuiPhaiTra)</div>
+                <div class="small text-muted mb-2">@(d.LaDonHoan ? "Đơn chuyển hoàn về người gửi phát sinh phí vận chuyển 2 chiều." : "Đơn đã hoàn tất nhưng người gửi chưa thanh toán phí ship.")</div>
+                <a asp-action="CongNo" class="btn btn-warning btn-sm w-100 rounded-pill fw-bold">
+                    <i class="bi bi-credit-card me-1"></i> Thanh toán công nợ cước ngay
+                </a>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(d.AnhGiaoHang))
+        {
+            <div class="the-mem p-4 mb-4">
+                <h2 class="h6 fw-bold mb-3"><i class="bi bi-camera text-cam"></i> Ảnh giao hàng</h2>
+                <a href="@d.AnhGiaoHang" target="_blank"><img src="@d.AnhGiaoHang" alt="Ảnh giao hàng @d.MaHienThi" class="anh-giao-hang" loading="lazy" /></a>
+            </div>
+        }
+
+        <div class="kh-ho-tro">
+            <span class="xt-icon cam" style="width:46px;height:46px;font-size:1.2rem"><i class="bi bi-headset"></i></span>
+            <div class="flex-grow-1"><b>Cần hỗ trợ đơn này?</b><small>Đọc mã @d.MaHienThi cho tổng đài viên</small></div>
+            <a href="tel:19001515" class="btn btn-cam btn-sm rounded-pill px-3 text-nowrap">1900 1515</a>
+        </div>
+    </div>
+</div>
+
+@if (Model.CoTheHuy)
+{
+    <div class="modal fade hop-day" id="hopHuy" tabindex="-1">
+        <div class="modal-dialog">
+            <form asp-action="Huy" asp-route-id="@d.MaDon" method="post" class="modal-content">
+                <div class="hop-day-dau"><span class="fw-bold">Hủy đơn @d.MaHienThi</span><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="text-center mb-3">
+                    <div class="tc-trong-icon loi mx-auto mb-2" style="width:64px;height:64px;font-size:1.7rem"><i class="bi bi-x-octagon"></i></div>
+                    <div class="mo nho">Đơn đã hủy sẽ không thể khôi phục</div>
+                </div>
+                <label class="form-label" for="lyDo">Lý do hủy</label>
+                <textarea name="lyDo" id="lyDo" maxlength="300" rows="3" class="form-control mb-3" placeholder="VD: Đổi ý, sai thông tin người nhận..."></textarea>
+                <div class="alert alert-light border nho"><i class="bi bi-info-circle"></i> Chỉ hủy được khi chưa mang hàng tới bưu cục. Nếu đã gửi, vui lòng gọi tổng đài 1900 1515.</div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light flex-fill" data-bs-dismiss="modal">Giữ đơn</button>
+                    <button class="btn btn-danger flex-fill">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts { <partial name="_VanChuyenScripts" /> }

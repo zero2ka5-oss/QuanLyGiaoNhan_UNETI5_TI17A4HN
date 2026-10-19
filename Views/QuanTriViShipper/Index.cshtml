@@ -1,7 +1,4 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Module 4 + 5 - Quản lý ví shipper: giao dịch chờ xác nhận, số dư / tiền đang giữ của từng shipper,
-                       lịch sử giao dịch (lọc theo loại, trạng thái, nhân viên; phân trang). *@
-@model QuanTriViVM
+﻿@model QuanTriViVM
 @{
     ViewData["Title"] = "Ví & thanh toán shipper";
     var dsNv = (List<NhanVienGiaoHang>)ViewBag.DsNhanVien;
@@ -17,19 +14,29 @@
     <div class="p-3 fw-bold"><i class="bi bi-wallet2 text-cam"></i> Ví từng shipper</div>
     <div class="table-responsive">
         <table class="table bang mb-0">
-            <thead><tr><th>Nhân viên</th><th class="text-end">Đơn thành công</th><th class="text-end">Thu nhập</th><th class="text-end">Đã rút</th><th class="text-end">Số dư</th><th class="text-end">Đang giữ tiền</th><th class="text-end">Chờ xác nhận nộp</th><th></th></tr></thead>
+            <thead><tr><th>Shipper</th><th class="text-end">Đơn thành công</th><th class="text-end">Thu nhập</th><th class="text-end">Đã rút</th><th class="text-end">Số dư</th><th class="text-end">Đang giữ tiền</th><th class="text-end">Chờ xác nhận nộp</th><th></th></tr></thead>
             <tbody>
             @foreach (var v in Model.DsVi)
             {
                 <tr>
-                    <td><div class="d-flex align-items-center gap-2"><span class="avt avt-sm avt-xanh">@HienThi.ChuCaiDau(v.NhanVien.HoTen)</span><div class="lh-sm"><a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@v.NhanVien.MaNhanVien" class="ten">@v.NhanVien.HoTen</a><div class="nho mo">NV@(v.NhanVien.MaNhanVien.ToString("D3"))</div></div></div></td>
+                    <td><div class="d-flex align-items-center gap-2"><span class="avt avt-sm avt-xanh">@HienThi.ChuCaiDau(v.NhanVien.HoTen)</span><div class="lh-sm"><a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@v.NhanVien.MaNhanVien" class="ten">@v.NhanVien.HoTen</a><div class="nho mo">@v.NhanVien.MaHienThi</div></div></div></td>
                     <td class="text-end">@v.SoDonThanhCong</td>
                     <td class="text-end text-nowrap">@DinhDang.Tien(v.ThuNhap)</td>
                     <td class="text-end text-nowrap">@DinhDang.Tien(v.DaRut)@if (v.DangChoRut > 0) { <div class="nho text-primary">+ @DinhDang.Tien(v.DangChoRut) chờ</div> }</td>
                     <td class="text-end fw-bold text-success text-nowrap">@DinhDang.Tien(v.SoDu)</td>
                     <td class="text-end text-nowrap @(v.TienDangGiu > 0 ? "fw-bold text-danger" : "mo")">@DinhDang.Tien(v.TienDangGiu)@if (v.SoDonDangGiu > 0) { <div class="nho mo fw-normal">@v.SoDonDangGiu đơn</div> }</td>
                     <td class="text-end text-nowrap @(v.TienChoXacNhanNop > 0 ? "fw-semibold text-cam" : "mo")">@DinhDang.Tien(v.TienChoXacNhanNop)</td>
-                    <td class="text-end"><a asp-route-maNhanVien="@v.NhanVien.MaNhanVien" class="btn btn-sm btn-light" title="Lịch sử giao dịch"><i class="bi bi-receipt"></i></a></td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            @if (v.SoDu > 0 && Context.Session.LaQuanTri() && v.TienDangGiu == 0 && v.TienChoXacNhanNop == 0)
+                            {
+                                <form asp-action="TatToan" asp-route-maNhanVien="@v.NhanVien.MaNhanVien" method="post" data-xac-nhan="Xác nhận tất toán toàn bộ số dư @DinhDang.Tien(v.SoDu) cho shipper @v.NhanVien.HoTen?">
+                                    <button class="btn btn-sm btn-outline-success text-nowrap" title="Tất toán ví shipper"><i class="bi bi-cash-stack"></i> Tất toán</button>
+                                </form>
+                            }
+                            <a asp-route-maNhanVien="@v.NhanVien.MaNhanVien" class="btn btn-sm btn-light" title="Lịch sử giao dịch"><i class="bi bi-receipt"></i></a>
+                        </div>
+                    </td>
                 </tr>
             }
             </tbody>
@@ -43,7 +50,7 @@
             <select name="loai" class="form-select"><option value="">Tất cả</option>@foreach (var l in Enum.GetValues<LoaiGiaoDich>()) { <option value="@l" selected="@(Model.Loai == l)">@l.TenHienThi()</option> }</select></div>
         <div class="col-md-3"><label class="form-label nho">Trạng thái</label>
             <select name="trangThai" class="form-select"><option value="">Tất cả</option>@foreach (var t in Enum.GetValues<TrangThaiGiaoDich>()) { <option value="@t" selected="@(Model.TrangThai == t)">@t.TenHienThi()</option> }</select></div>
-        <div class="col-md-3"><label class="form-label nho">Nhân viên</label>
+        <div class="col-md-3"><label class="form-label nho">Shipper</label>
             <select name="maNhanVien" class="form-select"><option value="">Tất cả</option>@foreach (var n in dsNv) { <option value="@n.MaNhanVien" selected="@(Model.MaNhanVien == n.MaNhanVien)">@n.HoTen</option> }</select></div>
         <div class="col-md-3 d-flex gap-2"><button class="btn btn-cam flex-fill"><i class="bi bi-funnel"></i> Lọc</button><a asp-action="Index" class="btn btn-light">Bỏ lọc</a></div>
     </div>
@@ -53,7 +60,7 @@
     <div class="p-3 fw-bold"><i class="bi bi-receipt text-cam"></i> Lịch sử giao dịch</div>
     <div class="table-responsive">
         <table class="table bang mb-0">
-            <thead><tr><th>Mã giao dịch</th><th>Nhân viên</th><th>Loại</th><th class="text-end">Số tiền</th><th>Thanh toán</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
+            <thead><tr><th>Mã giao dịch</th><th>Shipper</th><th>Loại</th><th class="text-end">Số tiền</th><th>Thanh toán</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
             <tbody>
             @foreach (var g in Model.GiaoDich.DanhSach)
             {

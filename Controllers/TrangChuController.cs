@@ -1,8 +1,4 @@
-// Họ và tên: Nguyễn Minh Hướng
-// Mã sinh viên: 23103100268
-// Nội dung thực hiện: Trang chủ công khai – giới thiệu dịch vụ, ước tính phí, bảng giá, tin tức, câu hỏi thường gặp, tra cứu đơn.
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Data;
@@ -12,7 +8,7 @@ namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
 
 /*
  * TrangChuController — trang công khai (không cần đăng nhập)
- * URL: / , /TrangChu/TraCuu?ma=DH000012&sdt=09..., /TrangChu/TinhPhi (AJAX), /TrangChu/LienHe, /TrangChu/TinTuc?chuyenMuc=,
+ * URL: / , /TrangChu/TraCuu?ma=DH202610060041&sdt=09..., /TrangChu/TinhPhi (AJAX), /TrangChu/LienHe, /TrangChu/TinTuc?chuyenMuc=,
  *      /TrangChu/ChiTietTinTuc/5, /TrangChu/Loi
  * Tra cứu công khai yêu cầu mã đơn + SĐT người nhận khớp nhau để không lộ thông tin đơn của người khác.
  */
@@ -25,6 +21,9 @@ public partial class TrangChuController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         ViewBag.SoDonDaGiao = await db.DonGiaoHangs.CountAsync(d => d.TrangThai == TrangThaiDon.GiaoThanhCong || d.TrangThai == TrangThaiDon.HoanTat);
         ViewBag.SoNhanVien = await db.NhanVienGiaoHangs.CountAsync(n => n.TrangThai != TrangThaiNhanVien.NgungHoatDong);
         ViewBag.SoPhuongTien = await db.PhuongTiens.CountAsync(p => p.TrangThai != TrangThaiPhuongTien.NgungHoatDong);
+        ViewBag.DsBuuCuc = await db.BuuCucs.AsNoTracking().Where(b => b.TrangThai == TrangThaiHoatDong.HoatDong)
+                                   .OrderBy(b => b.TinhThanh).ThenBy(b => b.TenBuuCuc).ToListAsync();
+        ViewBag.SoBuuCuc = ((List<BuuCuc>)ViewBag.DsBuuCuc).Count;
         ViewBag.DsBanner = await db.BannerTrangChus.AsNoTracking().Where(b => b.HienThi)
                                    .OrderBy(b => b.ThuTu).ThenBy(b => b.MaBanner).ToListAsync();
         ViewBag.TinMoi = await db.TinTucs.AsNoTracking().DangHienThi()
@@ -82,4 +81,22 @@ public partial class TrangChuController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         ViewBag.MaYeuCau = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
         return View();
     }
+
+    /// <summary>
+    /// API phản hồi tự động giải đáp thắc mắc người dùng qua Chatbox trên trang chủ và các trang công khai.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> ChatBot([FromBody] ChatBotYeuCauVM? req)
+    {
+        var cauHoi = req?.NoiDung;
+        if (string.IsNullOrWhiteSpace(cauHoi) && Request.HasFormContentType)
+        {
+            cauHoi = Request.Form["NoiDung"].ToString();
+        }
+
+        bool daDangNhap = HttpContext.Session.DaDangNhap();
+        var phanHoi = await ChatBotXuLy.XuLyCauHoiAsync(db, cauHoi, daDangNhap);
+        return Json(phanHoi);
+    }
 }
+

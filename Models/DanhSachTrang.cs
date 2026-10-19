@@ -1,8 +1,4 @@
-// Họ và tên: Nguyễn Minh Hướng
-// Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 5 - Phân trang dùng chung: lớp DanhSachTrang (EF Core Skip/Take chạy trên SQL Server).
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
@@ -27,8 +23,6 @@ public class DanhSachTrang<T> : IPhanTrang
     public int KichThuocTrang { get; init; }
     public int TongSoDong { get; init; }
     public int TongSoTrang => Math.Max(1, (int)Math.Ceiling(TongSoDong / (double)KichThuocTrang));
-    public bool CoTrangTruoc => Trang > 1;
-    public bool CoTrangSau => Trang < TongSoTrang;
 
     public static async Task<DanhSachTrang<T>> TaoAsync(IQueryable<T> truyVan, int trang, int kichThuocTrang)
     {

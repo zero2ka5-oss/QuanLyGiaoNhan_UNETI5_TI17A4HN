@@ -1,0 +1,69 @@
+@model DonGiaoHang
+@{
+    Layout = null;
+    var d = Model;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nhãn @d.MaHienThi – GiaoNhanh</title>
+    <style>
+        /* Nhãn in nhiệt 100 × 150 mm; trên màn hình hiện ở giữa trang kèm nút in */
+        @@page { size: 100mm 150mm; margin: 0; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; background: #e5e7eb; }
+        .nhan { width: 100mm; height: 150mm; margin: 12px auto; background: #fff; padding: 4mm; display: flex; flex-direction: column; gap: 2mm; border: 1px solid #000; }
+        .dau { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 2mm; }
+        .logo { font-weight: 800; font-size: 16pt; }
+        .tuyen { font-size: 11pt; font-weight: 700; text-align: right; }
+        .ma { display: flex; gap: 3mm; align-items: center; }
+        .ma .qr { width: 32mm; height: 32mm; flex-shrink: 0; }
+        .ma .qr svg { width: 100%; height: 100%; }
+        .ma-chu { font-size: 15pt; font-weight: 800; letter-spacing: .5px; word-break: break-all; }
+        .khoi { border: 1px solid #000; padding: 2mm; font-size: 9.5pt; line-height: 1.35; }
+        .khoi b.nhan-muc { display: block; font-size: 8pt; text-transform: uppercase; color: #333; }
+        .lon { font-size: 12pt; font-weight: 700; }
+        .hang { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
+        .tien { font-size: 13pt; font-weight: 800; }
+        svg.vach { width: 100%; height: 18mm; }
+        .nut { text-align: center; margin: 12px; }
+        .nut button { font-size: 14px; padding: 8px 20px; cursor: pointer; }
+        @@media print { body { background: #fff; } .nhan { margin: 0; border: none; } .nut { display: none; } }
+    </style>
+</head>
+<body>
+<div class="nut"><button onclick="window.print()">In nhãn</button></div>
+<div class="nhan">
+    <div class="dau">
+        <span class="logo">GiaoNhanh</span>
+        <span class="tuyen">@d.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") → @d.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")<br><span style="font-weight:400;font-size:9pt">@d.KhuVuc?.TenKhuVuc</span></span>
+    </div>
+    <div class="ma">
+        <div class="qr" data-qr="@d.MaHienThi" data-co-o="4"></div>
+        <div>
+            <div class="ma-chu">@d.MaHienThi</div>
+            <div style="font-size:9pt">Tạo @d.NgayTao.ToString("dd/MM/yyyy HH:mm") · @DinhDang.KhoiLuong(d.KhoiLuong) · @(d.KichThuocM3.ToString("0.####")) m³ · @d.LoaiHang?.TenLoaiHang</div>
+        </div>
+    </div>
+    <svg class="vach" data-barcode="@d.MaHienThi" data-cao="48"></svg>
+    <div class="khoi">
+        <b class="nhan-muc">Người gửi</b>
+        <span class="lon">@d.KhachHang?.HoTen</span> · @DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)<br>@d.KhachHang?.DiaChi
+    </div>
+    <div class="khoi" style="flex-grow:1">
+        <b class="nhan-muc">Người nhận</b>
+        <span class="lon">@d.TenNguoiNhan</span> · @DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)<br>@d.DiaChiNhan
+        @if (!string.IsNullOrWhiteSpace(d.GhiChu)) { <div style="margin-top:1.5mm"><i>Ghi chú: @d.GhiChu</i></div> }
+    </div>
+    <div class="hang">
+        <div class="khoi"><b class="nhan-muc">Thu người nhận</b><span class="tien">@DinhDang.Tien(d.TongThuNguoiNhan)</span></div>
+        <div class="khoi"><b class="nhan-muc">Giao dự kiến (Hệ thống tính)</b><span class="lon">@d.NgayGiaoDuKien.ToString("dd/MM/yyyy")</span></div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="~/js/van-chuyen.js" asp-append-version="true"></script>
+</body>
+</html>

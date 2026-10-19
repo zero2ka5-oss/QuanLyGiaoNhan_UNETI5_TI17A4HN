@@ -1,7 +1,3 @@
-// Họ và tên: Nguyễn Minh Hướng
-// Mã sinh viên: 23103100268
-// Nội dung thực hiện: Module 2 + 5 - ViewModel đơn giao hàng (form, bộ lọc danh sách, chi tiết) và kết quả tính phí.
-
 using System.ComponentModel.DataAnnotations;
 
 namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
@@ -23,6 +19,18 @@ public class DonGiaoHangFormVM
     [Display(Name = "Khu vực giao")]
     public int MaKhuVuc { get; set; }
 
+    /// <summary>Bưu cục khách mang hàng tới gửi (bưu cục nhận suy ra từ khu vực giao).</summary>
+    [Required(ErrorMessage = "Chọn bưu cục gửi hàng")]
+    [Display(Name = "Bưu cục gửi")]
+    public int? MaBuuCucGui { get; set; }
+
+    [Display(Name = "Hình thức gửi")]
+    public HinhThucGui HinhThucGui { get; set; } = HinhThucGui.GuiTaiBuuCuc;
+
+    [StringLength(255)]
+    [Display(Name = "Địa chỉ lấy hàng")]
+    public string? DiaChiLayHang { get; set; }
+
     [Required(ErrorMessage = "Nhập tên người nhận"), StringLength(100)]
     [Display(Name = "Tên người nhận")]
     public string TenNguoiNhan { get; set; } = "";
@@ -40,43 +48,49 @@ public class DonGiaoHangFormVM
     [Display(Name = "Khối lượng (kg)")]
     public decimal KhoiLuong { get; set; }
 
-    [Required(ErrorMessage = "Chọn ngày giao dự kiến")]
+    [Range(0.0001, 1000, ErrorMessage = "Kích thước từ 0,0001 đến 1.000 m³")]
+    [Display(Name = "Kích thước (m³)")]
+    public decimal KichThuocM3 { get; set; } = 0.005m;
+
     [DataType(DataType.Date)]
     [Display(Name = "Ngày giao dự kiến")]
-    public DateTime NgayGiaoDuKien { get; set; } = DateTime.Today.AddDays(2);
+    public DateTime? NgayGiaoDuKien { get; set; }
 
     [StringLength(500)]
     [Display(Name = "Ghi chú")]
     public string? GhiChu { get; set; }
 
-    [Range(0, 50_000_000, ErrorMessage = "Tiền thu hộ từ 0 đến 50.000.000 đ")]
-    [Display(Name = "Tiền thu hộ")]
+    [Range(typeof(decimal), "0", "50000000", ErrorMessage = "Tiền thu hộ từ 0 đến 50.000.000 đ")]
+    [Display(Name = "Tiền thu hộ (COD)")]
     public decimal TienThuHo { get; set; }
 
     [Display(Name = "Người trả phí ship")]
     public NguoiTraPhi NguoiTraPhi { get; set; } = NguoiTraPhi.NguoiGui;
 
-    /// <summary>Nạp form sửa từ đơn đã lưu.</summary>
     public static DonGiaoHangFormVM TuDon(DonGiaoHang don) => new()
     {
-        MaDon = don.MaDon, MaKhachHang = don.MaKhachHang, MaLoaiHang = don.MaLoaiHang, MaKhuVuc = don.MaKhuVuc,
+        MaDon = don.MaDon, MaKhachHang = don.MaKhachHang, MaLoaiHang = don.MaLoaiHang, MaKhuVuc = don.MaKhuVuc, MaBuuCucGui = don.MaBuuCucGui,
+        HinhThucGui = don.HinhThucGui, DiaChiLayHang = don.DiaChiLayHang,
         TenNguoiNhan = don.TenNguoiNhan, SoDienThoaiNguoiNhan = don.SoDienThoaiNguoiNhan, DiaChiNhan = don.DiaChiNhan,
-        KhoiLuong = don.KhoiLuong, NgayGiaoDuKien = don.NgayGiaoDuKien, GhiChu = don.GhiChu,
+        KhoiLuong = don.KhoiLuong, KichThuocM3 = don.KichThuocM3, NgayGiaoDuKien = don.NgayGiaoDuKien, GhiChu = don.GhiChu,
         TienThuHo = don.TienThuHo, NguoiTraPhi = don.NguoiTraPhi
     };
 }
 
-/// <summary>Các thành phần phí vận chuyển (mục 9.1).</summary>
+/// <summary>Các thành phần phí vận chuyển.</summary>
 public record KetQuaTinhPhi(decimal PhiCoBan, decimal KhoiLuongVuot, decimal PhuPhiKhoiLuong,
-                            decimal HeSoPhuThu, decimal PhuPhiLoaiHang, decimal Tong);
+                            decimal PhuPhiKichThuoc, string MoTaKichThuoc,
+                            decimal HeSoPhuThu, decimal PhuPhiLoaiHang, decimal Tong, int SoNgayGiao = 2);
 
-/// <summary>Tham số tìm kiếm + lọc + sắp xếp + phân trang của danh sách đơn (mục 6.3–6.6).</summary>
+/// <summary>Tham số tìm kiếm + lọc + sắp xếp + phân trang của danh sách đơn.</summary>
 public class BoLocDonHang
 {
     public string? TuKhoa { get; set; }
     public TrangThaiDon? TrangThai { get; set; }
     public int? MaLoaiHang { get; set; }
     public int? MaKhuVuc { get; set; }
+    /// <summary>Đơn liên quan tới bưu cục (gửi / nhận / đang giữ).</summary>
+    public int? MaBuuCuc { get; set; }
     /// <summary>"tao" = lọc theo ngày tạo, "giao" = theo ngày giao dự kiến.</summary>
     public string LoaiNgay { get; set; } = "tao";
     [DataType(DataType.Date)] public DateTime? TuNgay { get; set; }
@@ -106,4 +120,8 @@ public class ChiTietDonVM
     public bool CoThePhanCong { get; set; }
     public bool CoTheDoiPhanCong { get; set; }
     public bool LaKhachHang { get; set; }
+    public ViTriDon? ViTri { get; set; }
 }
+
+/// <summary>Vị trí hiện tại của đơn (Loai: buucuc | shipper | dagiao | khach | loi | khac).</summary>
+public record ViTriDon(string Loai, string TieuDe, string MoTa, double? ViDo, double? KinhDo, DateTime? CapNhatLuc, string? PhuongTien);

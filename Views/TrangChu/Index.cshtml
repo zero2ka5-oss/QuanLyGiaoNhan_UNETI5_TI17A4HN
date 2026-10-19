@@ -1,0 +1,280 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Trang chủ";
+    var bangGia = (BangGiaVM)ViewBag.BangGia;
+    var tinMoi = (List<TinTuc>)ViewBag.TinMoi;
+    var dsBanner = (List<BannerTrangChu>)ViewBag.DsBanner;
+    decimal khoiLuongToiDa = bangGia.KhoiLuongToiDa;
+}
+@if (dsBanner.Count > 0)
+{
+    @* Banner trình chiếu (Quản trị quản lý tại QuanTriBanner) + ô tra cứu nổi bên dưới *@
+    <section class="khu-banner">
+        <div class="container">
+            <div id="bannerTrangChu" class="carousel slide banner-chinh" data-bs-ride="carousel" data-bs-interval="5500">
+                @if (dsBanner.Count > 1)
+                {
+                    <div class="carousel-indicators">
+                        @for (int i = 0; i < dsBanner.Count; i++)
+                        {
+                            <button type="button" data-bs-target="#bannerTrangChu" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")" aria-label="Banner @(i + 1)"></button>
+                        }
+                    </div>
+                }
+                <div class="carousel-inner">
+                    @for (int i = 0; i < dsBanner.Count; i++)
+                    {
+                        var b = dsBanner[i];
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <img src="@b.Anh" alt="@b.TieuDe" loading="@(i == 0 ? "eager" : "lazy")" />
+                            <div class="banner-chu">
+                                <h2>@b.TieuDe</h2>
+                                @if (b.MoTa is not null) { <p>@b.MoTa</p> }
+                                @if (b.ChuNut is not null && b.LienKet is not null) { <a href="@b.LienKet" class="btn btn-cam btn-lg rounded-pill px-4">@b.ChuNut</a> }
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (dsBanner.Count > 1)
+                {
+                    <button class="carousel-control-prev" type="button" data-bs-target="#bannerTrangChu" data-bs-slide="prev" aria-label="Banner trước"><span class="nut-dieu-huong"><i class="bi bi-chevron-left"></i></span></button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#bannerTrangChu" data-bs-slide="next" aria-label="Banner sau"><span class="nut-dieu-huong"><i class="bi bi-chevron-right"></i></span></button>
+                }
+            </div>
+            <form class="hop-tra-cuu hop-tra-cuu-noi p-3 p-md-4" asp-controller="TrangChu" asp-action="TraCuu" method="get">
+                <div class="row g-2 align-items-center">
+                    <div class="col-lg-3"><div class="fw-bold"><i class="bi bi-search text-cam"></i> Tra cứu đơn hàng</div><div class="nho mo d-none d-lg-block">Theo dõi hành trình đơn</div></div>
+                    <div class="col-lg-4 col-md-5"><input name="ma" class="form-control form-control-lg" placeholder="Nhập mã đơn hàng" required /></div>
+                    <div class="col-lg-3 col-md-4"><input name="sdt" class="form-control form-control-lg" placeholder="Số điện thoại người nhận" required /></div>
+                    <div class="col-lg-2 col-md-3 d-grid"><button class="btn btn-cam btn-lg">Tra cứu</button></div>
+                </div>
+            </form>
+        </div>
+    </section>
+}
+else
+{
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="nhan-muc mb-3"><i class="bi bi-buildings-fill"></i> Gửi hàng tại bưu cục gần nhất</span>
+                <h1 class="display-5 mb-3">Giao hàng nhanh,<br><span class="text-cam">theo dõi minh bạch</span> từng bước</h1>
+                <p class="mo fs-5 mb-4">Tạo đơn trực tuyến, in nhãn có mã QR rồi mang hàng tới bưu cục. Mỗi lần bàn giao giữa bưu cục và shipper đều được quét mã – bạn biết đơn đang ở đâu, ai đang giữ.</p>
+                <form class="hop-tra-cuu p-3 p-md-4" asp-controller="TrangChu" asp-action="TraCuu" method="get">
+                    <div class="fw-semibold mb-2"><i class="bi bi-search text-cam"></i> Tra cứu đơn hàng</div>
+                    <div class="row g-2">
+                        <div class="col-md-5"><input name="ma" class="form-control form-control-lg" placeholder="Nhập mã đơn hàng" required /></div>
+                        <div class="col-md-4"><input name="sdt" class="form-control form-control-lg" placeholder="Số điện thoại người nhận" required /></div>
+                        <div class="col-md-3 d-grid"><button class="btn btn-cam btn-lg">Tra cứu</button></div>
+                    </div>
+                </form>
+                <div class="d-flex flex-wrap gap-4 mt-4 nho mo">
+                    <span><i class="bi bi-shield-check text-cam"></i> Phí hiển thị trước khi gửi</span>
+                    <span><i class="bi bi-clock-history text-cam"></i> Lịch sử giao nhận đầy đủ</span>
+                    <span><i class="bi bi-qr-code-scan text-cam"></i> Quét mã mỗi lần bàn giao</span>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                @* Thẻ minh họa hành trình đơn hàng – chỉ nội dung minh họa chung, không hiển thị mã đơn / tên / biển số thật *@
+                <div class="minh-hoa">
+                    <span class="vong vong-1"></span><span class="vong vong-2"></span>
+                    <div class="noi noi-1"><span class="icon icon-luc rounded-3 d-grid" style="width:34px;height:34px;place-items:center"><i class="bi bi-check2-circle"></i></span><div><div class="fw-semibold">Giao thành công</div><div class="mo" style="font-size:.74rem">Người nhận đã ký nhận</div></div></div>
+                    <div class="the-chinh">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div><div class="mo nho">Hành trình đơn hàng</div><div class="fw-bold fs-5">Theo dõi trực tuyến</div></div>
+                            <span class="tt tt-dang"><i class="bi bi-truck"></i> Đang giao</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 p-2 rounded-3 mb-3" style="background:var(--nen)">
+                            <i class="bi bi-geo-alt-fill text-cam"></i>
+                            <div class="nho lh-sm"><div class="fw-semibold">Bưu cục gửi → Bưu cục nhận → Người nhận</div><div class="mo">Mã QR quét ở mỗi lần bàn giao</div></div>
+                        </div>
+                        <div class="buoc-mh xong"><span class="cham-mh"><i class="bi bi-check-lg"></i></span><div class="nho lh-sm"><div class="fw-semibold">Bưu cục gửi đã tiếp nhận</div><div class="mo">Quét mã khi nhận hàng</div></div></div>
+                        <div class="buoc-mh xong"><span class="cham-mh"><i class="bi bi-check-lg"></i></span><div class="nho lh-sm"><div class="fw-semibold">Trung chuyển tới bưu cục nhận</div><div class="mo">Shipper liên tỉnh – xe định danh</div></div></div>
+                        <div class="buoc-mh hien-tai"><span class="cham-mh"><i class="bi bi-truck"></i></span><div class="nho lh-sm"><div class="fw-semibold">Đang giao đến người nhận</div><div class="mo">Xem vị trí shipper trên bản đồ</div></div></div>
+                        <div class="buoc-mh"><span class="cham-mh"><i class="bi bi-flag"></i></span><div class="nho lh-sm"><div class="fw-semibold mo">Hoàn tất</div></div></div>
+                    </div>
+                    <div class="noi noi-2"><span class="avt avt-sm"><i class="bi bi-person-badge"></i></span><div><div class="fw-semibold">Shipper chuyên nghiệp</div><div class="mo" style="font-size:.74rem"><i class="bi bi-geo-alt-fill text-cam"></i> Vị trí cập nhật theo GPS</div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+}
+
+<section class="container py-5">
+    <div class="text-center mb-4">
+        <span class="nhan-muc mb-2">Dịch vụ</span>
+        <h2 class="tieu-de-muc">Vì sao chọn GiaoNhanh?</h2>
+        <p class="mo">Mạng lưới bưu cục, shipper liên tỉnh và shipper khu vực – theo dõi từng lần bàn giao</p>
+    </div>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+        <div class="col"><div class="the-dich-vu"><div class="icon"><i class="bi bi-calculator"></i></div><h5 class="fw-bold">Phí minh bạch</h5><p class="mo nho mb-0">Hệ thống tự tính phí, hiển thị rõ phí cơ bản, phụ phí khối lượng và phụ phí loại hàng.</p></div></div>
+        <div class="col"><div class="the-dich-vu"><div class="icon"><i class="bi bi-qr-code-scan"></i></div><h5 class="fw-bold">Quét mã mỗi lần bàn giao</h5><p class="mo nho mb-0">Mỗi đơn có một mã QR / barcode duy nhất, được quét ở bưu cục và khi shipper nhận hàng.</p></div></div>
+        <div class="col"><div class="the-dich-vu"><div class="icon"><i class="bi bi-geo-alt"></i></div><h5 class="fw-bold">Biết đơn đang ở đâu</h5><p class="mo nho mb-0">Đơn ở bưu cục nào, shipper nào đang giữ, xe biển số gì – kèm vị trí trên bản đồ khi đang giao.</p></div></div>
+        <div class="col"><div class="the-dich-vu"><div class="icon"><i class="bi bi-clock-history"></i></div><h5 class="fw-bold">Hành trình đầy đủ</h5><p class="mo nho mb-0">Mọi lần tiếp nhận, trung chuyển, bàn giao, giao hàng đều được ghi lại: ai, lúc nào, ở đâu.</p></div></div>
+    </div>
+</section>
+
+<section class="khu-bang-gia py-5" id="bang-gia">
+    <div class="container">
+        <div class="text-center mb-4">
+            <span class="nhan-muc mb-2">Bảng giá</span>
+            <h2 class="tieu-de-muc">Bảng giá vận chuyển</h2>
+            <p class="mo mb-0">Biết trước chi phí trước khi gửi hàng</p>
+        </div>
+
+        <partial name="_UocLuongPhi" model="bangGia" />
+    </div>
+</section>
+
+<section class="container py-5" id="quy-trinh">
+    <div class="text-center mb-5"><span class="nhan-muc mb-2">Quy trình</span><h2 class="tieu-de-muc">Quy trình giao nhận</h2><p class="mo mb-0">Mỗi bước đều được cập nhật để bạn theo dõi</p></div>
+    <div class="qt-buoc">
+        @{ var dsBuoc = new[] { ("bi-pencil-square", "Tạo đơn", "Xem phí ngay, in nhãn mã QR"), ("bi-building-check", "Gửi tại bưu cục", "Bưu cục quét mã tiếp nhận"),
+                                ("bi-truck-front", "Trung chuyển", "Shipper liên tỉnh chở tới bưu cục nhận"), ("bi-building-down", "Bưu cục nhận", "Quét mã, phân shipper khu vực"),
+                                ("bi-truck", "Giao hàng", "Theo dõi vị trí shipper"), ("bi-patch-check-fill", "Hoàn tất", "Đối soát tiền thu hộ") }; }
+        @for (int i = 0; i < dsBuoc.Length; i++)
+        {
+            var (icon, ten, moTa) = dsBuoc[i];
+            <div class="qt-the">
+                <span class="qt-so">@(i + 1)</span>
+                <span class="qt-icon"><i class="bi @icon"></i></span>
+                <b>@ten</b>
+                <small>@moTa</small>
+            </div>
+        }
+    </div>
+</section>
+
+@if (ViewBag.DsBuuCuc is List<BuuCuc> dsBc && dsBc.Count > 0)
+{
+<section class="container pb-5" id="buu-cuc">
+    <div class="text-center mb-4">
+        <span class="nhan-muc mb-2">Mạng lưới</span>
+        <h2 class="tieu-de-muc">Hệ thống 34 bưu cục toàn quốc</h2>
+        <p class="mo mb-0">Mang kiện hàng đã dán nhãn tới bưu cục gần nhất tại 34 tỉnh thành</p>
+    </div>
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6 col-lg-5">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                <span class="input-group-text border-0 ps-3"><i class="bi bi-search text-cam"></i></span>
+                <input type="text" id="timKiemBuuCuc" class="form-control border-0 py-2" placeholder="Tìm theo tỉnh thành, tên bưu cục..." autocomplete="off" />
+            </div>
+        </div>
+    </div>
+    <div class="row g-3" id="danhSachBuuCuc">
+        @foreach (var bc in dsBc)
+        {
+            <div class="col-md-6 col-lg-4 muc-buu-cuc" data-search="@(bc.TenBuuCuc.ToLower()) @(bc.TinhThanh.ToLower()) @(bc.DiaChi.ToLower())">
+                <div class="the-buu-cuc h-100">
+                    <span class="bc-icon"><i class="bi bi-building"></i></span>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="fw-bold">@bc.TenBuuCuc</div>
+                        <div class="nho mo">@bc.DiaChi, <strong class="fw-semibold">@bc.TinhThanh</strong></div>
+                        @if (bc.SoDienThoai is not null) { <div class="nho mt-1"><i class="bi bi-telephone text-cam"></i> @DinhDang.SoDienThoai(bc.SoDienThoai)</div> }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div id="khongCoBuuCuc" class="text-center py-4 text-muted d-none">
+        <i class="bi bi-geo-alt fs-2 d-block mb-1 text-warning"></i>
+        Không tìm thấy bưu cục nào phù hợp với từ khóa.
+    </div>
+</section>
+}
+
+@if (tinMoi.Count > 0)
+{
+<section class="py-5 khu-tin-tuc" id="tin-tuc">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+            <div><span class="nhan-muc mb-2">Tin tức</span><h2 class="tieu-de-muc mb-0">Tin tức & thông báo</h2></div>
+            <a asp-action="TinTuc" class="btn btn-cam rounded-pill px-4">Xem tất cả</a>
+        </div>
+        <div class="row g-3">
+            @foreach (var t in tinMoi)
+            {
+                <div class="col-md-4"><partial name="_TheTinTuc" model="t" /></div>
+            }
+        </div>
+    </div>
+</section>
+}
+
+<section class="khoi-so-lieu py-5">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3"><div class="so">@ViewBag.SoKhachHang</div><div>Khách hàng tin dùng</div></div>
+            <div class="col-6 col-md-3"><div class="so">@ViewBag.SoDonDaGiao</div><div>Đơn đã giao thành công</div></div>
+            <div class="col-6 col-md-3"><div class="so">@ViewBag.SoBuuCuc</div><div>Bưu cục trên toàn quốc</div></div>
+            <div class="col-6 col-md-3"><div class="so">@ViewBag.SoNhanVien</div><div>Shipper liên tỉnh & khu vực</div></div>
+        </div>
+    </div>
+</section>
+
+<section class="container py-5" id="cau-hoi">
+    <div class="text-center mb-4"><span class="nhan-muc mb-2">Hỗ trợ</span><h2 class="tieu-de-muc">Câu hỏi thường gặp</h2></div>
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="accordion hoi-dap" id="cauHoi">
+            <div class="accordion-item">
+                <h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#hoi0">Phí vận chuyển được tính như thế nào?</button></h3>
+                <div id="hoi0" class="accordion-collapse collapse show" data-bs-parent="#cauHoi"><div class="accordion-body mo">Phí gồm cước cơ bản theo cự ly khoảng cách giữa bưu cục gửi và bưu cục nhận (tính tự động theo tọa độ GPS giữa 34 tỉnh thành theo 6 bậc cự ly), phụ phí khối lượng cho phần vượt @DinhDang.KhoiLuong(TinhPhiXuLy.NguongKhoiLuongKg) (@DinhDang.Tien(TinhPhiXuLy.DonGiaVuotMoiKg) mỗi kg) và phụ phí theo loại hàng. Phí hiển thị minh bạch ngay khi tạo đơn, không phát sinh thêm khi giao.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hoi1">Tôi có thể sửa hoặc hủy đơn không?</button></h3>
+                <div id="hoi1" class="accordion-collapse collapse" data-bs-parent="#cauHoi"><div class="accordion-body mo">Được, khi bạn chưa mang hàng tới bưu cục (đơn đang ở trạng thái Đã tạo đơn). Khi bưu cục đã tiếp nhận hàng, vui lòng gọi tổng đài 1900 1515 – bưu cục sẽ hủy và giữ hàng chờ bạn nhận lại.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hoi2">Tiền thu hộ bao giờ được trả lại cho người gửi?</button></h3>
+                <div id="hoi2" class="accordion-collapse collapse" data-bs-parent="#cauHoi"><div class="accordion-body mo">Sau khi giao thành công, shipper nộp tiền thu hộ về công ty. Khi công ty xác nhận, đơn chuyển sang Hoàn tất và được đối soát trả người gửi (trừ phí ship nếu người gửi trả phí).</div></div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hoi3">Nếu người nhận vắng nhà thì sao?</button></h3>
+                <div id="hoi3" class="accordion-collapse collapse" data-bs-parent="#cauHoi"><div class="accordion-body mo">Shipper ghi nhận Giao không thành công kèm lý do, sau đó hẹn giao lại với người nhận hoặc trả hàng về bưu cục để giao lại sau. Mỗi đơn được giao tối đa @DonHangXuLy.SoLanGiaoToiDa lần.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hoi4">Khối lượng tối đa của một đơn là bao nhiêu?</button></h3>
+                <div id="hoi4" class="accordion-collapse collapse" data-bs-parent="#cauHoi"><div class="accordion-body mo">Một đơn không vượt quá tải trọng của phương tiện lớn nhất đang hoạt động, hiện là @DinhDang.KhoiLuong(khoiLuongToiDa).</div></div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hoi5">Làm sao để tra cứu đơn hàng?</button></h3>
+                <div id="hoi5" class="accordion-collapse collapse" data-bs-parent="#cauHoi"><div class="accordion-body mo">Vào mục Tra cứu đơn, nhập mã vận đơn in trên nhãn (ví dụ DH202610060041) và số điện thoại người nhận. Thông tin cá nhân được che bớt để bảo mật.</div></div>
+            </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container py-5">
+    <div class="p-4 p-md-5 d-md-flex align-items-center justify-content-between gap-4 rounded-4 text-white position-relative overflow-hidden"
+         style="background:linear-gradient(120deg,#F26522 0%,#FF8A4C 100%);box-shadow:0 18px 40px rgba(242,101,34,.25)">
+        <div>
+            <h3 class="fw-bold mb-1">Bắt đầu gửi hàng ngay hôm nay</h3>
+            <p class="mb-md-0" style="opacity:.9">Đăng ký tài khoản miễn phí, tạo đơn trong 1 phút và theo dõi mọi lúc.</p>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+            <a class="btn btn-light btn-lg fw-semibold text-cam" asp-controller="DangNhap" asp-action="DangKy">Đăng ký miễn phí</a>
+            <a class="btn btn-lg fw-semibold text-white" style="border:1px solid rgba(255,255,255,.6)" asp-controller="DangNhap" asp-action="Index">Đăng nhập</a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.getElementById('timKiemBuuCuc')?.addEventListener('input', function(e) {
+            const q = e.target.value.trim().toLowerCase();
+            let dem = 0;
+            document.querySelectorAll('.muc-buu-cuc').forEach(el => {
+                const s = el.getAttribute('data-search') || '';
+                const hop = !q || s.includes(q);
+                el.style.display = hop ? '' : 'none';
+                if (hop) dem++;
+            });
+            const khongCo = document.getElementById('khongCoBuuCuc');
+            if (khongCo) khongCo.classList.toggle('d-none', dem > 0);
+        });
+    </script>
+}

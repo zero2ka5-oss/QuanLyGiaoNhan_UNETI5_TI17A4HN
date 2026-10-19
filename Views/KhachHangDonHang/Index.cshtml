@@ -1,7 +1,3 @@
-@* Họ và tên: Nguyễn Minh Hướng – MSSV: 23103100268
-   Nội dung thực hiện: Module 2 - [Khách hàng] Danh sách đơn: dải đầu trang có số liệu nhanh, ô tìm kiếm + bộ lọc nâng cao
-                       (loại hàng, khu vực, khoảng ngày), sắp xếp, tab trạng thái có số đếm, mỗi đơn là một thẻ có thanh tiến độ,
-                       phân trang. Mọi điều kiện nằm trên query string nên được giữ khi chuyển trang. *@
 @model DanhSachDonVM
 @{
     var bl = Model.BoLoc;
@@ -18,7 +14,7 @@
     };
     var so = Model.SoDonTheoTrangThai;
     int tong = so.Values.Sum();
-    int dangXuLy = new[] { TrangThaiDon.ChoPhanCong, TrangThaiDon.DaPhanCong, TrangThaiDon.DaNhanHang, TrangThaiDon.DangGiao }.Sum(t => so.GetValueOrDefault(t));
+    int dangXuLy = HienThi.NhomDangXuLy.Where(t => t != TrangThaiDon.GiaoKhongThanhCong).Sum(t => so.GetValueOrDefault(t));
     int daGiao = so.GetValueOrDefault(TrangThaiDon.GiaoThanhCong) + so.GetValueOrDefault(TrangThaiDon.HoanTat);
     int soLocNangCao = new object?[] { bl.MaLoaiHang, bl.MaKhuVuc, bl.TuNgay, bl.DenNgay }.Count(x => x is not null);
 }
@@ -35,6 +31,19 @@
     </div>
     <a asp-action="TaoMoi" class="btn btn-light btn-lg kh-nut-trang text-nowrap"><i class="bi bi-plus-circle"></i> Tạo đơn mới</a>
 </div>
+
+@if ((int?)ViewBag.SoDonNoCuoc > 0)
+{
+    <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 rounded-3 border-warning shadow-sm">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+            <span>Bạn đang có <b>@ViewBag.SoDonNoCuoc đơn hàng nợ cước</b> chưa thanh toán. Vui lòng thanh toán cước để tiếp tục tạo đơn mới.</span>
+        </div>
+        <a asp-action="CongNo" class="btn btn-warning btn-sm rounded-pill fw-bold px-3">
+            <i class="bi bi-credit-card me-1"></i> Xem công nợ & Thanh toán
+        </a>
+    </div>
+}
 
 @* ---------- Tìm kiếm + bộ lọc ---------- *@
 <form method="get" class="dh-loc mb-3" id="boLocDon">
@@ -72,7 +81,8 @@
 @* ---------- Tab trạng thái ---------- *@
 <div class="dh-tab mb-3">
     <a class="@(bl.TrangThai is null ? "active" : "")" href="@TabUrl(null)"><i class="bi bi-grid"></i> Tất cả <span>@tong</span></a>
-    @foreach (var tt in HienThi.TatCaTrangThaiDon)
+    @* 16 trạng thái: chỉ hiện tab có đơn (và tab đang chọn) *@
+    @foreach (var tt in HienThi.TatCaTrangThaiDon.Where(t => so.GetValueOrDefault(t) > 0 || bl.TrangThai == t))
     {
         <a class="@(bl.TrangThai == tt ? "active" : "")" href="@TabUrl(tt)"><i class="bi @tt.BieuTuong()"></i> @tt.TenHienThi() <span>@so.GetValueOrDefault(tt)</span></a>
     }
@@ -87,19 +97,28 @@
     @foreach (var d in Model.KetQua.DanhSach)
     {
         int bac = d.TrangThai.BacHanhTrinh();
-        bool treHan = d.NgayGiaoDuKien.Date < DateTime.Today && bac < 4 && d.TrangThai != TrangThaiDon.DaHuy;
-        <div class="dh-the @(d.TrangThai == TrangThaiDon.DaHuy ? "da-huy" : "")">
+        bool treHan = d.NgayGiaoDuKien.Date < DateTime.Today && !d.TrangThai.DaKetThuc();
+        <div class="dh-the @(d.TrangThai is TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong ? "da-huy" : "")">
             <a asp-action="ChiTiet" asp-route-id="@d.MaDon" class="dh-the-chinh">
                 <span class="dh-icon @d.TrangThai.LopBadge()"><i class="bi @d.TrangThai.BieuTuong()"></i></span>
                 <div class="dh-giua">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <b class="dh-ma">@d.MaHienThi</b>
                         <span class="tt @d.TrangThai.LopBadge()">@d.TrangThai.TenHienThi()</span>
+                        @if (d.HinhThucGui == HinhThucGui.LayTanNoi) { <span class="badge bg-light text-secondary border nho">Lấy tận nơi</span> }
+                        @if (d.HinhThucGui == HinhThucGui.GuiTaiBuuCuc && d.TrangThai == TrangThaiDon.DaTao)
+                        {
+                            var conLai = d.NgayTao.AddDays(7) - DateTime.Now;
+                            int soNgayCon = Math.Max(0, (int)Math.Ceiling(conLai.TotalDays));
+                            <span class="badge bg-warning text-dark border nho" title="Vui lòng mang hàng ra bưu cục trước 7 ngày để tránh bị tự động hủy">
+                                <i class="bi bi-clock-history"></i> Hạn gửi: còn @soNgayCon ngày
+                            </span>
+                        }
                         @if (treHan) { <span class="tt tt-thatbai"><i class="bi bi-alarm"></i> Trễ hẹn</span> }
                     </div>
                     <div class="dh-nguoi-nhan"><i class="bi bi-person"></i> @d.TenNguoiNhan <span class="mo">· @DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</span></div>
                     <div class="nho mo text-truncate"><i class="bi bi-geo-alt"></i> @d.KhuVuc?.TenKhuVuc · @d.LoaiHang?.TenLoaiHang · @DinhDang.KhoiLuong(d.KhoiLuong)</div>
-                    @if (d.TrangThai != TrangThaiDon.DaHuy)
+                    @if (d.TrangThai is not (TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong))
                     {
                         <partial name="_TienDoNgan" model="d.TrangThai" />
                     }
@@ -111,7 +130,7 @@
                 </div>
             </a>
             <div class="dh-hanh-dong">
-                @if (DonHangXuLy.CoTheSua(d.TrangThai, true))
+                @if (DonHangXuLy.CoTheSua(d, true))
                 {
                     <a asp-action="ChinhSua" asp-route-id="@d.MaDon" class="btn btn-sm btn-light" title="Sửa đơn"><i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Sửa</span></a>
                 }
