@@ -1,0 +1,35 @@
+@model DanhSachTrang<ThongBao>
+@{
+    bool chuaDoc = ViewBag.ChuaDoc is true;
+    int soChuaDoc = ViewBag.SoChuaDoc;
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div class="tab-pill">
+        <a class="@(chuaDoc ? "" : "active")" asp-action="Index">Tất cả <span class="so">@ViewBag.Tong</span></a>
+        <a class="@(chuaDoc ? "active" : "")" asp-action="Index" asp-route-chuaDoc="true">Chưa đọc <span class="so">@soChuaDoc</span></a>
+    </div>
+    @if (soChuaDoc > 0)
+    {
+        <form asp-action="DanhDauDaDoc" method="post"><button class="btn btn-light btn-sm"><i class="bi bi-check2-all"></i> Đánh dấu tất cả đã đọc</button></form>
+    }
+</div>
+
+<div class="the-mem">
+    @if (Model.DanhSach.Count == 0)
+    {
+        <div class="o-trong"><i class="bi bi-bell-slash"></i>@(chuaDoc ? "Bạn đã đọc hết thông báo" : "Chưa có thông báo nào")</div>
+    }
+    @foreach (var tb in Model.DanhSach)
+    {
+        <a class="dong-tb dong-tb-lon @(tb.DaDoc ? "" : "chua-doc")" asp-action="Mo" asp-route-id="@tb.MaThongBao">
+            <span class="tb-icon @tb.Loai.LopIcon()"><i class="bi @tb.Loai.Icon()"></i></span>
+            <span class="min-w-0 flex-grow-1">
+                <span class="tb-tieu-de">@tb.TieuDe</span>
+                <span class="tb-noi-dung">@tb.NoiDung</span>
+                <span class="tb-gio">@DinhDang.ThoiGianTuongDoi(tb.NgayTao) · @DinhDang.NgayGio(tb.NgayTao)</span>
+            </span>
+            @if (!tb.DaDoc) { <span class="cham-moi" aria-label="Chưa đọc"></span> }
+        </a>
+    }
+</div>
+<partial name="_PhanTrang" model="Model" />

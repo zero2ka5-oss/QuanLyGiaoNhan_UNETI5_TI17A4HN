@@ -1,0 +1,755 @@
+@model ChuyenXeIndexVM
+@{
+    ViewData["Title"] = "Điều hành chuyến liên tỉnh";
+    bool khoaBuuCuc = ViewBag.KhoaBuuCuc == true;
+    int idBc = Model.BuuCucHienTai.MaBuuCuc;
+}
+
+<style>
+    /* Styling hiện đại cho Trang Điều hành Chuyến xe liên tỉnh */
+    .tab-pill-bar {
+        background-color: #f1f5f9;
+        padding: 5px;
+        border-radius: 9999px;
+        display: inline-flex;
+        gap: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    .tab-pill-item {
+        border-radius: 9999px !important;
+        font-weight: 600;
+        padding: 8px 20px;
+        font-size: 0.92rem;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        color: #64748b;
+    }
+    .tab-pill-item:hover {
+        color: #1e293b;
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+    .tab-pill-item.active-dangxep {
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+    }
+    .tab-pill-item.active-sapden {
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .tab-pill-item.active-lichsu {
+        background: linear-gradient(135deg, #475569, #334155) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(51, 65, 85, 0.35);
+    }
+    .squircle-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .chuyen-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #ffffff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .chuyen-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+    }
+</style>
+
+<!-- TIÊU ĐỀ & THANH ĐIỀU HƯỚNG BƯU CỤC -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+            <span class="squircle-icon bg-warning bg-opacity-10 text-cam" style="width: 38px; height: 38px; border-radius: 10px;">
+                <i class="bi bi-truck"></i>
+            </span>
+            <span>Điều hành chuyến xe liên tỉnh</span>
+        </h4>
+        <div class="text-muted small ps-1 d-flex flex-wrap align-items-center gap-2 mt-1">
+            <span>Bưu cục đang vận hành: <strong class="text-dark">@Model.BuuCucHienTai.TenBuuCuc</strong> (@Model.BuuCucHienTai.TinhThanh)</span>
+            @if (Model.LaHubTrungTam)
+            {
+                <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1 fw-semibold">
+                    <i class="bi bi-star-fill text-warning me-1"></i> HUB MIỀN @Model.TenMien.ToUpperInvariant() (TRUNG TÂM PHÂN LOẠI)
+                </span>
+            }
+            else
+            {
+                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 fw-semibold">
+                    <i class="bi bi-diagram-2-fill me-1"></i> Bưu cục vệ tinh · Hub phụ trách: @Model.TenHubVung
+                </span>
+            }
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        @if (!khoaBuuCuc)
+        {
+            <form method="get" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="tab" value="@Model.Tab" />
+                <select name="maBuuCuc" class="form-select form-select-sm rounded-pill px-3 shadow-xs" onchange="this.form.submit()" style="min-width: 210px;">
+                    @foreach (var bc in Model.DsBuuCuc)
+                    {
+                        <option value="@bc.MaBuuCuc" selected="@(bc.MaBuuCuc == idBc)">@bc.TenBuuCuc</option>
+                    }
+                </select>
+            </form>
+        }
+        <button type="button" class="btn btn-cam rounded-pill px-4 py-2 shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalLapChuyen">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span class="fw-semibold">Lập chuyến mới</span>
+        </button>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 py-3 px-4 rounded-4 shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+        <div class="fw-medium">@TempData["Success"]</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 py-3 px-4 rounded-4 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+        <div class="fw-medium">@TempData["Error"]</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- KHUNG TRÊN: 2 THẺ (ĐƠN CHỜ XẾP CHUYẾN & XE ĐANG ĐẬU) -->
+<div class="row g-4 mb-4">
+    <!-- CỘT TRÁI: ĐƠN CHỜ XẾP CHUYẾN TẠI BƯU CỤC -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                <div class="fw-bold text-dark d-flex align-items-center gap-2 fs-6">
+                    <span class="squircle-icon bg-warning bg-opacity-10 text-cam" style="width: 32px; height: 32px; border-radius: 8px; font-size: 1rem;">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </span>
+                    <span>@(Model.LaHubTrungTam ? $"Phân loại & Khai thác tại Hub {Model.BuuCucHienTai.TenBuuCuc}" : $"Đơn chờ gom về Hub {Model.TenHubVung}")</span>
+                </div>
+                <button type="button" class="btn btn-warning rounded-pill btn-sm px-3 py-1 text-dark fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalLapChuyen">
+                    + Lập chuyến
+                </button>
+            </div>
+            <div class="card-body p-4">
+                @if (Model.DonChoTheoDichDen.Count == 0)
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-box2 display-6 d-block mb-2 text-black-50"></i>
+                        <span>Không có đơn hàng nào chờ xếp chuyến liên tỉnh</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var nhom in Model.DonChoTheoDichDen)
+                        {
+                            <div class="p-3 bg-light rounded-4 border-0 d-flex align-items-center justify-content-between gap-3 shadow-xs">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="squircle-icon bg-white text-cam shadow-sm">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark fs-6 d-flex align-items-center gap-2 flex-wrap">
+                                            <span>@nhom.TenBuuCucNhan</span>
+                                            @if (nhom.LaTuyenVeHub)
+                                            {
+                                                <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-0 small fw-semibold">
+                                                    Hub phân loại
+                                                </span>
+                                            }
+                                        </div>
+                                        <div class="text-muted small mt-1">
+                                            <span class="badge rounded-pill bg-white text-dark border px-2 py-1 me-1 shadow-xs">@nhom.SoLuongDon đơn</span>
+                                            <span>• <strong>@nhom.TongKhoiLuong.ToString("N1")</strong> kg</span>
+                                            @if (!string.IsNullOrEmpty(nhom.MoTaTuyen))
+                                            {
+                                                <span class="d-none d-md-inline ms-1">• @nhom.MoTaTuyen</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <form asp-action="XepNhanh" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="maBuuCucGui" value="@idBc" />
+                                        <input type="hidden" name="maBuuCucNhan" value="@nhom.MaBuuCucNhan" />
+                                        @foreach (var don in nhom.DsDonHang)
+                                        {
+                                            <input type="hidden" name="maDonHangs" value="@don.MaDon" />
+                                        }
+                                        <button type="submit" class="btn btn-warning rounded-pill btn-sm fw-bold text-dark px-3 py-1 shadow-sm d-flex align-items-center gap-1" title="Xếp toàn bộ đơn vào chuyến này">
+                                            <i class="bi bi-lightning-charge-fill"></i>
+                                            <span>@(Model.LaHubTrungTam ? "Xếp" : "Xếp về Hub")</span>
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-white rounded-circle p-2 shadow-xs border" data-bs-toggle="collapse" data-bs-target="#collapseNhom_@nhom.MaBuuCucNhan" aria-expanded="false" title="Xem danh sách đơn">
+                                        <i class="bi bi-chevron-down text-muted"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="collapse" id="collapseNhom_@nhom.MaBuuCucNhan">
+                                <div class="p-3 border rounded-3 bg-white mb-2 small shadow-xs">
+                                    <div class="text-muted mb-2 fw-semibold">Danh sách @nhom.SoLuongDon đơn tuyến @nhom.TenBuuCucNhan:</div>
+                                    <ul class="list-unstyled mb-0 ps-1">
+                                        @foreach (var d in nhom.DsDonHang)
+                                        {
+                                            <li class="py-2 border-bottom d-flex justify-content-between align-items-center">
+                                                <span>
+                                                    <strong class="text-primary">@d.MaHienThi</strong> — @d.TenNguoiNhan (@d.SoDienThoaiNguoiNhan)
+                                                </span>
+                                                <span class="badge bg-light text-dark rounded-pill">@d.KhoiLuong.ToString("N1") kg</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: XE LIÊN TỈNH ĐANG ĐẬU -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <div class="fw-bold text-dark d-flex align-items-center gap-2 fs-6">
+                    <span class="squircle-icon bg-primary bg-opacity-10 text-primary" style="width: 32px; height: 32px; border-radius: 8px; font-size: 1rem;">
+                        <i class="bi bi-truck-front-fill"></i>
+                    </span>
+                    <span>Xe liên tỉnh đang đậu (@Model.XeLienTinhDangDau.Count)</span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                @if (Model.XeLienTinhDangDau.Count == 0)
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-truck display-6 d-block mb-2 text-black-50"></i>
+                        <span>Chưa có xe liên tỉnh nào đậu tại bưu cục này</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var xe in Model.XeLienTinhDangDau)
+                        {
+                            bool sanSang = xe.TrangThai == TrangThaiNhanVien.SanSang;
+                            <div class="p-3 bg-light rounded-4 border-0 d-flex align-items-center justify-content-between gap-3 shadow-xs">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="squircle-icon bg-white @(sanSang ? "text-success" : "text-warning") shadow-sm">
+                                        <i class="bi bi-truck"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark fs-6">
+                                            @xe.HoTen <span class="text-muted fw-normal small">(@xe.TaiKhoan?.TenDangNhap)</span>
+                                        </div>
+                                        <div class="text-muted small mt-1">
+                                            @if (xe.PhuongTien != null)
+                                            {
+                                                <span><strong class="text-dark">@xe.PhuongTien.BienSo</strong> • @xe.PhuongTien.LoaiPhuongTien (@xe.PhuongTien.TaiTrongToiDa.ToString("N0") kg)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-danger">Chưa gán phương tiện xe tải</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    @if (sanSang)
+                                    {
+                                        <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fw-semibold">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Sẵn sàng
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 px-3 py-2 fw-semibold">
+                                            <i class="bi bi-hourglass-split me-1"></i> @xe.TrangThai.TenHienThi()
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KHUNG DƯỚI: TABS DANH SÁCH CHUYẾN LIÊN TỈNH (BO TRÒN HIỆN ĐẠI THEO PHONG CÁCH SEGMENTED CONTROL) -->
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white border-bottom p-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <!-- THANH CHUYỂN TAB BO TRÒN MỀM MẠI -->
+        <div class="tab-pill-bar">
+            <!-- TAB 1: ĐANG XẾP HÀNG -->
+            <a class="tab-pill-item @(Model.Tab == "dangxep" ? "active-dangxep" : "")"
+               asp-route-tab="dangxep" asp-route-maBuuCuc="@idBc">
+                <i class="bi bi-box-seam-fill"></i>
+                <span>Đang xếp hàng</span>
+                <span class="badge rounded-pill @(Model.Tab == "dangxep" ? "bg-white text-dark shadow-xs" : "bg-secondary bg-opacity-25 text-dark")">
+                    @Model.SoDangXep
+                </span>
+            </a>
+
+            <!-- TAB 2: SẮP ĐẾN -->
+            <a class="tab-pill-item @(Model.Tab == "sapden" ? "active-sapden" : "")"
+               asp-route-tab="sapden" asp-route-maBuuCuc="@idBc">
+                <i class="bi bi-truck-front-fill"></i>
+                <span>Sắp đến</span>
+                <span class="badge rounded-pill @(Model.Tab == "sapden" ? "bg-white text-primary shadow-xs" : "bg-secondary bg-opacity-25 text-dark")">
+                    @Model.SoSapDen
+                </span>
+            </a>
+
+            <!-- TAB 3: LỊCH SỬ -->
+            <a class="tab-pill-item @(Model.Tab == "lichsu" ? "active-lichsu" : "")"
+               asp-route-tab="lichsu" asp-route-maBuuCuc="@idBc">
+                <i class="bi bi-clock-history"></i>
+                <span>Lịch sử</span>
+                <span class="badge rounded-pill @(Model.Tab == "lichsu" ? "bg-white text-secondary shadow-xs" : "bg-secondary bg-opacity-25 text-dark")">
+                    @Model.SoLichSu
+                </span>
+            </a>
+        </div>
+
+        <div class="text-muted small fw-medium">
+            Hiển thị <strong>@Model.DsChuyenXe.Count</strong> chuyến xe
+        </div>
+    </div>
+
+    <div class="card-body p-4">
+        @if (Model.DsChuyenXe.Count == 0)
+        {
+            <!-- TRẠNG THÁI RỖNG -->
+            <div class="text-center py-5 my-3">
+                <div class="mb-3">
+                    <span class="squircle-icon bg-light text-muted mx-auto" style="width: 80px; height: 80px; border-radius: 24px; font-size: 2.5rem;">
+                        <i class="bi bi-truck"></i>
+                    </span>
+                </div>
+                <div class="text-muted fw-semibold fs-6">
+                    Chưa có chuyến nào trong danh sách này
+                </div>
+                <div class="text-black-50 small mt-1">
+                    Hãy bấm nút <strong>"+ Lập chuyến mới"</strong> ở góc trên để tạo chuyến xe liên tỉnh
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- DANH SÁCH CÁC CHUYẾN XE (CARD BO TRÒN HIỆN ĐẠI) -->
+            <div class="d-flex flex-column gap-3">
+                @foreach (var c in Model.DsChuyenXe)
+                {
+                    decimal tongKg = c.DonHangs.Sum(d => d.KhoiLuong);
+                    decimal taiTrong = c.PhuongTien?.TaiTrongToiDa ?? 2000m;
+                    int phanTramTai = taiTrong > 0 ? (int)Math.Round((tongKg / taiTrong) * 100) : 0;
+                    bool quaTai = taiTrong > 0 && tongKg > taiTrong;
+
+                    <div class="chuyen-card p-4 shadow-sm">
+                        <!-- HÀNG TRÊN: MÃ CHUYẾN, TUYẾN ĐƯỜNG & TRẠNG THÁI -->
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 border-bottom mb-3">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge rounded-pill bg-primary bg-gradient px-3 py-2 fs-6 shadow-xs fw-bold">
+                                    <i class="bi bi-truck me-1"></i> @c.MaHienThi
+                                </span>
+                                @{
+                                    bool guiLaHub = c.BuuCucGui != null && DonHangXuLy.LaHubTrungTam(c.BuuCucGui);
+                                    bool nhanLaHub = c.BuuCucNhan != null && DonHangXuLy.LaHubTrungTam(c.BuuCucNhan);
+                                }
+                                @if (!guiLaHub && nhanLaHub)
+                                {
+                                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-2 py-1 nho fw-semibold">
+                                        <i class="bi bi-arrow-repeat me-1 text-cam"></i> Tuyến con thoi gom Hub
+                                    </span>
+                                }
+                                else if (guiLaHub && nhanLaHub)
+                                {
+                                    <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1 nho fw-semibold">
+                                        <i class="bi bi-truck me-1"></i> Tuyến trục liên Hub
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 nho fw-semibold">
+                                        <i class="bi bi-diagram-2 me-1"></i> Tuyến phân tỏa nội miền
+                                    </span>
+                                }
+                                <div class="d-flex align-items-center gap-2 ms-md-2 flex-wrap">
+                                    <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fw-medium">
+                                        <i class="bi bi-geo-alt-fill text-muted me-1"></i> @c.BuuCucGui?.TenBuuCuc
+                                    </span>
+                                    @if (c.CoGheTram && c.BuuCucTrungGian != null)
+                                    {
+                                        <i class="bi bi-arrow-right text-muted small"></i>
+                                        <span class="badge rounded-pill @(c.DaGheTram ? "bg-success bg-opacity-10 text-success border border-success border-opacity-25" : (c.TrangThai == TrangThaiChuyenXe.DangGheTram ? "bg-warning bg-opacity-25 text-dark border border-warning" : "bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25")) px-3 py-2 fw-semibold" title="Trạm dừng trung gian giữa đường">
+                                            <i class="bi bi-signpost-split me-1 text-cam"></i> Ghé: @c.BuuCucTrungGian.TenBuuCuc
+                                            @if (c.DaGheTram)
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success ms-1 small" title="Đã ghé trạm và rời trạm"></i>
+                                            }
+                                            else if (c.TrangThai == TrangThaiChuyenXe.DangGheTram)
+                                            {
+                                                <span class="badge rounded-pill bg-danger text-white ms-1 small px-2 py-0">Đang ở trạm</span>
+                                            }
+                                        </span>
+                                    }
+                                    <i class="bi bi-arrow-right text-cam fs-5"></i>
+                                    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fw-semibold">
+                                        <i class="bi bi-geo-alt-fill me-1"></i> @c.BuuCucNhan?.TenBuuCuc
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge rounded-pill @c.TrangThai.LopBadge() px-3 py-2 fs-6 fw-semibold">
+                                    <i class="@c.TrangThai.BieuTuong() me-1"></i> @c.TrangThai.TenHienThi()
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- HÀNG GIỮA: TÀI XẾ, PHƯƠNG TIỆN, TẢI TRỌNG & TÁC VỤ -->
+                        <div class="row g-3 align-items-center">
+                            <div class="col-lg-4 col-md-6">
+                                <div class="text-muted small mb-1">Tài xế & Phương tiện:</div>
+                                <div class="fw-bold text-dark fs-6">
+                                    <i class="bi bi-person-fill text-muted me-1"></i> @c.NhanVien?.HoTen
+                                    <span class="text-muted fw-normal small">(@c.NhanVien?.SoDienThoai)</span>
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    <i class="bi bi-truck text-muted me-1"></i> <strong>@(c.PhuongTien?.BienSo ?? "Xe tải")</strong> • @(c.PhuongTien?.LoaiPhuongTien ?? "2 tấn")
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4 col-md-6">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>Tải trọng chuyến hàng:</span>
+                                    @if (quaTai)
+                                    {
+                                        <strong class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>QUÁ TẢI: @tongKg.ToString("N1") / @taiTrong.ToString("N0") kg (@phanTramTai%)</strong>
+                                    }
+                                    else
+                                    {
+                                        <strong class="text-dark">@tongKg.ToString("N1") / @taiTrong.ToString("N0") kg (@phanTramTai%)</strong>
+                                    }
+                                </div>
+                                <div class="progress rounded-pill overflow-hidden" style="height: 10px; background-color: #e2e8f0;">
+                                    <div class="progress-bar rounded-pill @(quaTai ? "bg-danger" : (phanTramTai > 90 ? "bg-danger" : (phanTramTai > 70 ? "bg-warning" : "bg-success")))"
+                                         role="progressbar" style="width: @Math.Min(100, phanTramTai)%;" aria-valuenow="@phanTramTai" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    <i class="bi bi-box-seam me-1 text-cam"></i> Đang chứa: <strong>@c.DonHangs.Count</strong> kiện hàng
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4 text-lg-end">
+                                <div class="text-muted small mb-2">
+                                    @if (c.NgayXuatBen.HasValue)
+                                    {
+                                        <span><i class="bi bi-clock me-1"></i> Xuất bến: @c.NgayXuatBen.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span><i class="bi bi-clock me-1"></i> Lập lúc: @c.NgayTao.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                </div>
+                                <div class="d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+                                    @if (c.TrangThai == TrangThaiChuyenXe.DangXepHang && c.MaBuuCucGui == idBc)
+                                    {
+                                        <form asp-action="XuatBen" method="post" class="d-inline"
+                                              data-xac-nhan="Bạn có chắc chắn muốn cho chuyến xe @c.MaHienThi xuất bến vận chuyển?"
+                                              data-tieu-de="Xác nhận xuất bến"
+                                              data-nut-xac-nhan="Xuất bến ngay"
+                                              data-kieu="success"
+                                              data-icon="bi-send-fill">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.MaChuyen" />
+                                            <input type="hidden" name="maBuuCuc" value="@idBc" />
+                                            <button type="submit" class="btn btn-success rounded-pill px-3 py-2 shadow-sm fw-semibold d-inline-flex align-items-center gap-1" @(c.DonHangs.Count == 0 || quaTai ? "disabled" : "") title="@(quaTai ? "Chuyến xe vượt quá tải trọng, không thể xuất bến" : "")">
+                                                <i class="bi bi-send-fill"></i>
+                                                <span>Xuất bến</span>
+                                            </button>
+                                        </form>
+                                        <form asp-action="Huy" method="post" class="d-inline"
+                                              data-xac-nhan="Xác nhận hủy chuyến xe @c.MaHienThi? Các đơn hàng sẽ được trả lại bưu cục gửi."
+                                              data-tieu-de="Xác nhận hủy chuyến xe"
+                                              data-nut-xac-nhan="Hủy chuyến"
+                                              data-kieu="danger"
+                                              data-icon="bi-x-circle-fill">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.MaChuyen" />
+                                            <input type="hidden" name="maBuuCuc" value="@idBc" />
+                                            <button type="submit" class="btn btn-outline-danger rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-x-circle"></i>
+                                                <span>Hủy</span>
+                                            </button>
+                                        </form>
+                                    }
+                                    @* Tác vụ tại trạm dừng trung gian *@
+                                    @if (c.MaBuuCucTrungGian == idBc)
+                                    {
+                                        if (c.TrangThai == TrangThaiChuyenXe.DangVanChuyen && !c.DaGheTram)
+                                        {
+                                            <form asp-action="GheTram" method="post" class="d-inline"
+                                                  data-xac-nhan="Xác nhận Chuyến xe @c.MaHienThi đã đến trạm dừng @(c.BuuCucTrungGian?.TenBuuCuc)? Hệ thống sẽ dỡ các kiện hàng Miền Trung vào kho bưu cục."
+                                                  data-tieu-de="Xác nhận ghé trạm"
+                                                  data-nut-xac-nhan="Ghé trạm & Dỡ hàng"
+                                                  data-kieu="warning"
+                                                  data-icon="bi-box-arrow-in-down">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@c.MaChuyen" />
+                                                <input type="hidden" name="maBuuCuc" value="@idBc" />
+                                                <button type="submit" class="btn btn-warning rounded-pill px-3 py-2 shadow-sm text-dark fw-bold d-inline-flex align-items-center gap-1">
+                                                    <i class="bi bi-box-arrow-in-down"></i>
+                                                    <span>Ghé trạm & Dỡ hàng</span>
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (c.TrangThai == TrangThaiChuyenXe.DangGheTram)
+                                        {
+                                            <form asp-action="RoiTram" method="post" class="d-inline"
+                                                  data-xac-nhan="Xác nhận Chuyến xe @c.MaHienThi đã hoàn tất dỡ/bốc hàng và rời trạm tiếp tục hành trình đến @(c.BuuCucNhan?.TenBuuCuc)?"
+                                                  data-tieu-de="Xác nhận rời trạm"
+                                                  data-nut-xac-nhan="Rời trạm đi tiếp"
+                                                  data-kieu="success"
+                                                  data-icon="bi-send-fill">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@c.MaChuyen" />
+                                                <input type="hidden" name="maBuuCuc" value="@idBc" />
+                                                <button type="submit" class="btn btn-success rounded-pill px-3 py-2 shadow-sm text-white fw-bold d-inline-flex align-items-center gap-1">
+                                                    <i class="bi bi-send-fill"></i>
+                                                    <span>Rời trạm đi tiếp</span>
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                    @* Tác vụ tiếp nhận tại đích đến cuối *@
+                                    @if ((c.TrangThai == TrangThaiChuyenXe.DangVanChuyen || c.TrangThai == TrangThaiChuyenXe.DangXepHang) && c.MaBuuCucNhan == idBc)
+                                    {
+                                        <form asp-action="TiepNhan" method="post" class="d-inline"
+                                              data-xac-nhan="Xác nhận tiếp nhận và dỡ hàng cho chuyến xe @c.MaHienThi?"
+                                              data-tieu-de="Xác nhận tiếp nhận"
+                                              data-nut-xac-nhan="Tiếp nhận"
+                                              data-kieu="warning"
+                                              data-icon="bi-box-arrow-in-down">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.MaChuyen" />
+                                            <input type="hidden" name="maBuuCuc" value="@idBc" />
+                                            <button type="submit" class="btn btn-warning rounded-pill px-3 py-2 shadow-sm text-dark fw-bold d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-box-arrow-in-down"></i>
+                                                <span>Tiếp nhận</span>
+                                            </button>
+                                        </form>
+                                    }
+                                    @* Tác vụ lập chuyến lượt về cho xe vệ tinh đã dỡ hàng xong tại Hub *@
+                                    @if (c.TrangThai == TrangThaiChuyenXe.DaDenNoi && Model.LaHubTrungTam && c.BuuCucGui != null && !DonHangXuLy.LaHubTrungTam(c.BuuCucGui) && c.MaBuuCucNhan == idBc)
+                                    {
+                                        <form asp-action="LapChuyenLuotVe" method="post" class="d-inline"
+                                              data-xac-nhan="Lập chuyến xe con thoi lượt về cho tài xế @c.NhanVien?.HoTen (@(c.PhuongTien?.BienSo ?? "Xe tải")) từ Hub @Model.BuuCucHienTai.TenBuuCuc về lại @c.BuuCucGui.TenBuuCuc? Hệ thống sẽ tự động quét và xếp các kiện hàng đang lưu tại Hub đi @c.BuuCucGui.TenBuuCuc lên xe."
+                                              data-tieu-de="Lập chuyến xe lượt về"
+                                              data-nut-xac-nhan="Lập chuyến về"
+                                              data-kieu="success"
+                                              data-icon="bi-arrow-return-left">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.MaChuyen" />
+                                            <input type="hidden" name="maBuuCuc" value="@idBc" />
+                                            <button type="submit" class="btn btn-outline-success rounded-pill px-3 py-2 shadow-xs fw-bold d-inline-flex align-items-center gap-1" title="Lập chuyến xe con thoi quay về @c.BuuCucGui.TenBuuCuc">
+                                                <i class="bi bi-arrow-return-left"></i>
+                                                <span>Lập chuyến về @c.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "")</span>
+                                            </button>
+                                        </form>
+                                    }
+                                    <a asp-action="ChiTiet" asp-route-id="@c.MaChuyen" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-eye"></i>
+                                        <span>Chi tiết</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(c.GhiChu))
+                        {
+                            <div class="mt-3 pt-2 border-top small text-muted">
+                                <i class="bi bi-chat-left-text me-1 text-cam"></i> Ghi chú: <em>@c.GhiChu</em>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- MODAL: LẬP CHUYẾN XE LIÊN TỈNH MỚI (BO TRÒN GÓC HIỆN ĐẠI) -->
+<div class="modal fade" id="modalLapChuyen" tabindex="-1" aria-labelledby="modalLapChuyenLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <form asp-action="TaoMoi" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="MaBuuCucGui" value="@idBc" />
+                <div class="modal-header bg-cam text-white py-3 px-4">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="modalLapChuyenLabel">
+                        <i class="bi bi-truck"></i> Lập chuyến xe liên tỉnh mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Bưu cục gửi (Xuất phát)</label>
+                            <input type="text" class="form-control rounded-3 bg-light" value="@Model.BuuCucHienTai.TenBuuCuc" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Bưu cục nhận (Đích đến) <span class="text-danger">*</span></label>
+                            @if (!Model.LaHubTrungTam)
+                            {
+                                <select name="MaBuuCucNhan" class="form-select rounded-3" required id="modalMaBuuCucNhan">
+                                    @if (Model.HubVung != null)
+                                    {
+                                        <option value="@Model.HubVung.MaBuuCuc" selected>★ Hub @Model.HubVung.TenBuuCuc (@Model.HubVung.TinhThanh) — Tuyến gom về Hub Vùng (Bắt buộc)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="">Chưa cấu hình Hub vùng phụ trách</option>
+                                    }
+                                </select>
+                                <div class="form-text small text-primary">
+                                    <i class="bi bi-info-circle me-1"></i> Bưu cục khu vực chỉ có nhiệm vụ gom toàn bộ kiện liên tỉnh về Hub trung tâm vùng (Hub @Model.TenHubVung).
+                                </div>
+                            }
+                            else
+                            {
+                                <select name="MaBuuCucNhan" class="form-select rounded-3" required id="modalMaBuuCucNhan">
+                                    <option value="">-- Chọn bưu cục đích --</option>
+                                    <optgroup label="🚛 Tuyến trục liên Hub (Kết nối liên miền)">
+                                        @foreach (var bc in Model.DsBuuCuc.Where(b => b.MaBuuCuc != idBc && DonHangXuLy.LaHubTrungTam(b)))
+                                        {
+                                            <option value="@bc.MaBuuCuc">★ Hub @bc.TenBuuCuc (@bc.TinhThanh)</option>
+                                        }
+                                    </optgroup>
+                                    <optgroup label="🚚 Tuyến phân tỏa nội miền (Về bưu cục khu vực trực thuộc)">
+                                        @foreach (var bc in Model.DsBuuCuc.Where(b => b.MaBuuCuc != idBc && !DonHangXuLy.LaHubTrungTam(b) && DonHangXuLy.LayMien(b.TinhThanh) == Model.TenMien))
+                                        {
+                                            <option value="@bc.MaBuuCuc">@bc.TenBuuCuc (@bc.TinhThanh)</option>
+                                        }
+                                    </optgroup>
+                                </select>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            @if (!Model.LaHubTrungTam)
+                            {
+                                <label class="form-label fw-semibold">Trạm dừng trung gian</label>
+                                <input type="text" class="form-control rounded-3 bg-light text-muted" value="-- Tuyến con thoi gom hàng không ghé trạm --" readonly />
+                                <div class="form-text small text-muted">Xe gom bưu cục khu vực chỉ chạy thẳng về Hub vùng.</div>
+                            }
+                            else
+                            {
+                                <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                                    <span>Trạm dừng trung gian (Tùy chọn)</span>
+                                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-cam small border border-warning border-opacity-25">Đa chặng</span>
+                                </label>
+                                <select name="MaBuuCucTrungGian" class="form-select rounded-3" id="modalMaBuuCucTrungGian">
+                                    <option value="">-- Không ghé trạm (Chạy thẳng) --</option>
+                                    @foreach (var bc in Model.DsBuuCuc.Where(b => b.MaBuuCuc != idBc && DonHangXuLy.LaHubTrungTam(b)))
+                                    {
+                                        <option value="@bc.MaBuuCuc">★ Hub @bc.TenBuuCuc (@bc.TinhThanh)</option>
+                                    }
+                                </select>
+                                <div class="form-text small text-muted">
+                                    Tuyến Bắc - Nam đường dài: Khuyến nghị chọn <strong>Hub Đà Nẵng</strong> để dỡ/bốc thêm hàng.
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tài xế xe tải liên tỉnh <span class="text-danger">*</span></label>
+                            <select name="MaNhanVien" class="form-select rounded-3" required>
+                                <option value="">-- Chọn tài xế liên tỉnh --</option>
+                                <optgroup label="Tài xế bưu cục hiện tại (@Model.BuuCucHienTai.TenBuuCuc)">
+                                    @foreach (var s in Model.XeLienTinhDangDau)
+                                    {
+                                        <option value="@s.MaNhanVien">
+                                            @s.HoTen (@(s.PhuongTien?.BienSo ?? "Chưa có xe")) - @s.TrangThai.TenHienThi()
+                                        </option>
+                                    }
+                                </optgroup>
+                                @if (ViewBag.XeVeTinhTaiHub is List<NhanVienGiaoHang> dsXeVeTinh && dsXeVeTinh.Count > 0)
+                                {
+                                    <optgroup label="Tài xế xe vệ tinh đang đậu tại Hub (Chuyến lượt về)">
+                                        @foreach (var s in dsXeVeTinh)
+                                        {
+                                            <option value="@s.MaNhanVien">
+                                                @s.HoTen - @s.BuuCuc?.TenBuuCuc (@(s.PhuongTien?.BienSo ?? "Xe tải")) - Sẵn sàng chạy về tỉnh
+                                            </option>
+                                        }
+                                    </optgroup>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Ghi chú chuyến xe</label>
+                            <input type="text" name="GhiChu" class="form-control rounded-3" placeholder="Ví dụ: Chuyến ghép hàng buổi sáng, ghé trạm dỡ/bốc thêm hàng..." />
+                        </div>
+                    </div>
+
+                    @if (Model.DonChoTheoDichDen.Count > 0)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                                <span>Chọn kiện hàng muốn xếp lên chuyến (Tùy chọn):</span>
+                                <span class="text-muted small">Có thể bổ sung thêm kiện sau khi lập chuyến</span>
+                            </label>
+                            <div class="border rounded-4 p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
+                                @foreach (var nhom in Model.DonChoTheoDichDen)
+                                {
+                                    <div class="fw-bold text-dark mb-2">Tuyến @nhom.TenBuuCucNhan (@nhom.SoLuongDon đơn):</div>
+                                    @foreach (var d in nhom.DsDonHang)
+                                    {
+                                        <div class="form-check py-1">
+                                            <input class="form-check-input" type="checkbox" name="DsMaDon" value="@d.MaDon" id="chk_don_@d.MaDon">
+                                            <label class="form-check-label d-flex justify-content-between" for="chk_don_@d.MaDon">
+                                                <span><strong>@d.MaHienThi</strong> — @d.TenNguoiNhan (@d.DiaChiNhan)</span>
+                                                <span class="badge bg-white text-dark rounded-pill border">@d.KhoiLuong.ToString("N1") kg</span>
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer bg-light py-3 px-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-cam rounded-pill px-4 shadow-sm fw-semibold">
+                        <i class="bi bi-check-lg me-1"></i> Xác nhận lập chuyến
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

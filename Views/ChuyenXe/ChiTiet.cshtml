@@ -1,0 +1,393 @@
+@model ChuyenXe
+@{
+    ViewData["Title"] = $"Chi tiết chuyến xe {Model.MaHienThi}";
+    var donCoTheThem = (List<DonGiaoHang>)ViewBag.DonCoTheThem;
+    decimal tongKg = Model.DonHangs.Sum(d => d.KhoiLuong);
+    decimal taiTrong = Model.PhuongTien?.TaiTrongToiDa ?? 2000m;
+    int phanTramTai = taiTrong > 0 ? (int)Math.Min(100, (tongKg / taiTrong) * 100) : 0;
+    int? maBuuCucHienTai = Context.Session.MaBuuCuc();
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill btn-sm px-3 shadow-xs">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </a>
+            <h4 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                <span class="badge rounded-pill bg-primary bg-gradient px-3 py-2 fs-6 shadow-xs fw-bold">
+                    <i class="bi bi-truck me-1"></i> @Model.MaHienThi
+                </span>
+            </h4>
+            <span class="badge rounded-pill @Model.TrangThai.LopBadge() px-3 py-2 fs-6 fw-semibold">
+                <i class="@Model.TrangThai.BieuTuong() me-1"></i> @Model.TrangThai.TenHienThi()
+            </span>
+        </div>
+        <div class="text-muted small ps-1 flex-wrap d-flex align-items-center gap-1">
+            <span>Hành trình:</span>
+            <span class="badge rounded-pill bg-light text-dark border px-3 py-1 fw-medium">@Model.BuuCucGui?.TenBuuCuc</span>
+            @if (Model.CoGheTram && Model.BuuCucTrungGian != null)
+            {
+                <i class="bi bi-arrow-right text-muted small"></i>
+                <span class="badge rounded-pill @(Model.DaGheTram ? "bg-success bg-opacity-10 text-success border border-success border-opacity-25" : (Model.TrangThai == TrangThaiChuyenXe.DangGheTram ? "bg-warning bg-opacity-25 text-dark border border-warning" : "bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25")) px-3 py-1 fw-semibold">
+                    <i class="bi bi-signpost-split me-1 text-cam"></i> Trạm dừng: @Model.BuuCucTrungGian.TenBuuCuc
+                    @(Model.DaGheTram ? "(Đã hoàn tất)" : (Model.TrangThai == TrangThaiChuyenXe.DangGheTram ? "(Đang đỗ tại trạm)" : "(Sắp ghé)"))
+                </span>
+            }
+            <i class="bi bi-arrow-right text-cam mx-1"></i>
+            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 fw-semibold">@Model.BuuCucNhan?.TenBuuCuc</span>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        @if (Model.TrangThai == TrangThaiChuyenXe.DangXepHang)
+        {
+            <form asp-action="XuatBen" method="post" class="d-inline"
+                  data-xac-nhan="Bạn có chắc chắn muốn cho chuyến xe @Model.MaHienThi xuất bến vận chuyển?"
+                  data-tieu-de="Xác nhận xuất bến"
+                  data-nut-xac-nhan="Xuất bến ngay"
+                  data-kieu="success"
+                  data-icon="bi-send-fill">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaChuyen" />
+                <button type="submit" class="btn btn-success rounded-pill px-4 py-2 shadow-sm fw-semibold d-inline-flex align-items-center gap-1" @(Model.DonHangs.Count == 0 ? "disabled" : "")>
+                    <i class="bi bi-send-fill me-1"></i> Xuất bến vận chuyển
+                </button>
+            </form>
+            <form asp-action="Huy" method="post" class="d-inline"
+                  data-xac-nhan="Xác nhận hủy chuyến xe @Model.MaHienThi? Các kiện hàng sẽ được lưu kho lại bưu cục gửi."
+                  data-tieu-de="Xác nhận hủy chuyến xe"
+                  data-nut-xac-nhan="Hủy chuyến"
+                  data-kieu="danger"
+                  data-icon="bi-x-circle-fill">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaChuyen" />
+                <button type="submit" class="btn btn-outline-danger rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-x-circle me-1"></i> Hủy chuyến
+                </button>
+            </form>
+        }
+        else if (Model.CoGheTram && Model.TrangThai == TrangThaiChuyenXe.DangVanChuyen && !Model.DaGheTram && (maBuuCucHienTai == null || maBuuCucHienTai == Model.MaBuuCucTrungGian))
+        {
+            <form asp-action="GheTram" method="post" class="d-inline"
+                  data-xac-nhan="Xác nhận Chuyến xe @Model.MaHienThi đã đến trạm dừng @(Model.BuuCucTrungGian?.TenBuuCuc)? Hệ thống sẽ dỡ các kiện hàng Miền Trung vào kho."
+                  data-tieu-de="Xác nhận ghé trạm"
+                  data-nut-xac-nhan="Ghé trạm & Dỡ hàng"
+                  data-kieu="warning"
+                  data-icon="bi-box-arrow-in-down">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaChuyen" />
+                <button type="submit" class="btn btn-warning rounded-pill px-4 py-2 shadow-sm text-dark fw-bold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-box-arrow-in-down me-1"></i> Ghé trạm & Dỡ hàng
+                </button>
+            </form>
+        }
+        else if (Model.TrangThai == TrangThaiChuyenXe.DangGheTram && (maBuuCucHienTai == null || maBuuCucHienTai == Model.MaBuuCucTrungGian))
+        {
+            <form asp-action="RoiTram" method="post" class="d-inline"
+                  data-xac-nhan="Xác nhận Chuyến xe @Model.MaHienThi đã hoàn tất dỡ/bốc hàng và rời trạm tiếp tục hành trình đến @(Model.BuuCucNhan?.TenBuuCuc)?"
+                  data-tieu-de="Xác nhận rời trạm"
+                  data-nut-xac-nhan="Rời trạm đi tiếp"
+                  data-kieu="success"
+                  data-icon="bi-send-fill">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaChuyen" />
+                <button type="submit" class="btn btn-success rounded-pill px-4 py-2 shadow-sm text-white fw-bold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-send-fill me-1"></i> Rời trạm đi tiếp
+                </button>
+            </form>
+        }
+        else if (Model.TrangThai == TrangThaiChuyenXe.DangVanChuyen && (maBuuCucHienTai == null || maBuuCucHienTai == Model.MaBuuCucNhan))
+        {
+            <form asp-action="TiepNhan" method="post" class="d-inline"
+                  data-xac-nhan="Xác nhận tiếp nhận và dỡ hàng cho chuyến xe @Model.MaHienThi?"
+                  data-tieu-de="Xác nhận tiếp nhận"
+                  data-nut-xac-nhan="Tiếp nhận"
+                  data-kieu="warning"
+                  data-icon="bi-box-arrow-in-down">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaChuyen" />
+                <button type="submit" class="btn btn-warning rounded-pill px-4 py-2 shadow-sm text-dark fw-bold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-box-arrow-in-down me-1"></i> Tiếp nhận tại bưu cục đích
+                </button>
+            </form>
+        }
+        @if (Model.TrangThai == TrangThaiChuyenXe.DaDenNoi && Model.BuuCucNhan != null && DonHangXuLy.LaHubTrungTam(Model.BuuCucNhan) && Model.BuuCucGui != null && !DonHangXuLy.LaHubTrungTam(Model.BuuCucGui) && (maBuuCucHienTai == null || maBuuCucHienTai == Model.MaBuuCucNhan))
+        {
+            <form asp-action="LapChuyenLuotVe" method="post" class="d-inline"
+                  data-xac-nhan="Lập chuyến xe con thoi lượt về cho tài xế @Model.NhanVien?.HoTen (@(Model.PhuongTien?.BienSo ?? "Xe tải")) từ Hub @Model.BuuCucNhan.TenBuuCuc về lại @Model.BuuCucGui.TenBuuCuc? Hệ thống sẽ tự động quét và xếp các kiện hàng đang lưu tại Hub đi @Model.BuuCucGui.TenBuuCuc lên xe."
+                  data-tieu-de="Lập chuyến xe lượt về"
+                  data-nut-xac-nhan="Lập chuyến về"
+                  data-kieu="success"
+                  data-icon="bi-arrow-return-left">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaChuyen" />
+                <input type="hidden" name="maBuuCuc" value="@Model.MaBuuCucNhan" />
+                <button type="submit" class="btn btn-success rounded-pill px-4 py-2 shadow-sm text-white fw-bold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-return-left me-1"></i> Lập chuyến lượt về @Model.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "")
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 py-3 px-4 rounded-4 shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+        <div class="fw-medium">@TempData["Success"]</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 py-3 px-4 rounded-4 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+        <div class="fw-medium">@TempData["Error"]</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <!-- THÔNG TIN TỔNG QUAN CHUYẾN XE -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4 fw-bold text-dark d-flex align-items-center gap-2 fs-6">
+                <i class="bi bi-info-circle-fill text-cam"></i>
+                <span>Thông tin hành trình & phương tiện</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="@(Model.CoGheTram ? "col-md-4" : "col-md-6")">
+                        <div class="text-muted small mb-1">Bưu cục xuất phát (Gửi):</div>
+                        <div class="fw-bold text-dark fs-6">@Model.BuuCucGui?.TenBuuCuc</div>
+                        <div class="text-muted small mt-1"><i class="bi bi-geo-alt me-1"></i> @Model.BuuCucGui?.DiaChi</div>
+                    </div>
+                    @if (Model.CoGheTram && Model.BuuCucTrungGian != null)
+                    {
+                        <div class="col-md-4">
+                            <div class="text-muted small mb-1">Trạm dừng trung gian:</div>
+                            <div class="fw-bold text-warning fs-6">@Model.BuuCucTrungGian.TenBuuCuc</div>
+                            <div class="text-muted small mt-1"><i class="bi bi-signpost me-1"></i> @Model.BuuCucTrungGian.DiaChi</div>
+                        </div>
+                    }
+                    <div class="@(Model.CoGheTram ? "col-md-4" : "col-md-6")">
+                        <div class="text-muted small mb-1">Bưu cục đích đến (Nhận):</div>
+                        <div class="fw-bold text-primary fs-6">@Model.BuuCucNhan?.TenBuuCuc</div>
+                        <div class="text-muted small mt-1"><i class="bi bi-geo-alt me-1"></i> @Model.BuuCucNhan?.DiaChi</div>
+                    </div>
+                    <div class="col-12"><hr class="my-1 border-light-subtle"></div>
+                    <div class="col-md-6">
+                        <div class="text-muted small mb-1">Tài xế xe tải liên tỉnh:</div>
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="bi bi-person-fill text-muted me-1"></i> @Model.NhanVien?.HoTen
+                        </div>
+                        <div class="text-muted small mt-1">
+                            SĐT: <a href="tel:@Model.NhanVien?.SoDienThoai" class="text-decoration-none fw-semibold">@Model.NhanVien?.SoDienThoai</a>
+                            • Email: @Model.NhanVien?.Email
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small mb-1">Phương tiện vận chuyển:</div>
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="bi bi-truck text-muted me-1"></i> @(Model.PhuongTien?.BienSo ?? "Chưa gán xe")
+                            <span class="badge rounded-pill bg-secondary bg-opacity-10 text-dark fw-normal ms-1">@Model.PhuongTien?.LoaiPhuongTien</span>
+                        </div>
+                        <div class="text-muted small mt-1">
+                            Tải trọng cho phép: <strong class="text-dark">@taiTrong.ToString("N0") kg</strong>
+                        </div>
+                    </div>
+                    <div class="col-12"><hr class="my-1 border-light-subtle"></div>
+                    <div class="@(Model.CoGheTram ? "col-md-2" : "col-md-4")">
+                        <div class="text-muted small mb-1">Lập chuyến:</div>
+                        <div class="fw-semibold text-dark"><i class="bi bi-clock me-1 text-muted"></i> @Model.NgayTao.ToString("dd/MM HH:mm")</div>
+                    </div>
+                    <div class="@(Model.CoGheTram ? "col-md-2" : "col-md-4")">
+                        <div class="text-muted small mb-1">Xuất bến:</div>
+                        <div class="fw-semibold text-dark"><i class="bi bi-send me-1 text-muted"></i> @(Model.NgayXuatBen?.ToString("dd/MM HH:mm") ?? "—")</div>
+                    </div>
+                    @if (Model.CoGheTram)
+                    {
+                        <div class="col-md-3">
+                            <div class="text-muted small mb-1">Ghé trạm trung gian:</div>
+                            <div class="fw-semibold text-warning"><i class="bi bi-signpost me-1"></i> @(Model.NgayGheTram?.ToString("dd/MM HH:mm") ?? (Model.TrangThai == TrangThaiChuyenXe.DangVanChuyen && !Model.DaGheTram ? "— Đang đến —" : "—"))</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small mb-1">Rời trạm đi tiếp:</div>
+                            <div class="fw-semibold text-success"><i class="bi bi-arrow-repeat me-1"></i> @(Model.NgayRoiTram?.ToString("dd/MM HH:mm") ?? (Model.TrangThai == TrangThaiChuyenXe.DangGheTram ? "— Đang ở trạm —" : "—"))</div>
+                        </div>
+                    }
+                    <div class="@(Model.CoGheTram ? "col-md-2" : "col-md-4")">
+                        <div class="text-muted small mb-1">Đến đích cuối:</div>
+                        <div class="fw-semibold text-dark"><i class="bi bi-check2-circle me-1 text-muted"></i> @(Model.NgayDenNoi?.ToString("dd/MM HH:mm") ?? "— Đang đi —")</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.GhiChu))
+                    {
+                        <div class="col-12">
+                            <div class="p-3 bg-light rounded-4 text-muted small">
+                                <strong class="text-dark"><i class="bi bi-chat-left-text text-cam me-1"></i> Ghi chú chuyến:</strong> @Model.GhiChu
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- DANH SÁCH KIỆN HÀNG TRONG CHUYẾN -->
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                <div class="fw-bold text-dark d-flex align-items-center gap-2 fs-6">
+                    <i class="bi bi-boxes text-cam"></i>
+                    <span>Danh sách kiện hàng trong chuyến (@Model.DonHangs.Count kiện)</span>
+                </div>
+                <div class="small fw-semibold text-muted">
+                    Tổng khối lượng: <strong class="text-dark">@tongKg.ToString("N1") kg</strong>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Mã đơn</th>
+                            <th>Người nhận</th>
+                            <th>Địa chỉ nhận</th>
+                            <th class="text-end">Khối lượng</th>
+                            <th>Trạng thái</th>
+                            <th class="pe-4 text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.DonHangs.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-box2 fs-2 d-block mb-2 text-black-50"></i>
+                                    Chưa có kiện hàng nào được xếp lên chuyến xe này
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var d in Model.DonHangs)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <strong class="text-primary">@d.MaHienThi</strong>
+                                        <div class="text-muted small">@d.LoaiHang?.TenLoaiHang</div>
+                                        <div class="nho text-muted mt-1">
+                                            <i class="bi bi-geo-alt text-cam"></i> Đích phát: <strong>@d.BuuCucNhan?.TenBuuCuc</strong>
+                                            @if (d.MaBuuCucNhan != Model.MaBuuCucNhan)
+                                            {
+                                                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning" style="font-size: .7rem;">Chia luồng tại Hub</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@d.TenNguoiNhan</div>
+                                        <div class="text-muted small">@d.SoDienThoaiNguoiNhan</div>
+                                    </td>
+                                    <td>
+                                        <div class="small text-truncate" style="max-width: 250px;">@d.DiaChiNhan</div>
+                                        <div class="text-muted small">Khu vực: @d.KhuVuc?.TenKhuVuc</div>
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                        <span class="badge bg-light text-dark rounded-pill border">@d.KhoiLuong.ToString("N1") kg</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill @d.TrangThai.LopBadge() px-2 py-1 small">
+                                            @d.TrangThai.TenHienThi()
+                                        </span>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        @if (Model.TrangThai == TrangThaiChuyenXe.DangXepHang)
+                                        {
+                                            <form asp-action="XoaDon" method="post" class="d-inline" data-xac-nhan="Dỡ kiện hàng @d.MaHienThi khỏi chuyến xe?">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="maChuyen" value="@Model.MaChuyen" />
+                                                <input type="hidden" name="maDon" value="@d.MaDon" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-2 shadow-xs" title="Dỡ khỏi xe">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: TẢI TRỌNG & BỔ SUNG ĐƠN HÀNG -->
+    <div class="col-lg-4">
+        <!-- TIẾN ĐỘ TẢI TRỌNG -->
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4 fw-bold text-dark fs-6">
+                <i class="bi bi-speedometer2 text-cam me-1"></i> Tải trọng thùng xe tải
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Hiện tại / Tối đa:</span>
+                    <strong class="fs-6 text-dark">@tongKg.ToString("N1") / @taiTrong.ToString("N0") kg</strong>
+                </div>
+                <div class="progress rounded-pill overflow-hidden mb-3" style="height: 12px; background-color: #e2e8f0;">
+                    <div class="progress-bar rounded-pill @(phanTramTai > 90 ? "bg-danger" : (phanTramTai > 70 ? "bg-warning" : "bg-success"))"
+                         role="progressbar" style="width: @phanTramTai%;" aria-valuenow="@phanTramTai" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Đã dùng: <strong>@phanTramTai%</strong></span>
+                    <span>Còn dư: <strong class="text-success">@Math.Max(0, taiTrong - tongKg).ToString("N1") kg</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- BỔ SUNG ĐƠN VÀO CHUYẾN NẾU ĐANG XẾP HÀNG HOẶC ĐANG GHÉ TRẠM -->
+        @if (Model.TrangThai == TrangThaiChuyenXe.DangXepHang || Model.TrangThai == TrangThaiChuyenXe.DangGheTram)
+        {
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-bottom py-3 px-4 fw-bold text-dark d-flex align-items-center justify-content-between fs-6">
+                    <span>
+                        <i class="bi bi-plus-circle-fill text-cam me-1"></i>
+                        @(Model.TrangThai == TrangThaiChuyenXe.DangGheTram ? "Bốc thêm kiện tại trạm dừng" : "Bổ sung kiện vào xe")
+                    </span>
+                    <span class="badge rounded-pill bg-secondary bg-opacity-10 text-dark">@donCoTheThem.Count khả dụng</span>
+                </div>
+                <div class="card-body p-4">
+                    @if (donCoTheThem.Count == 0)
+                    {
+                        <div class="text-center py-3 text-muted small">
+                            @(Model.TrangThai == TrangThaiChuyenXe.DangGheTram ? "Không có kiện nào đang chờ tại trạm trung gian gửi đến đích cuối" : "Không còn kiện hàng nào cùng tuyến đích tại bưu cục gửi")
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-action="ThemDon" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="maChuyen" value="@Model.MaChuyen" />
+                            <div class="list-group list-group-flush mb-3 small" style="max-height: 260px; overflow-y: auto;">
+                                @foreach (var d in donCoTheThem)
+                                {
+                                    <div class="list-group-item px-0 py-2 border-bottom">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="maDonHangs" value="@d.MaDon" id="add_don_@d.MaDon">
+                                            <label class="form-check-label d-flex justify-content-between w-100" for="add_don_@d.MaDon">
+                                                <span><strong>@d.MaHienThi</strong> — @d.TenNguoiNhan</span>
+                                                <span class="badge bg-light text-dark rounded-pill">@d.KhoiLuong.ToString("N1") kg</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <button type="submit" class="btn btn-cam rounded-pill btn-sm w-100 py-2 shadow-sm fw-semibold">
+                                <i class="bi bi-box-arrow-in-down me-1"></i>
+                                @(Model.TrangThai == TrangThaiChuyenXe.DangGheTram ? "Bốc các kiện đã chọn lên xe" : "Xếp các kiện đã chọn vào chuyến")
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
