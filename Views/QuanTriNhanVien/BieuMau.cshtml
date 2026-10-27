@@ -1,0 +1,111 @@
+@model NhanVienFormVM
+@{
+    bool laTao = Model.MaNhanVien == 0;
+    ViewData["Title"] = laTao ? "Thêm shipper" : "Sửa shipper";
+    var dsBuuCuc = (List<BuuCuc>)ViewBag.DsBuuCuc;
+    var dsKhuVuc = (List<KhuVuc>)ViewBag.DsKhuVucDayDu;
+    var dsXe = (List<PhuongTien>)ViewBag.DsPhuongTien;
+    int dangGiu = ViewBag.DangGiuHang as int? ?? 0;
+}
+<div class="the-mem p-4" style="max-width: 860px">
+    <form asp-action="@(laTao ? "TaoMoi" : "ChinhSua")" method="post">
+        <input type="hidden" asp-for="MaNhanVien" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        @if (dangGiu > 0)
+        {
+            <div class="alert alert-warning nho"><i class="bi bi-lock"></i> Shipper đang giữ / được phân @dangGiu đơn – chưa đổi được loại shipper, bưu cục, phương tiện.</div>
+        }
+        <h6 class="text-cam fw-bold">Thông tin shipper</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><label asp-for="HoTen" class="form-label"></label><input asp-for="HoTen" class="form-control" /><span asp-validation-for="HoTen" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="SoDienThoai" class="form-label"></label><input asp-for="SoDienThoai" class="form-control" /><span asp-validation-for="SoDienThoai" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="TrangThai" class="form-label"></label>
+                <select asp-for="TrangThai" class="form-select">
+                    <option value="SanSang">Sẵn sàng</option>
+                    <option value="TamNghi">Tạm nghỉ</option>
+                    <option value="NgungHoatDong">Ngừng hoạt động (trả phương tiện)</option>
+                </select>
+                <span asp-validation-for="TrangThai" class="text-danger nho"></span>
+            </div>
+        </div>
+
+        <h6 class="text-cam fw-bold">Phân bổ</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><label asp-for="LoaiShipper" class="form-label"></label>
+                <select asp-for="LoaiShipper" class="form-select" id="chonLoai">
+                    <option value="KhuVuc">Shipper khu vực</option>
+                    <option value="LienTinh">Shipper liên tỉnh</option>
+                </select>
+                <div class="nho mo" id="goiYLoai"></div></div>
+            <div class="col-md-6"><label asp-for="MaBuuCuc" class="form-label"></label>
+                <select asp-for="MaBuuCuc" class="form-select" id="chonBuuCuc">
+                    <option value="">-- Chọn bưu cục --</option>
+                    @foreach (var bc in dsBuuCuc) { <option value="@bc.MaBuuCuc">@bc.TenBuuCuc – @bc.TinhThanh</option> }
+                </select>
+                <div class="nho mo" id="goiYBuuCuc"></div>
+                <span asp-validation-for="MaBuuCuc" class="text-danger nho"></span></div>
+            <div class="col-md-6" id="oKhuVuc"><label asp-for="MaKhuVucPhuTrach" class="form-label"></label>
+                <select asp-for="MaKhuVucPhuTrach" class="form-select" id="chonKhuVuc">
+                    <option value="">-- Chọn khu vực giao --</option>
+                    @foreach (var kv in dsKhuVuc) { <option value="@kv.MaKhuVuc" data-buu-cuc="@kv.MaBuuCuc">@kv.TenKhuVuc (@(kv.BuuCuc?.TenBuuCuc ?? "chưa có bưu cục"))</option> }
+                </select>
+                <span asp-validation-for="MaKhuVucPhuTrach" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="MaPhuongTien" class="form-label"></label>
+                <select asp-for="MaPhuongTien" class="form-select" id="chonXe">
+                    <option value="">-- Chưa gán --</option>
+                    @foreach (var pt in dsXe) { <option value="@pt.MaPhuongTien">@pt.MaHienThi · @pt.BienSo · @pt.LoaiPhuongTien (@DinhDang.KhoiLuong(pt.TaiTrongToiDa))@(pt.TrangThai == TrangThaiPhuongTien.BaoTri ? " – đang bảo trì" : "")</option> }
+                </select>
+                <div class="nho mo">Mỗi shipper dùng đúng một phương tiện; danh sách chỉ gồm xe chưa gán cho ai.</div>
+                <span asp-validation-for="MaPhuongTien" class="text-danger nho"></span></div>
+            @if (!laTao)
+            {
+                <div class="col-12" id="oLyDoXe" data-xe-cu="@ViewBag.XeHienTai">
+                    <label asp-for="LyDoDoiXe" class="form-label"></label>
+                    <input asp-for="LyDoDoiXe" class="form-control" placeholder="VD: Xe cũ hỏng động cơ, chuyển sang xe mới" />
+                    <span asp-validation-for="LyDoDoiXe" class="text-danger nho"></span>
+                </div>
+            }
+        </div>
+
+        <h6 class="text-cam fw-bold">Tài khoản đăng nhập của shipper</h6>
+        @if (Model.CoTaiKhoan)
+        {
+            <div class="alert alert-light border nho">Tài khoản đăng nhập: <code>@Model.TenDangNhap</code></div>
+        }
+        else
+        {
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="TenDangNhap" class="form-label"></label><input asp-for="TenDangNhap" class="form-control" placeholder="VD: sp.bacninh01 (xe tải) hoặc sp.bacninh02 (xe máy)" /><span asp-validation-for="TenDangNhap" class="text-danger nho"></span></div>
+                <div class="col-md-6"><label asp-for="MatKhau" class="form-label"></label><input asp-for="MatKhau" class="form-control" /><span asp-validation-for="MatKhau" class="text-danger nho"></span></div>
+            </div>
+            @if (!laTao)
+            {
+                <div class="nho mo mt-1">Shipper chưa có tài khoản – nhập tên đăng nhập và mật khẩu để cấp tài khoản mới.</div>
+            }
+        }
+        <div class="d-flex gap-2 mt-4"><button class="btn btn-cam px-4">Lưu</button><a asp-action="@(laTao ? "Index" : "ChiTiet")" asp-route-id="@(laTao ? null : Model.MaNhanVien)" class="btn btn-light">Hủy</a></div>
+    </form>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Shipper liên tỉnh không phụ trách khu vực; khu vực chỉ hiện các khu vực do bưu cục đã chọn phát hàng
+        (() => {
+            const loai = document.getElementById('chonLoai'), bc = document.getElementById('chonBuuCuc'), kv = document.getElementById('chonKhuVuc');
+            const oKv = document.getElementById('oKhuVuc'), goiY = document.getElementById('goiYBuuCuc'), goiYLoai = document.getElementById('goiYLoai');
+            const xe = document.getElementById('chonXe'), oLyDo = document.getElementById('oLyDoXe');
+            const capNhat = () => {
+                const lienTinh = loai.value === 'LienTinh';
+                oKv.classList.toggle('d-none', lienTinh);
+                goiYLoai.textContent = lienTinh ? 'Chạy giữa các bưu cục, hưởng hoa hồng chặng liên tỉnh.' : 'Nhận hàng ở bưu cục, giao tới người nhận trong khu vực.';
+                goiY.textContent = lienTinh ? 'Bưu cục xuất phát – nhận các đơn đi liên tỉnh tại đây.' : 'Bưu cục nơi shipper nhận hàng để đi giao.';
+                [...kv.options].forEach(o => { if (o.value) o.hidden = !!bc.value && o.dataset.buuCuc !== bc.value; });
+                if (kv.selectedOptions[0]?.hidden) kv.value = '';
+                if (oLyDo) oLyDo.classList.toggle('d-none', !oLyDo.dataset.xeCu || xe.value === oLyDo.dataset.xeCu);
+            };
+            [loai, bc, xe].forEach(e => e.addEventListener('change', capNhat));
+            capNhat();
+        })();
+    </script>
+}

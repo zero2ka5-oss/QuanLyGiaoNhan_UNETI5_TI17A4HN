@@ -1,0 +1,238 @@
+@model DanhSachLienHeVM
+@{
+    var bl = Model.BoLoc;
+    ViewData["Title"] = "Quản lý liên hệ & Hỗ trợ khách hàng";
+    string TabUrl(TrangThaiLienHe? tt) => Url.Action("Index", new
+    {
+        TuKhoa = bl.TuKhoa,
+        TrangThai = tt,
+        ChuDe = bl.ChuDe,
+        MaBuuCuc = bl.MaBuuCuc
+    })!;
+    int tongTatCa = Model.TongSoChoPhanHoi + Model.TongSoDangXuLy + Model.TongSoDaPhanHoi + Model.TongSoDaDong;
+    var dsBuuCuc = ViewBag.DsBuuCuc as SelectList;
+    bool laQuanTri = Context.Session.LaQuanTri();
+}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Hỗ trợ & Tiếp nhận khiếu nại khách hàng</h2>
+        <div class="mo nho">Theo dõi, điều phối và phản hồi thắc mắc, yêu cầu trợ giúp từ người gửi hàng.</div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-6">
+            <i class="bi bi-bell-fill me-1"></i> @Model.TongSoChoPhanHoi chờ phản hồi
+        </span>
+    </div>
+</div>
+
+@* ---------- Thẻ thống kê nhanh ---------- *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="the-mem p-3 shadow-sm border rounded-3 bg-white d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                <i class="bi bi-hourglass-split fs-5"></i>
+            </div>
+            <div>
+                <div class="h4 fw-bold mb-0 text-danger">@Model.TongSoChoPhanHoi</div>
+                <div class="nho mo">Chờ phản hồi</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="the-mem p-3 shadow-sm border rounded-3 bg-white d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                <i class="bi bi-arrow-repeat fs-5"></i>
+            </div>
+            <div>
+                <div class="h4 fw-bold mb-0 text-warning">@Model.TongSoDangXuLy</div>
+                <div class="nho mo">Đang xử lý</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="the-mem p-3 shadow-sm border rounded-3 bg-white d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                <i class="bi bi-chat-check-fill fs-5"></i>
+            </div>
+            <div>
+                <div class="h4 fw-bold mb-0 text-success">@Model.TongSoDaPhanHoi</div>
+                <div class="nho mo">Đã phản hồi</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="the-mem p-3 shadow-sm border rounded-3 bg-white d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                <i class="bi bi-check2-circle fs-5"></i>
+            </div>
+            <div>
+                <div class="h4 fw-bold mb-0 text-secondary">@Model.TongSoDaDong</div>
+                <div class="nho mo">Đã giải quyết xong</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ---------- Bộ lọc & Tìm kiếm ---------- *@
+<div class="the-mem p-3 p-md-4 shadow-sm border rounded-3 bg-white mb-3">
+    <form method="get" id="formLocQuanTriLienHe">
+        <input type="hidden" name="TrangThai" value="@bl.TrangThai" />
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input name="TuKhoa" value="@bl.TuKhoa" class="form-control" placeholder="Tìm theo tiêu đề, nội dung, khách hàng..." />
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <select name="ChuDe" class="form-select" onchange="this.form.requestSubmit()">
+                    <option value="">-- Tất cả chủ đề --</option>
+                    @foreach (ChuDeLienHe cd in Enum.GetValues<ChuDeLienHe>())
+                    {
+                        <option value="@cd" selected="@(bl.ChuDe == cd)">@cd.TenHienThi()</option>
+                    }
+                </select>
+            </div>
+            @if (laQuanTri && dsBuuCuc != null)
+            {
+                <div class="col-6 col-md-3">
+                    <select name="MaBuuCuc" asp-items="dsBuuCuc" class="form-select" onchange="this.form.requestSubmit()">
+                        <option value="">-- Tất cả bưu cục --</option>
+                    </select>
+                </div>
+            }
+            <div class="col-12 @(laQuanTri ? "col-md-2" : "col-md-5") d-flex gap-2">
+                <button type="submit" class="btn btn-cam flex-grow-1"><i class="bi bi-funnel me-1"></i> Lọc</button>
+                @if (!string.IsNullOrWhiteSpace(bl.TuKhoa) || bl.ChuDe.HasValue || bl.TrangThai.HasValue || bl.MaBuuCuc.HasValue)
+                {
+                    <a asp-action="Index" class="btn btn-light" title="Bỏ lọc"><i class="bi bi-x-lg"></i></a>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+
+@* ---------- Tab trạng thái ---------- *@
+<div class="dh-tab-cuon mb-3">
+    <div class="dh-tab">
+        <a href="@TabUrl(null)" class="@(bl.TrangThai is null ? "active" : "")">
+            Tất cả <span>@tongTatCa</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.ChoPhanHoi)" class="@(bl.TrangThai == TrangThaiLienHe.ChoPhanHoi ? "active" : "")">
+            Chờ phản hồi <span class="bg-danger text-white">@Model.TongSoChoPhanHoi</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.DangXuLy)" class="@(bl.TrangThai == TrangThaiLienHe.DangXuLy ? "active" : "")">
+            Đang xử lý <span>@Model.TongSoDangXuLy</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.DaPhanHoi)" class="@(bl.TrangThai == TrangThaiLienHe.DaPhanHoi ? "active" : "")">
+            Đã phản hồi <span>@Model.TongSoDaPhanHoi</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.DaDong)" class="@(bl.TrangThai == TrangThaiLienHe.DaDong ? "active" : "")">
+            Đã đóng <span>@Model.TongSoDaDong</span>
+        </a>
+    </div>
+</div>
+
+@* ---------- Bảng danh sách liên hệ ---------- *@
+<div class="the-mem p-0 shadow-sm border rounded-3 bg-white mb-4 overflow-hidden">
+    @if (Model.KetQua.TongSoDong > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light nho text-muted">
+                    <tr>
+                        <th class="ps-3" style="width: 140px;">Mã yêu cầu</th>
+                        <th>Khách hàng</th>
+                        <th>Chủ đề & Tiêu đề</th>
+                        <th>Bưu cục phụ trách</th>
+                        <th style="width: 150px;">Thời gian</th>
+                        <th style="width: 140px;">Trạng thái</th>
+                        <th class="text-end pe-3" style="width: 120px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lh in Model.KetQua.DanhSach)
+                    {
+                        var canXuLyGap = lh.TrangThai == TrangThaiLienHe.ChoPhanHoi;
+                        <tr class="@(canXuLyGap ? "table-danger-subtle bg-danger bg-opacity-10" : "")">
+                            <td class="ps-3">
+                                <a asp-action="ChiTiet" asp-route-id="@lh.MaLienHe" class="fw-bold text-dark text-decoration-none font-monospace">
+                                    @lh.MaHienThi
+                                </a>
+                                @if (canXuLyGap)
+                                {
+                                    <span class="badge bg-danger d-block mt-1" style="font-size: .7rem;">Mới cần xử lý</span>
+                                }
+                            </td>
+                            <td>
+                                @if (lh.KhachHang != null)
+                                {
+                                    <div class="fw-semibold text-dark">@lh.KhachHang.HoTen</div>
+                                    <div class="nho text-muted"><i class="bi bi-telephone me-1"></i>@DinhDang.SoDienThoai(lh.KhachHang.SoDienThoai)</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Khách vãng lai</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: .75rem;">
+                                        @lh.ChuDe.TenHienThi()
+                                    </span>
+                                    @if (lh.DonHang != null)
+                                    {
+                                        <a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@lh.DonHang.MaDon" class="badge bg-primary-subtle text-primary text-decoration-none" target="_blank" style="font-size: .75rem;">
+                                            <i class="bi bi-box-seam me-1"></i>@lh.DonHang.MaHienThi
+                                        </a>
+                                    }
+                                </div>
+                                <a asp-action="ChiTiet" asp-route-id="@lh.MaLienHe" class="fw-semibold text-dark text-decoration-none d-block text-truncate" style="max-width: 320px;">
+                                    @lh.TieuDe
+                                </a>
+                                <div class="nho mo text-truncate" style="max-width: 320px;">@lh.NoiDung</div>
+                            </td>
+                            <td>
+                                @if (lh.BuuCuc != null)
+                                {
+                                    <span class="nho fw-semibold text-dark"><i class="bi bi-building me-1 text-primary"></i>@lh.BuuCuc.TenBuuCuc</span>
+                                    <div class="nho text-muted">@lh.BuuCuc.TinhThanh</div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border">Chưa phân bưu cục</span>
+                                }
+                            </td>
+                            <td class="nho">
+                                <div class="text-dark fw-semibold">@DinhDang.NgayGio(lh.NgayGui)</div>
+                                <div class="text-muted"><i class="bi bi-chat-text me-1"></i>@lh.TinNhans.Count tin</div>
+                            </td>
+                            <td>
+                                <span class="tt @lh.TrangThai.LopBadge()">
+                                    <i class="bi @lh.TrangThai.BieuTuong() me-1"></i>@lh.TrangThai.TenHienThi()
+                                </span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a asp-action="ChiTiet" asp-route-id="@lh.MaLienHe" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="bi bi-reply-fill me-1"></i> Xử lý
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 border-top">
+            <partial name="_PhanTrang" model="Model.KetQua" />
+        </div>
+    }
+    else
+    {
+        <div class="tc-trong py-5">
+            <div class="tc-trong-icon"><i class="bi bi-check2-all text-success"></i></div>
+            <h5 class="fw-bold mb-1">Không có yêu cầu nào cần hiển thị</h5>
+            <p class="mo mb-0">Tất cả yêu cầu đã được xử lý hoặc không có dữ liệu phù hợp với bộ lọc hiện tại.</p>
+        </div>
+    }
+</div>

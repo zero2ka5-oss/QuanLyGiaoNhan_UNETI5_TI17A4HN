@@ -1,0 +1,37 @@
+﻿@model BuuCuc
+@{
+    bool laTao = Model.MaBuuCuc == 0;
+    ViewData["Title"] = laTao ? "Thêm bưu cục" : "Sửa " + Model.TenBuuCuc;
+    string So(double? x) => x?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+}
+<div class="the-mem p-4" style="max-width: 760px">
+    <form asp-action="@(laTao ? "TaoMoi" : "ChinhSua")" method="post">
+        <input type="hidden" asp-for="MaBuuCuc" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <div class="row g-3">
+            <div class="col-md-7"><label asp-for="TenBuuCuc" class="form-label"></label><input asp-for="TenBuuCuc" class="form-control" placeholder="VD: Bưu cục Cầu Giấy" /><span asp-validation-for="TenBuuCuc" class="text-danger nho"></span></div>
+            <div class="col-md-5"><label asp-for="TinhThanh" class="form-label"></label><input asp-for="TinhThanh" class="form-control" placeholder="VD: Hà Nội" /><span asp-validation-for="TinhThanh" class="text-danger nho"></span></div>
+            <div class="col-md-8"><label asp-for="DiaChi" class="form-label"></label><input asp-for="DiaChi" class="form-control" /><span asp-validation-for="DiaChi" class="text-danger nho"></span></div>
+            <div class="col-md-4"><label asp-for="SoDienThoai" class="form-label"></label><input asp-for="SoDienThoai" class="form-control" /><span asp-validation-for="SoDienThoai" class="text-danger nho"></span></div>
+            <div class="col-md-4"><label asp-for="ViDo" class="form-label"></label><input asp-for="ViDo" value="@So(Model.ViDo)" type="number" step="0.000001" class="form-control" placeholder="VD: 21.0368" /><span asp-validation-for="ViDo" class="text-danger nho"></span></div>
+            <div class="col-md-4"><label asp-for="KinhDo" class="form-label"></label><input asp-for="KinhDo" value="@So(Model.KinhDo)" type="number" step="0.000001" class="form-control" placeholder="VD: 105.7825" /><span asp-validation-for="KinhDo" class="text-danger nho"></span></div>
+            <div class="col-md-4 d-flex align-items-end"><button type="button" id="nutLayToaDo" class="btn btn-outline-dark w-100"><i class="bi bi-crosshair"></i> Lấy vị trí hiện tại</button></div>
+            <div class="col-12 nho mo">Toạ độ là vị trí của đơn khi đơn nằm ở bưu cục (hiện trên bản đồ theo dõi của khách). Có thể lấy từ Google Maps / OpenStreetMap.</div>
+            <div class="col-md-6"><label class="form-label">Trạng thái</label>
+                <select asp-for="TrangThai" class="form-select">
+                    <option value="HoatDong">Đang hoạt động</option>
+                    <option value="NgungHoatDong">Ngừng hoạt động (không nhận hàng gửi mới)</option>
+                </select></div>
+        </div>
+        <div class="d-flex gap-2 mt-4"><button class="btn btn-cam px-4">Lưu</button><a asp-action="Index" class="btn btn-light">Hủy</a></div>
+    </form>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('nutLayToaDo').addEventListener('click', () => navigator.geolocation?.getCurrentPosition(p => {
+            document.getElementById('ViDo').value = p.coords.latitude.toFixed(6);
+            document.getElementById('KinhDo').value = p.coords.longitude.toFixed(6);
+        }, () => alert('Không lấy được vị trí – hãy cho phép truy cập vị trí.')));
+    </script>
+}

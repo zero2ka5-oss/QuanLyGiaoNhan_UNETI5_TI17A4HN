@@ -1,4 +1,4 @@
-﻿@model DanhSachDonVM
+@model DanhSachDonVM
 @{
     var bl = Model.BoLoc;
     ViewData["Title"] = "Đơn hàng của tôi";
@@ -106,6 +106,14 @@
                         <b class="dh-ma">@d.MaHienThi</b>
                         <span class="tt @d.TrangThai.LopBadge()">@d.TrangThai.TenHienThi()</span>
                         @if (d.HinhThucGui == HinhThucGui.LayTanNoi) { <span class="badge bg-light text-secondary border nho">Lấy tận nơi</span> }
+                        @if (d.HinhThucGui == HinhThucGui.GuiTaiBuuCuc && d.TrangThai == TrangThaiDon.DaTao)
+                        {
+                            var conLai = d.NgayTao.AddDays(7) - DateTime.Now;
+                            int soNgayCon = Math.Max(0, (int)Math.Ceiling(conLai.TotalDays));
+                            <span class="badge bg-warning text-dark border nho" title="Vui lòng mang hàng ra bưu cục trước 7 ngày để tránh bị tự động hủy">
+                                <i class="bi bi-clock-history"></i> Hạn gửi: còn @soNgayCon ngày
+                            </span>
+                        }
                         @if (treHan) { <span class="tt tt-thatbai"><i class="bi bi-alarm"></i> Trễ hẹn</span> }
                     </div>
                     <div class="dh-nguoi-nhan"><i class="bi bi-person"></i> @d.TenNguoiNhan <span class="mo">· @DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</span></div>

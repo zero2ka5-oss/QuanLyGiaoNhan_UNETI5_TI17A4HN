@@ -1,0 +1,12 @@
+﻿@model BangGiaVM
+@{ ViewData["Title"] = "Bảng giá & ước lượng phí"; }
+<div class="kh-dau-trang mb-4">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Biết trước chi phí trước khi gửi hàng</h2>
+        <p class="mb-0">Ước lượng phí theo khu vực, loại hàng, khối lượng rồi tạo đơn ngay với thông tin đó</p>
+    </div>
+    <span class="kh-dau-icon"><i class="bi bi-calculator"></i></span>
+</div>
+<div class="kh-bang-gia">
+    <partial name="_UocLuongPhi" model="Model" />
+</div>

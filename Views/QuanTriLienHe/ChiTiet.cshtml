@@ -1,0 +1,249 @@
+@model YeuCauLienHe
+@{
+    ViewData["Title"] = $"Xử lý yêu cầu {Model.MaHienThi}";
+    bool laQuanTri = Context.Session.LaQuanTri();
+}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" class="btn btn-light rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-dark text-white font-monospace fs-6">@Model.MaHienThi</span>
+                <span class="tt @Model.TrangThai.LopBadge()">
+                    <i class="bi @Model.TrangThai.BieuTuong() me-1"></i>@Model.TrangThai.TenHienThi()
+                </span>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                    <i class="bi bi-tag me-1"></i>@Model.ChuDe.TenHienThi()
+                </span>
+            </div>
+            <h2 class="h5 fw-bold mb-0 mt-1 text-dark">@Model.TieuDe</h2>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        @* Đổi nhanh trạng thái *@
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-pencil-square me-1"></i> Đổi trạng thái
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                @foreach (TrangThaiLienHe tt in Enum.GetValues<TrangThaiLienHe>())
+                {
+                    <li>
+                        <form asp-action="DoiTrangThai" method="post" class="dropdown-item p-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.MaLienHe" />
+                            <input type="hidden" name="trangThai" value="@tt" />
+                            <button type="submit" class="dropdown-item py-2 @(Model.TrangThai == tt ? "active fw-bold" : "")">
+                                <i class="bi @tt.BieuTuong() me-2"></i>@tt.TenHienThi()
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        @if (laQuanTri)
+        {
+            <form asp-action="Xoa" asp-route-id="@Model.MaLienHe" method="post" data-xac-nhan="Bạn có chắc chắn muốn xóa yêu cầu hỗ trợ này và toàn bộ tin nhắn liên quan?">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                    <i class="bi bi-trash me-1"></i> Xóa
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    @* ---------- Cột trái: Luồng trao đổi & Form phản hồi ---------- *@
+    <div class="col-12 col-lg-8">
+        @* Lịch sử tin nhắn trao đổi *@
+        <div class="the-mem p-4 shadow-sm border rounded-3 bg-white mb-4">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-chat-dots-fill text-cam me-1"></i> Lịch sử trao đổi (@Model.TinNhans.Count tin nhắn)</span>
+                <span class="nho text-muted fw-normal">Bắt đầu: @DinhDang.NgayGio(Model.NgayGui)</span>
+            </h5>
+
+            <div class="d-flex flex-column gap-3 mb-4">
+                @foreach (var tin in Model.TinNhans)
+                {
+                    var laNV = tin.LaNhanVien;
+                    <div class="d-flex gap-3 @(laNV ? "flex-row-reverse" : "")">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0 @(laNV ? "bg-primary" : "bg-secondary")" style="width: 42px; height: 42px; font-weight: bold;">
+                            <i class="bi @(laNV ? "bi-headset" : "bi-person-fill") fs-5"></i>
+                        </div>
+
+                        <div class="d-flex flex-column" style="max-width: 82%;">
+                            <div class="d-flex align-items-center gap-2 mb-1 @(laNV ? "justify-content-end" : "")">
+                                <span class="fw-bold nho @(laNV ? "text-primary" : "text-dark")">@tin.NguoiGui</span>
+                                <span class="text-muted" style="font-size: .75rem;">@DinhDang.NgayGio(tin.NgayGui)</span>
+                            </div>
+
+                            <div class="p-3 rounded-3 @(laNV ? "bg-primary bg-opacity-10 text-dark border border-primary-subtle" : "bg-light text-dark border")" style="white-space: pre-wrap; word-break: break-word; line-height: 1.5;">@tin.NoiDung</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Form phản hồi của nhân viên / Admin *@
+            <div class="pt-3 border-top">
+                <form asp-action="PhanHoi" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="MaLienHe" value="@Model.MaLienHe" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-reply-all-fill text-primary me-1"></i> Nội dung phản hồi giải đáp thắc mắc:
+                        </label>
+                        <textarea name="NoiDung" rows="4" class="form-control" placeholder="Nhập câu trả lời hướng dẫn, giải đáp thắc mắc hoặc cập nhật tiến độ xử lý cho khách hàng..." required></textarea>
+                    </div>
+
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold mb-1 nho">Cập nhật trạng thái sau khi phản hồi:</label>
+                            <select name="TrangThaiMoi" class="form-select form-select-sm">
+                                <option value="@TrangThaiLienHe.DaPhanHoi" selected="@(Model.TrangThai != TrangThaiLienHe.DaDong)">Đã phản hồi (chờ khách xác nhận thêm nếu cần)</option>
+                                <option value="@TrangThaiLienHe.DangXuLy">Đang xử lý (đang phối hợp kho bãi / shipper)</option>
+                                <option value="@TrangThaiLienHe.DaDong" selected="@(Model.TrangThai == TrangThaiLienHe.DaDong)">Đã giải quyết thỏa đáng & Đóng yêu cầu</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 text-md-end pt-md-4">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="bi bi-send-fill me-1"></i> Gửi phản hồi cho khách
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="nho text-muted">
+                        <i class="bi bi-info-circle me-1"></i> Khi gửi câu trả lời, hệ thống sẽ tự động bắn chuông thông báo trực tiếp tới tài khoản khách hàng.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- Cột phải: Thông tin khách hàng, đơn hàng & bưu cục ---------- *@
+    <div class="col-12 col-lg-4">
+        @* Thẻ thông tin khách hàng *@
+        <div class="the-mem p-4 shadow-sm border rounded-3 bg-white mb-4">
+            <h6 class="fw-bold mb-3 pb-2 border-bottom text-dark">
+                <i class="bi bi-person-lines-fill text-cam me-1"></i> Thông tin khách hàng
+            </h6>
+            @if (Model.KhachHang != null)
+            {
+                var kh = Model.KhachHang;
+                <div class="mb-2">
+                    <span class="text-muted nho d-block">Họ và tên:</span>
+                    <span class="fw-bold text-dark fs-6">@kh.HoTen</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted nho d-block">Số điện thoại:</span>
+                    <a href="tel:@kh.SoDienThoai" class="fw-semibold text-primary text-decoration-none">
+                        <i class="bi bi-telephone me-1"></i>@DinhDang.SoDienThoai(kh.SoDienThoai)
+                    </a>
+                </div>
+                @if (!string.IsNullOrEmpty(kh.Email))
+                {
+                    <div class="mb-2">
+                        <span class="text-muted nho d-block">Email:</span>
+                        <a href="mailto:@kh.Email" class="text-dark text-decoration-none">
+                            <i class="bi bi-envelope me-1"></i>@kh.Email
+                        </a>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(kh.DiaChi))
+                {
+                    <div class="mb-3">
+                        <span class="text-muted nho d-block">Địa chỉ:</span>
+                        <span class="nho text-dark">@kh.DiaChi</span>
+                    </div>
+                }
+                @if (laQuanTri)
+                {
+                    <a asp-controller="QuanTriKhachHang" asp-action="ChiTiet" asp-route-id="@kh.MaKhachHang" class="btn btn-outline-secondary btn-sm w-100 rounded-pill" target="_blank">
+                        <i class="bi bi-person-vcard me-1"></i> Xem hồ sơ khách hàng
+                    </a>
+                }
+            }
+        </div>
+
+        @* Thẻ thông tin đơn hàng nếu có *@
+        @if (Model.DonHang != null)
+        {
+            var don = Model.DonHang;
+            <div class="the-mem p-4 shadow-sm border rounded-3 bg-white mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-box-seam text-cam me-1"></i> Đơn hàng liên quan
+                    </h6>
+                    <a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@don.MaDon" class="nho text-decoration-none fw-semibold" target="_blank">
+                        Chi tiết đơn <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark font-monospace fs-6">@don.MaHienThi</span>
+                        <span class="tt @don.TrangThai.LopBadge()">@don.TrangThai.TenHienThi()</span>
+                    </div>
+                    <div class="nho text-muted">Tạo lúc: @DinhDang.NgayGio(don.NgayTao)</div>
+                </div>
+
+                <div class="nho d-flex flex-column gap-2 mb-3">
+                    <div>
+                        <span class="text-muted">Người nhận:</span>
+                        <span class="fw-semibold text-dark">@don.TenNguoiNhan</span> (@DinhDang.SoDienThoai(don.SoDienThoaiNguoiNhan))
+                    </div>
+                    <div>
+                        <span class="text-muted">Địa chỉ nhận:</span>
+                        <span class="text-dark">@don.DiaChiNhan</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Bưu cục gửi:</span>
+                        <span class="fw-semibold text-dark">@(don.BuuCucGui?.TenBuuCuc ?? "—")</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Bưu cục nhận:</span>
+                        <span class="fw-semibold text-dark">@(don.BuuCucNhan?.TenBuuCuc ?? "—")</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Cước vận chuyển:</span>
+                        <span class="fw-bold text-danger">@DinhDang.Tien(don.PhiVanChuyen)</span>
+                    </div>
+                    @if (don.TienThuHo > 0)
+                    {
+                        <div>
+                            <span class="text-muted">Tiền thu hộ COD:</span>
+                            <span class="fw-bold text-success">@DinhDang.Tien(don.TienThuHo)</span>
+                        </div>
+                    }
+                </div>
+
+                <a asp-controller="QuanTriDonGiaoHang" asp-action="ChiTiet" asp-route-id="@don.MaDon" class="btn btn-outline-primary btn-sm w-100 rounded-pill" target="_blank">
+                    <i class="bi bi-geo-alt me-1"></i> Theo dõi lộ trình & Phân công
+                </a>
+            </div>
+        }
+
+        @* Thẻ bưu cục tiếp nhận *@
+        @if (Model.BuuCuc != null)
+        {
+            var bc = Model.BuuCuc;
+            <div class="the-mem p-4 shadow-sm border rounded-3 bg-white mb-4">
+                <h6 class="fw-bold mb-3 pb-2 border-bottom text-dark">
+                    <i class="bi bi-building text-info me-1"></i> Bưu cục tiếp nhận
+                </h6>
+                <div class="fw-bold text-dark mb-1">@bc.TenBuuCuc</div>
+                <div class="nho text-muted mb-2"><i class="bi bi-geo-alt me-1"></i>@bc.DiaChi, @bc.TinhThanh</div>
+                @if (!string.IsNullOrEmpty(bc.SoDienThoai))
+                {
+                    <div class="nho"><i class="bi bi-telephone me-1"></i>Hotline bưu cục: <a href="tel:@bc.SoDienThoai" class="fw-bold">@bc.SoDienThoai</a></div>
+                }
+            </div>
+        }
+    </div>
+</div>

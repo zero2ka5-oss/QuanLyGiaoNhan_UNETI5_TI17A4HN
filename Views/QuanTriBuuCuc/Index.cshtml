@@ -1,0 +1,58 @@
+@model DanhSachTrang<BuuCuc>
+@{
+    ViewData["Title"] = "Bưu cục";
+    var soShipper = (Dictionary<(int, LoaiShipper), int>)ViewBag.SoShipper;
+    var soDon = (Dictionary<int, int>)ViewBag.SoDonTaiBuuCuc;
+    var soNv = (Dictionary<int, int>)ViewBag.SoNhanVienBuuCuc;
+    int Dem(int ma, LoaiShipper loai) => soShipper.GetValueOrDefault((ma, loai));
+}
+<form method="get" class="thanh-loc mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-8">
+            <label class="form-label nho">Tìm kiếm</label>
+            <input name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Tên bưu cục, tỉnh thành, địa chỉ..." />
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button class="btn btn-cam flex-fill"><i class="bi bi-search"></i> Tìm kiếm</button>
+            @if (Context.Session.LaQuanTri()) { <a asp-action="TaoMoi" class="btn btn-outline-dark flex-fill"><i class="bi bi-plus-lg"></i> Thêm bưu cục</a> }
+        </div>
+    </div>
+</form>
+<div class="the-mem">
+    <div class="table-responsive">
+        <table class="table bang">
+            <thead><tr><th style="min-width:250px">Bưu cục</th><th style="min-width:110px">Khu vực phát</th><th>Nhân sự</th><th class="text-end">Đơn đang ở</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+            @foreach (var b in Model.DanhSach)
+            {
+                <tr>
+                    <td><a asp-action="ChiTiet" asp-route-id="@b.MaBuuCuc" class="ten">@b.TenBuuCuc</a> <span class="nho mo">@b.MaHienThi</span><div class="nho mo"><i class="bi bi-geo-alt"></i> @b.DiaChi</div></td>
+                    <td class="nho">@(b.KhuVucs.Count == 0 ? "—" : string.Join(", ", b.KhuVucs.Select(k => k.TenKhuVuc)))</td>
+                    <td class="nho text-nowrap lh-lg">
+                        <span class="ls-chip" title="Shipper liên tỉnh"><i class="bi bi-truck-front"></i> @Dem(b.MaBuuCuc, LoaiShipper.LienTinh) liên tỉnh</span>
+                        <span class="ls-chip" title="Shipper khu vực"><i class="bi bi-truck"></i> @Dem(b.MaBuuCuc, LoaiShipper.KhuVuc) khu vực</span>
+                        <span class="ls-chip" title="Nhân viên bưu cục"><i class="bi bi-person-badge"></i> @soNv.GetValueOrDefault(b.MaBuuCuc) NV</span>
+                    </td>
+                    <td class="text-end fw-bold fs-6">@soDon.GetValueOrDefault(b.MaBuuCuc)</td>
+                    <td><span class="tt @b.TrangThai.LopBadge()">@b.TrangThai.TenHienThi()</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-controller="BuuCuc" asp-action="Index" asp-route-maBuuCuc="@b.MaBuuCuc" class="btn btn-sm btn-light" title="Hàng tại bưu cục"><i class="bi bi-boxes"></i></a>
+                        @if (Context.Session.LaQuanTri())
+                        {
+                            <a asp-action="ChinhSua" asp-route-id="@b.MaBuuCuc" class="btn btn-sm btn-light" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="DoiTrangThai" asp-route-id="@b.MaBuuCuc" method="post" class="d-inline">
+                                <button class="btn btn-sm btn-light" title="@(b.TrangThai == TrangThaiHoatDong.HoatDong ? "Ngừng hoạt động" : "Kích hoạt")"><i class="bi @(b.TrangThai == TrangThaiHoatDong.HoatDong ? "bi-pause-circle" : "bi-play-circle")"></i></button>
+                            </form>
+                            <form asp-action="Xoa" asp-route-id="@b.MaBuuCuc" method="post" class="d-inline" data-xac-nhan="Xóa @b.TenBuuCuc?">
+                                <button class="btn btn-sm btn-light text-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TongSoDong == 0) { <div class="o-trong"><i class="bi bi-building"></i>Không có bưu cục nào phù hợp</div> }
+</div>
+<partial name="_PhanTrang" model="Model" />

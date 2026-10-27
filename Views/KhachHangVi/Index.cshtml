@@ -1,0 +1,349 @@
+@model ViKhachHangVM
+@{
+    ViewData["Title"] = "Ví tiền & Thu hộ COD";
+    var kh = Model.KhachHang;
+    bool coNganHang = !string.IsNullOrWhiteSpace(kh.TenNganHang) && !string.IsNullOrWhiteSpace(kh.SoTaiKhoanNganHang);
+}
+
+<div class="row g-4 mb-4">
+    @* ---------- Thẻ số dư ví chính ---------- *@
+    <div class="col-12 col-lg-7">
+        <div class="the-mem p-4 shadow-sm border-0 rounded-4 text-white position-relative overflow-hidden h-100 d-flex flex-column justify-content-between"
+             style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rounded-circle bg-white bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                            <i class="bi bi-wallet2 text-warning fs-5"></i>
+                        </span>
+                        <span class="fw-semibold text-white-50 nho">VÍ TIỀN THU HỘ (COD)</span>
+                    </div>
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-1 rounded-pill nho">
+                        <i class="bi bi-check-circle-fill me-1"></i> Tự động đối soát
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-white-50 nho d-block mb-1">Số dư ví hiện tại</span>
+                    <h2 class="display-6 fw-bold text-white mb-0">@DinhDang.Tien(Model.SoDuVi)</h2>
+                </div>
+
+                @if (Model.TienDangChoRut > 0)
+                {
+                    <div class="nho text-warning mb-3 d-flex align-items-center gap-1">
+                        <i class="bi bi-hourglass-split"></i>
+                        <span>Đang có lệnh rút <b>@DinhDang.Tien(Model.TienDangChoRut)</b> chờ kế toán xử lý.</span>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex align-items-center gap-3 pt-3 border-top border-secondary border-opacity-25 flex-wrap">
+                <button type="button" class="btn btn-cam rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRutTien" @(Model.SoDuVi < 50000 ? "disabled" : "")>
+                    <i class="bi bi-cash-stack me-1"></i> Rút tiền về ngân hàng
+                </button>
+                <button type="button" class="btn btn-outline-light rounded-pill px-3 py-2 nho" data-bs-toggle="modal" data-bs-target="#modalNganHang">
+                    <i class="bi bi-bank me-1"></i> @(coNganHang ? "Đổi tài khoản nhận" : "Liên kết ngân hàng")
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- Cột phải: Tài khoản ngân hàng & Thống kê ---------- *@
+    <div class="col-12 col-lg-5">
+        <div class="the-mem p-4 shadow-sm border rounded-4 bg-white h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-credit-card-2-front text-cam me-1"></i> Tài khoản nhận tiền COD
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 nho text-primary" data-bs-toggle="modal" data-bs-target="#modalNganHang">
+                        Cập nhật <i class="bi bi-pencil-square"></i>
+                    </button>
+                </div>
+
+                @if (coNganHang)
+                {
+                    <div class="p-3 rounded-3 bg-light border mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-primary px-2 py-1">@kh.TenNganHang</span>
+                            <span class="text-success nho fw-semibold"><i class="bi bi-shield-check"></i> Đã liên kết</span>
+                        </div>
+                        <div class="font-monospace fw-bold fs-5 text-dark mb-1">@kh.SoTaiKhoanNganHang</div>
+                        <div class="text-muted nho text-uppercase">Chủ TK: <b>@kh.ChuTaiKhoanNganHang</b></div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning py-3 px-3 rounded-3 mb-3 nho d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                        <span>Bạn chưa thiết lập tài khoản ngân hàng để nhận tiền COD. Hãy bấm cập nhật để liên kết ngay.</span>
+                    </div>
+                }
+            </div>
+
+            <div class="row g-2 text-center pt-2 border-top">
+                <div class="col-6">
+                    <div class="p-2 rounded-3 bg-light">
+                        <span class="text-muted nho d-block">Tổng COD đã nhận</span>
+                        <span class="fw-bold text-success">@DinhDang.Tien(Model.TongCODDaNhan)</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 rounded-3 bg-light">
+                        <span class="text-muted nho d-block">Đã rút về ngân hàng</span>
+                        <span class="fw-bold text-primary">@DinhDang.Tien(Model.TongDaRut)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ---------- Đơn hàng COD đang chờ đối soát (nếu có) ---------- *@
+@if (Model.DonCODChoDoiSoat.Count > 0)
+{
+    <div class="alert alert-info border-info-subtle shadow-sm rounded-3 mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <h6 class="fw-bold mb-0 text-info-emphasis d-flex align-items-center gap-2">
+                <i class="bi bi-hourglass-top"></i> Đơn hàng đã giao thành công – Tiền COD đang chờ đối soát (@Model.DonCODChoDoiSoat.Count đơn)
+            </h6>
+            <span class="nho text-info-emphasis">Tiền sẽ tự động cộng vào ví ngay khi shipper nộp tiền về công ty</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-borderless align-middle mb-0 nho">
+                <thead>
+                    <tr class="text-muted border-bottom">
+                        <th>Mã đơn</th>
+                        <th>Người nhận</th>
+                        <th>Tiền thu hộ COD</th>
+                        <th>Tiền thực nhận dự kiến</th>
+                        <th class="text-end">Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model.DonCODChoDoiSoat)
+                    {
+                        <tr>
+                            <td><span class="fw-bold font-monospace">@d.MaHienThi</span></td>
+                            <td>@d.TenNguoiNhan (@d.DiaChiNhan)</td>
+                            <td class="fw-bold text-success">@DinhDang.Tien(d.TienThuHo)</td>
+                            <td class="fw-bold text-primary">@DinhDang.Tien(d.TienTraNguoiGui)</td>
+                            <td class="text-end">
+                                <a asp-controller="KhachHangDonHang" asp-action="ChiTiet" asp-route-id="@d.MaDon" class="btn btn-outline-info btn-sm py-0 px-2" target="_blank">Xem</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@* ---------- Lịch sử giao dịch ví (Sao kê) ---------- *@
+<div class="the-mem p-4 shadow-sm border rounded-4 bg-white mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-clock-history text-cam me-1"></i> Lịch sử giao dịch & Sao kê ví
+        </h5>
+        <span class="text-muted nho">Hiển thị 50 giao dịch gần nhất</span>
+    </div>
+
+    @if (Model.LichSuGiaoDich.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light nho text-muted">
+                    <tr>
+                        <th style="width: 120px;">Mã GD</th>
+                        <th style="width: 160px;">Loại giao dịch</th>
+                        <th style="width: 150px;">Biến động tiền</th>
+                        <th style="width: 150px;">Số dư sau GD</th>
+                        <th>Chi tiết / Ghi chú</th>
+                        <th style="width: 150px;">Thời gian</th>
+                        <th style="width: 130px;">Trạng thái</th>
+                        <th class="text-end pe-2" style="width: 90px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var gd in Model.LichSuGiaoDich)
+                    {
+                        bool laCong = gd.Loai == LoaiGiaoDichKhach.CongTienCOD;
+                        <tr>
+                            <td>
+                                <span class="font-monospace fw-bold text-dark">@gd.MaHienThi</span>
+                            </td>
+                            <td>
+                                <span class="tt @gd.Loai.LopBadge()">
+                                    <i class="bi @gd.Loai.BieuTuong() me-1"></i>@gd.Loai.TenHienThi()
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold fs-6 @(laCong ? "text-success" : "text-danger")">
+                                    @(laCong ? "+" : "-")@DinhDang.Tien(gd.SoTien)
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@DinhDang.Tien(gd.SoDuSauGiaoDich)</span>
+                            </td>
+                            <td>
+                                <div class="nho text-dark">@gd.GhiChu</div>
+                                @if (gd.DonHang != null)
+                                {
+                                    <a asp-controller="KhachHangDonHang" asp-action="ChiTiet" asp-route-id="@gd.DonHang.MaDon" class="badge bg-primary-subtle text-primary text-decoration-none mt-1" target="_blank">
+                                        <i class="bi bi-box-seam me-1"></i>Đơn: @gd.DonHang.MaHienThi
+                                    </a>
+                                }
+                                @if (!string.IsNullOrEmpty(gd.MaThamChieu))
+                                {
+                                    <div class="nho text-muted"><i class="bi bi-receipt me-1"></i>Mã GD NH: @gd.MaThamChieu</div>
+                                }
+                            </td>
+                            <td class="nho text-muted">
+                                @DinhDang.NgayGio(gd.NgayTao)
+                            </td>
+                            <td>
+                                <span class="tt @gd.TrangThai.LopBadge()">
+                                    @gd.TrangThai.TenHienThi()
+                                </span>
+                            </td>
+                            <td class="text-end pe-2">
+                                @if (gd.Loai == LoaiGiaoDichKhach.RutTien && gd.TrangThai == TrangThaiGiaoDich.ChoXacNhan)
+                                {
+                                    <form asp-action="HuyRutTien" asp-route-id="@gd.MaGiaoDich" method="post" class="d-inline" data-xac-nhan="Bạn có chắc muốn hủy lệnh rút tiền này? Số tiền sẽ được hoàn lại vào ví.">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2 rounded-pill" title="Hủy lệnh rút tiền">
+                                            Hủy
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted nho">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="tc-trong py-5">
+            <div class="tc-trong-icon"><i class="bi bi-wallet2 text-muted"></i></div>
+            <h6 class="fw-bold mb-1">Chưa có giao dịch ví nào</h6>
+            <p class="mo nho mb-0">Khi bạn có đơn hàng thu hộ COD giao thành công, tiền sẽ tự động đối soát và cộng vào ví tại đây.</p>
+        </div>
+    }
+</div>
+
+@* ---------- MODAL: RÚT TIỀN VỀ NGÂN HÀNG ---------- *@
+<div class="modal fade" id="modalRutTien" tabindex="-1" aria-labelledby="modalRutTienLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-cam text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="modalRutTienLabel">
+                    <i class="bi bi-cash-stack me-1"></i> Rút tiền COD về ngân hàng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="RutTien" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="alert alert-light border d-flex justify-content-between align-items-center mb-3 p-3 rounded-3">
+                        <span class="nho text-muted">Số dư ví khả dụng:</span>
+                        <span class="h5 fw-bold text-success mb-0">@DinhDang.Tien(Model.SoDuVi)</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số tiền muốn rút (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" name="SoTien" class="form-control form-control-lg" min="50000" max="@Model.SoDuVi" step="10000" value="@Model.SoDuVi" required />
+                        <div class="form-text nho">Tối thiểu: 50.000 đ. Tối đa: @DinhDang.Tien(Model.SoDuVi).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ngân hàng nhận tiền <span class="text-danger">*</span></label>
+                        <select name="TenNganHang" class="form-select" required>
+                            <option value="">-- Chọn ngân hàng --</option>
+                            @foreach (var nh in new[] { "Vietcombank", "MB Bank", "Techcombank", "BIDV", "VietinBank", "ACB", "TPBank", "VPBank", "Sacombank", "Agribank", "VIB", "HDBank", "SHB", "MSB", "OCB" })
+                            {
+                                <option value="@nh" selected="@(kh.TenNganHang == nh)">@nh</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-7">
+                            <label class="form-label fw-semibold">Số tài khoản <span class="text-danger">*</span></label>
+                            <input type="text" name="SoTaiKhoan" class="form-control" value="@kh.SoTaiKhoanNganHang" placeholder="Nhập số tài khoản" required />
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label fw-semibold">Chủ tài khoản <span class="text-danger">*</span></label>
+                            <input type="text" name="ChuTaiKhoan" class="form-control text-uppercase" value="@kh.ChuTaiKhoanNganHang" placeholder="HO VA TEN" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Ghi chú (tùy chọn)</label>
+                        <input type="text" name="GhiChu" class="form-control" placeholder="Rút tiền COD tuần này..." />
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 mt-3 nho text-muted">
+                        <i class="bi bi-shield-check text-success me-1"></i> Tiền sẽ được kế toán duyệt và chuyển khoản nhanh qua Napas 24/7 trong vòng 24 giờ làm việc.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-cam rounded-pill px-4 fw-semibold">Xác nhận rút tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ---------- MODAL: CẬP NHẬT TÀI KHOẢN NGÂN HÀNG ---------- *@
+<div class="modal fade" id="modalNganHang" tabindex="-1" aria-labelledby="modalNganHangLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="modalNganHangLabel">
+                    <i class="bi bi-bank me-1"></i> Tài khoản ngân hàng nhận tiền COD
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="CapNhatNganHang" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên ngân hàng <span class="text-danger">*</span></label>
+                        <select name="TenNganHang" class="form-select" required>
+                            <option value="">-- Chọn ngân hàng --</option>
+                            @foreach (var nh in new[] { "Vietcombank", "MB Bank", "Techcombank", "BIDV", "VietinBank", "ACB", "TPBank", "VPBank", "Sacombank", "Agribank", "VIB", "HDBank", "SHB", "MSB", "OCB" })
+                            {
+                                <option value="@nh" selected="@(kh.TenNganHang == nh)">@nh</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số tài khoản ngân hàng <span class="text-danger">*</span></label>
+                        <input type="text" name="SoTaiKhoan" class="form-control" value="@kh.SoTaiKhoanNganHang" placeholder="Nhập chính xác số tài khoản" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên chủ tài khoản (viết hoa không dấu) <span class="text-danger">*</span></label>
+                        <input type="text" name="ChuTaiKhoan" class="form-control text-uppercase" value="@kh.ChuTaiKhoanNganHang" placeholder="NGUYEN VAN A" required />
+                    </div>
+
+                    <div class="nho text-muted">
+                        <i class="bi bi-info-circle me-1"></i> Thông tin này sẽ được dùng mặc định cho các lần rút tiền COD sau này của bạn.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Lưu thông tin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

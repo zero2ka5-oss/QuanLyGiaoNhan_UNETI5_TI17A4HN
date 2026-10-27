@@ -14,13 +14,16 @@ namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
 [YeuCauVaiTro(VaiTroNguoiDung.KhachHang)]
 public class KhachHangDonHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy xuLy) : Controller
 {
-    private const int KichThuocTrang = 10;
+    private const int KichThuocTrang = 20;
     private int MaKhachHangCuaToi => HttpContext.Session.MaKhachHang() ?? -1;
 
     // ===================== DANH SÁCH =====================
 
     public async Task<IActionResult> Index(BoLocDonHang boLoc)
     {
+        // Tự động kiểm tra và hủy các đơn gửi tại bưu cục quá 7 ngày chưa mang tới gửi
+        await xuLy.TuDongHuyDonGuiTaiBuuCucQuaHanAsync(7);
+
         var truyVan = DonHangXuLy.LocDonHang(db.DonGiaoHangs.AsNoTracking()
                         .Include(d => d.LoaiHang).Include(d => d.KhuVuc)
                         .Where(d => d.MaKhachHang == MaKhachHangCuaToi), boLoc);
@@ -90,12 +93,30 @@ public class KhachHangDonHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         if (await KiemTraChanNoCuocAsync()) return RedirectToAction(nameof(CongNo));
 
         await NapDanhMucFormAsync(null);
+        var kh = ViewBag.KhachHang as KhachHang;
         var vm = new DonGiaoHangFormVM
         {
             // Mặc định bưu cục gửi lần trước của khách
             MaBuuCucGui = await db.DonGiaoHangs.Where(d => d.MaKhachHang == MaKhachHangCuaToi && d.MaBuuCucGui != null)
                                   .OrderByDescending(d => d.NgayTao).Select(d => d.MaBuuCucGui).FirstOrDefaultAsync()
         };
+
+        if (kh != null && !string.IsNullOrWhiteSpace(kh.DiaChi))
+        {
+            vm.DiaChiLayHang = kh.DiaChi;
+            string? tinhKh = DiaChiTienIch.NhanDienTinhThanh(kh.DiaChi);
+            if (tinhKh != null)
+            {
+                var dsBc = (List<BuuCuc>)ViewBag.DsBuuCuc;
+                var bcCu = vm.MaBuuCucGui.HasValue ? dsBc.FirstOrDefault(b => b.MaBuuCuc == vm.MaBuuCucGui.Value) : null;
+                if (bcCu == null || !DiaChiTienIch.KiemTraKhopTinhThanh(kh.DiaChi, bcCu.TinhThanh))
+                {
+                    var bcKhop = dsBc.FirstOrDefault(b => b.TinhThanh == tinhKh);
+                    if (bcKhop != null) vm.MaBuuCucGui = bcKhop.MaBuuCuc;
+                }
+            }
+        }
+
         if (maKhuVuc > 0) vm.MaKhuVuc = maKhuVuc.Value;
         if (maLoaiHang > 0) vm.MaLoaiHang = maLoaiHang.Value;
         if (khoiLuong is > 0 and <= 100_000) vm.KhoiLuong = khoiLuong.Value;
@@ -109,11 +130,9 @@ public class KhachHangDonHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
     {
         if (await KiemTraChanNoCuocAsync()) return RedirectToAction(nameof(CongNo));
 
-        if (vm.NgayGiaoDuKien.Date < DateTime.Today)
-            ModelState.AddModelError(nameof(vm.NgayGiaoDuKien), "Ngày giao dự kiến không được trước ngày tạo đơn");
         if (!ModelState.IsValid) { await NapDanhMucFormAsync(null); return View("BieuMau", vm); }
 
-        var kq = await xuLy.TaoDonAsync(vm, MaKhachHangCuaToi, HttpContext.Session.NguoiThucHien());
+        var kq = await xuLy.TaoDonAsync(vm, MaKhachHangCuaToi, HttpContext.Session.NguoiThucHien(), laKhachHang: true);
         if (!kq.ThanhCong)
         {
             ModelState.AddModelError("", kq.ThongBao);
@@ -198,6 +217,11 @@ public class KhachHangDonHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         }
 
         don.NgayYeuCauThanhToan = DateTime.Now;
+        var tb = new ThongBaoXuLy(db, () => DateTime.Now);
+        tb.GuiNhieu(tb.TkQuanTri(), LoaiThongBao.Vi,
+            $"Yêu cầu thanh toán cước: {don.MaHienThi}",
+            $"Khách hàng {HttpContext.Session.HoTen()} đã gửi yêu cầu xác nhận thanh toán cước {DinhDang.Tien(don.PhiNguoiGuiPhaiTra)} cho đơn {don.MaHienThi}.",
+            "/QuanTriCongNo", don.MaDon);
         await db.SaveChangesAsync();
 
         TempData["Success"] = $"Đã gửi yêu cầu xác nhận thanh toán cước cho đơn {don.MaHienThi}. Trạng thái chuyển sang Chờ duyệt (Pending) – Vui lòng đợi Admin kiểm tra tài khoản và phê duyệt!";
@@ -220,6 +244,11 @@ public class KhachHangDonHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         {
             don.NgayYeuCauThanhToan = bayGio;
         }
+        var tb = new ThongBaoXuLy(db, () => DateTime.Now);
+        tb.GuiNhieu(tb.TkQuanTri(), LoaiThongBao.Vi,
+            "Yêu cầu thanh toán toàn bộ công nợ cước",
+            $"Khách hàng {HttpContext.Session.HoTen()} đã gửi yêu cầu thanh toán cho {dsNo.Count} đơn nợ cước (tổng {DinhDang.Tien(tongTien)}).",
+            "/QuanTriCongNo");
         await db.SaveChangesAsync();
 
         TempData["Success"] = $"Đã gửi yêu cầu thanh toán cho {dsNo.Count} đơn hàng (tổng {DinhDang.Tien(tongTien)}). Trạng thái đã chuyển sang Chờ duyệt (Pending) – Vui lòng đợi Admin kiểm tra và duyệt!";
@@ -256,9 +285,23 @@ public class KhachHangDonHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
             .OrderBy(l => l.HeSoPhuThu).ToListAsync();
         ViewBag.DsKhuVuc = await db.KhuVucs.AsNoTracking().Include(k => k.BuuCuc)
             .Where(k => k.TrangThai == TrangThaiHoatDong.HoatDong || (donCu != null && k.MaKhuVuc == donCu.MaKhuVuc))
-            .OrderBy(k => k.PhiCoBan).ToListAsync();
+            .OrderBy(k => k.TenKhuVuc).ToListAsync();
         ViewBag.DsBuuCuc = await DanhSachBuuCucGuiAsync(db, donCu);
         // Thẻ "Người gửi" trên form: thông tin người gửi (chính khách hàng đang đăng nhập)
         ViewBag.KhachHang = await db.KhachHangs.AsNoTracking().FirstOrDefaultAsync(k => k.MaKhachHang == MaKhachHangCuaToi);
+
+        // Sổ địa chỉ người nhận gần đây giúp tự động điền nhanh form
+        var dsDonGanDay = await db.DonGiaoHangs.AsNoTracking()
+            .Where(d => d.MaKhachHang == MaKhachHangCuaToi)
+            .OrderByDescending(d => d.NgayTao)
+            .Select(d => new { d.TenNguoiNhan, d.SoDienThoaiNguoiNhan, d.DiaChiNhan, d.MaKhuVuc })
+            .Take(30)
+            .ToListAsync();
+        var dsLoc = dsDonGanDay
+            .GroupBy(d => d.SoDienThoaiNguoiNhan)
+            .Select(g => g.First())
+            .Take(10)
+            .ToList();
+        ViewBag.JsonNguoiNhanGanDay = System.Text.Json.JsonSerializer.Serialize(dsLoc);
     }
 }

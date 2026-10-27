@@ -1,0 +1,64 @@
+﻿@model BuuCuc
+@{
+    ViewData["Title"] = Model.TenBuuCuc;
+    ViewData["ThuVien"] = "bando";
+    var dsShipper = (List<NhanVienGiaoHang>)ViewBag.DsShipper;
+    var dsNv = (List<TaiKhoan>)ViewBag.DsNhanVienBuuCuc;
+}
+@section Head { <partial name="_BanDoHead" /> }
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="the-mem p-4 mb-3">
+            <div class="d-flex justify-content-between"><span class="fw-bold fs-5">@Model.TenBuuCuc</span><span class="tt @Model.TrangThai.LopBadge()">@Model.TrangThai.TenHienThi()</span></div>
+            <div class="nho mo mb-2">@Model.MaHienThi</div>
+            <div class="nho mb-1"><i class="bi bi-geo-alt text-cam"></i> @Model.DiaChi, @Model.TinhThanh</div>
+            @if (Model.SoDienThoai is not null) { <div class="nho mb-1"><i class="bi bi-telephone text-cam"></i> @DinhDang.SoDienThoai(Model.SoDienThoai)</div> }
+            <div class="nho mb-3"><i class="bi bi-map text-cam"></i> Phát hàng cho: @(Model.KhuVucs.Count == 0 ? "chưa có khu vực" : string.Join(", ", Model.KhuVucs.Select(k => k.TenKhuVuc)))</div>
+            <div class="row g-2 mb-3">
+                <div class="col-6"><div class="kpi p-2"><div class="nhan">Đơn đang ở</div><div class="gia-tri fs-5">@ViewBag.SoDonTaiBuuCuc</div></div></div>
+                <div class="col-6"><div class="kpi p-2"><div class="nhan">Đang chuyển đến</div><div class="gia-tri fs-5">@ViewBag.SoDonDangDen</div></div></div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-controller="BuuCuc" asp-action="Index" asp-route-maBuuCuc="@Model.MaBuuCuc" class="btn btn-cam btn-sm"><i class="bi bi-boxes"></i> Hàng tại bưu cục</a>
+                @if (Context.Session.LaQuanTri()) { <a asp-action="ChinhSua" asp-route-id="@Model.MaBuuCuc" class="btn btn-light btn-sm"><i class="bi bi-pencil"></i> Sửa</a> }
+            </div>
+        </div>
+        @if (Model.ViDo is not null && Model.KinhDo is not null)
+        {
+            <div class="the-mem p-2 mb-3">
+                <div class="ban-do" data-ban-do data-loai="buucuc" data-zoom="15" data-nhan="@Model.TenBuuCuc"
+                     data-vi-do="@Model.ViDo.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-kinh-do="@Model.KinhDo.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)"></div>
+            </div>
+        }
+        <div class="the-mem p-4">
+            <h6 class="fw-bold mb-2"><i class="bi bi-person-workspace text-cam"></i> Nhân viên bưu cục</h6>
+            @foreach (var t in dsNv) { <div class="nho mb-1">@t.HoTen <span class="mo">· @t.TenDangNhap</span> <span class="tt @t.TrangThai.LopBadge()">@t.TrangThai.TenHienThi()</span></div> }
+            @if (dsNv.Count == 0) { <div class="nho mo">Chưa có – tạo ở mục Tài khoản & phân quyền.</div> }
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="the-mem">
+            <div class="p-3 fw-bold"><i class="bi bi-person-badge text-cam"></i> Shipper của bưu cục</div>
+            <div class="table-responsive">
+                <table class="table bang mb-0">
+                    <thead><tr><th>Shipper</th><th>Loại</th><th>Khu vực</th><th>Phương tiện</th><th>Trạng thái</th></tr></thead>
+                    <tbody>
+                    @foreach (var n in dsShipper)
+                    {
+                        <tr>
+                            <td><a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@n.MaNhanVien" class="ten">@n.HoTen</a><div class="nho mo">@n.MaHienThi</div></td>
+                            <td><span class="tt @(n.LoaiShipper == LoaiShipper.LienTinh ? "tt-dang" : "tt-xuly")">@n.LoaiShipper.TenHienThi()</span></td>
+                            <td class="nho">@(n.KhuVucPhuTrach?.TenKhuVuc ?? "—")</td>
+                            <td class="nho">@(n.PhuongTien is null ? "— chưa gán" : $"{n.PhuongTien.MaHienThi} · {n.PhuongTien.BienSo}")</td>
+                            <td><span class="tt @n.TrangThai.LopBadge()">@n.TrangThai.TenHienThi()</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            @if (dsShipper.Count == 0) { <div class="o-trong"><i class="bi bi-person-x"></i>Chưa có shipper</div> }
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_VanChuyenScripts" /> }

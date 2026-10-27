@@ -1,0 +1,50 @@
+@model TaiKhoanFormVM
+@{
+    bool laTao = Model.MaTaiKhoan == 0;
+    ViewData["Title"] = laTao ? "Thêm tài khoản quản trị / nhân viên" : "Sửa tài khoản";
+    bool vaiTroCoDinh = Model.VaiTro is VaiTroNguoiDung.KhachHang or VaiTroNguoiDung.GiaoHang;
+}
+<div class="the-mem p-4" style="max-width: 720px">
+    <form asp-action="@(laTao ? "TaoMoi" : "ChinhSua")" method="post">
+        <input type="hidden" asp-for="MaTaiKhoan" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="row g-3">
+            <div class="col-md-6"><label asp-for="TenDangNhap" class="form-label"></label><input asp-for="TenDangNhap" class="form-control" placeholder="VD: nv.bacninh, nv.hanoi, nv.danang" /><span asp-validation-for="TenDangNhap" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="MatKhau" class="form-label">@(laTao ? "Mật khẩu" : "Mật khẩu mới (để trống nếu không đổi)")</label><input asp-for="MatKhau" class="form-control" /><span asp-validation-for="MatKhau" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="HoTen" class="form-label"></label><input asp-for="HoTen" class="form-control" /><span asp-validation-for="HoTen" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label asp-for="VaiTro" class="form-label"></label>
+                @if (vaiTroCoDinh)
+                {
+                    <input type="hidden" asp-for="VaiTro" />
+                    <input class="form-control" value="@HienThi.TenVaiTro(Model.VaiTro)" disabled />
+                }
+                else
+                {
+                    <select asp-for="VaiTro" asp-items="ViewBag.DsVaiTro" class="form-select" id="chonVaiTro"></select>
+                }
+                <span asp-validation-for="VaiTro" class="text-danger nho"></span></div>
+            <div class="col-md-6" id="oBuuCuc" data-vai-tro="@Model.VaiTro"><label asp-for="MaBuuCuc" class="form-label"></label>
+                <select asp-for="MaBuuCuc" asp-items="ViewBag.DsBuuCuc" class="form-select"><option value="">-- Chọn bưu cục làm việc --</option></select>
+                <div class="nho mo">Nhân viên sẽ điều hành và duyệt đơn tại bưu cục này (để trống nếu điều hành toàn hệ thống).</div>
+                <span asp-validation-for="MaBuuCuc" class="text-danger nho"></span></div>
+            <div class="col-md-6"><label class="form-label">Trạng thái</label>
+                <div class="d-flex gap-3 pt-2">
+                    <div class="form-check"><input class="form-check-input" type="radio" asp-for="TrangThai" value="HoatDong" id="ttHoatDong" /><label class="form-check-label" for="ttHoatDong">Hoạt động</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" asp-for="TrangThai" value="BiKhoa" id="ttBiKhoa" /><label class="form-check-label" for="ttBiKhoa">Bị khóa</label></div>
+                </div></div>
+        </div>
+        <div class="d-flex gap-2 mt-4"><button class="btn btn-cam px-4">Lưu</button><a asp-action="Index" class="btn btn-light">Hủy</a></div>
+    </form>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const vt = document.getElementById("chonVaiTro"), o = document.getElementById("oBuuCuc");
+            const capNhat = () => o.classList.toggle("d-none", (vt ? vt.value : o.dataset.vaiTro) !== "NhanVien");
+            if (vt) vt.addEventListener("change", capNhat);
+            capNhat();
+        })();
+    </script>
+}

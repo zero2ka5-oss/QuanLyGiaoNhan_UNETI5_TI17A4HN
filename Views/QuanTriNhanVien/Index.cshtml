@@ -1,0 +1,142 @@
+@model DanhSachTrang<NhanVienGiaoHang>
+@{
+    bool khoaBuuCuc = ViewBag.KhoaBuuCuc == true;
+    ViewData["Title"] = khoaBuuCuc ? $"Shipper – {ViewBag.TenBuuCuc}" : "Quản lý Shipper";
+    var soTheoTT = (Dictionary<TrangThaiNhanVien, int>)ViewBag.SoTheoTrangThai;
+    var dangGiu = (Dictionary<int, int>)ViewBag.DangGiu;
+    var daGiao = (Dictionary<int, int>)ViewBag.DaGiao;
+    TrangThaiNhanVien? loc = ViewBag.TrangThai;
+    int? maBc = ViewBag.MaBuuCuc;
+    var dsBc = (List<BuuCuc>)ViewBag.DsBuuCuc;
+}
+
+@if (khoaBuuCuc)
+{
+    <div class="alert alert-light border py-2 px-3 mb-3 d-flex align-items-center gap-2 rounded-3 shadow-sm">
+        <i class="bi bi-building text-cam fs-5"></i>
+        <div>Đội ngũ shipper bưu cục: <b class="text-dark">@ViewBag.TenBuuCuc</b> · Chỉ hiển thị danh sách shipper thuộc bưu cục của bạn</div>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    @foreach (var (tt, mau, icon) in new[] { (TrangThaiNhanVien.SanSang, "icon-luc", "bi-check-circle"), (TrangThaiNhanVien.DangGiaoHang, "icon-xanh", "bi-truck"),
+                                            (TrangThaiNhanVien.TamNghi, "icon-vang", "bi-pause-circle"), (TrangThaiNhanVien.NgungHoatDong, "icon-do", "bi-slash-circle") })
+    {
+        <div class="col-6 col-xl-3">
+            <a class="kpi d-flex justify-content-between align-items-center text-reset @(loc == tt ? "border border-2 border-warning" : "")"
+               asp-route-trangThai="@tt" asp-route-maBuuCuc="@maBc" asp-route-maKhuVuc="@ViewBag.MaKhuVuc" asp-route-tuKhoa="@ViewBag.TuKhoa">
+                <div><div class="nhan">@tt.TenHienThi()</div><div class="gia-tri">@soTheoTT.GetValueOrDefault(tt)</div></div>
+                <div class="icon @mau"><i class="bi @icon"></i></div>
+            </a>
+        </div>
+    }
+</div>
+<form method="get" class="thanh-loc mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="@(khoaBuuCuc ? "col-md-4" : "col-md-3")">
+            <label class="form-label nho">Tìm kiếm</label>
+            <input name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Họ tên, số điện thoại, email" />
+        </div>
+        @if (!khoaBuuCuc)
+        {
+            <div class="col-md-3">
+                <label class="form-label nho">Bưu cục</label>
+                <select name="maBuuCuc" class="form-select">
+                    <option value="">Tất cả bưu cục</option>
+                    @foreach (var bc in dsBc)
+                    {
+                        <option value="@bc.MaBuuCuc" selected="@(maBc == bc.MaBuuCuc)">@bc.TenBuuCuc</option>
+                    }
+                </select>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="maBuuCuc" value="@maBc" />
+        }
+        <div class="@(khoaBuuCuc ? "col-md-3" : "col-md-2")">
+            <label class="form-label nho">Khu vực phụ trách</label>
+            <select name="maKhuVuc" asp-items="ViewBag.DsKhuVuc" class="form-select">
+                <option value="">Tất cả</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label nho">Trạng thái</label>
+            <select name="trangThai" class="form-select">
+                <option value="">Tất cả</option>
+                @foreach (var tt in Enum.GetValues<TrangThaiNhanVien>())
+                {
+                    <option value="@tt" selected="@(loc == tt)">@tt.TenHienThi()</option>
+                }
+            </select>
+        </div>
+        <div class="@(khoaBuuCuc ? "col-md-3" : "col-md-2") d-flex gap-2">
+            <button class="btn btn-cam flex-fill"><i class="bi bi-funnel"></i> Lọc</button>
+            @if (Context.Session.LaQuanTri())
+            {
+                <a asp-action="TaoMoi" class="btn btn-outline-dark flex-fill"><i class="bi bi-person-plus"></i> Thêm</a>
+            }
+        </div>
+    </div>
+</form>
+<div class="the-mem">
+    <div class="table-responsive">
+        <table class="table bang">
+            <thead>
+                <tr>
+                    <th>Shipper</th>
+                    <th>Liên hệ</th>
+                    <th>@(khoaBuuCuc ? "Loại shipper / Phụ trách" : "Loại / bưu cục")</th>
+                    <th>Phương tiện</th>
+                    <th>Tài khoản</th>
+                    <th class="text-end">Đang giữ</th>
+                    <th class="text-end">Đã giao</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var n in Model.DanhSach)
+            {
+                <tr>
+                    <td><div class="d-flex align-items-center gap-2">@HienThi.AnhDaiDien(n.TaiKhoan?.AnhDaiDien, n.HoTen, "avt avt-sm avt-xanh")<div class="lh-sm"><a asp-action="ChiTiet" asp-route-id="@n.MaNhanVien" class="ten">@n.HoTen</a><div class="nho mo">@n.MaHienThi</div></div></div></td>
+                    <td class="nho">@DinhDang.SoDienThoai(n.SoDienThoai)<div class="mo">@n.Email</div></td>
+                    <td class="nho">
+                        <span class="tt @(n.LoaiShipper == LoaiShipper.LienTinh ? "tt-dang" : "tt-xuly")">@n.LoaiShipper.TenChang().Replace("Chặng ", "")</span>
+                        <div class="mo">
+                            @if (khoaBuuCuc)
+                            {
+                                @(n.LoaiShipper == LoaiShipper.LienTinh ? "Xe tải liên tỉnh" : (n.KhuVucPhuTrach?.TenKhuVuc ?? "Chưa phân khu vực"))
+                            }
+                            else
+                            {
+                                @(n.BuuCuc?.TenBuuCuc ?? "— chưa gán bưu cục")@(n.KhuVucPhuTrach is null ? "" : " · " + n.KhuVucPhuTrach.TenKhuVuc)
+                            }
+                        </div>
+                    </td>
+                    <td class="nho">@(n.PhuongTien is null ? "— chưa gán" : $"{n.PhuongTien.MaHienThi} · {n.PhuongTien.BienSo}")</td>
+                    <td class="nho">@if (n.TaiKhoan is not null) { <code>@n.TaiKhoan.TenDangNhap</code> } else { <span class="mo">—</span> }</td>
+                    <td class="text-end">@dangGiu.GetValueOrDefault(n.MaNhanVien)</td>
+                    <td class="text-end fw-semibold">@daGiao.GetValueOrDefault(n.MaNhanVien)</td>
+                    <td><span class="tt @n.TrangThai.LopBadge()">@n.TrangThai.TenHienThi()</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="ChiTiet" asp-route-id="@n.MaNhanVien" class="btn btn-sm btn-light" title="Chi tiết"><i class="bi bi-eye"></i></a>
+                        @if (Context.Session.LaQuanTri())
+                        {
+                            <a asp-action="ChinhSua" asp-route-id="@n.MaNhanVien" class="btn btn-sm btn-light" title="Sửa"><i class="bi bi-pencil"></i></a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TongSoDong == 0)
+    {
+        <div class="o-trong">
+            <i class="bi bi-person-badge"></i>
+            @(khoaBuuCuc ? $"Bưu cục {ViewBag.TenBuuCuc} chưa có shipper nào phù hợp điều kiện lọc" : "Không có nhân viên phù hợp")
+        </div>
+    }
+</div>
+<partial name="_PhanTrang" model="Model" />

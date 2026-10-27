@@ -1,0 +1,156 @@
+@model DanhSachLienHeVM
+@{
+    var bl = Model.BoLoc;
+    ViewData["Title"] = "Hỗ trợ & Liên hệ";
+    string TabUrl(TrangThaiLienHe? tt) => Url.Action("Index", new
+    {
+        TuKhoa = bl.TuKhoa,
+        TrangThai = tt,
+        ChuDe = bl.ChuDe,
+        MaBuuCuc = bl.MaBuuCuc
+    })!;
+    int tongTatCa = Model.TongSoChoPhanHoi + Model.TongSoDangXuLy + Model.TongSoDaPhanHoi + Model.TongSoDaDong;
+}
+
+@* ---------- Đầu trang ---------- *@
+<div class="kh-dau-trang dh-dau mb-4">
+    <div class="flex-grow-1">
+        <h2 class="h4 fw-bold mb-3">Trung tâm trợ giúp & Khiếu nại</h2>
+        <div class="dh-so-lieu">
+            <div><b>@tongTatCa</b><span>Tổng yêu cầu</span></div>
+            <div><b>@Model.TongSoChoPhanHoi</b><span>Chờ phản hồi</span></div>
+            <div><b>@Model.TongSoDangXuLy</b><span>Đang xử lý</span></div>
+            <div><b>@Model.TongSoDaPhanHoi</b><span>Đã phản hồi</span></div>
+            <div><b>@Model.TongSoDaDong</b><span>Đã giải quyết</span></div>
+        </div>
+    </div>
+    <a asp-action="TaoMoi" class="btn btn-light btn-lg kh-nut-trang text-nowrap">
+        <i class="bi bi-plus-circle me-1"></i> Gửi yêu cầu mới
+    </a>
+</div>
+
+@* ---------- Tìm kiếm + bộ lọc ---------- *@
+<form method="get" class="dh-loc mb-3" id="boLocLienHe">
+    <input type="hidden" name="TrangThai" value="@bl.TrangThai" />
+    <div class="dh-loc-dong">
+        <div class="o-nhap flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input name="TuKhoa" value="@bl.TuKhoa" class="form-control" placeholder="Tìm kiếm theo tiêu đề, nội dung thắc mắc..." />
+        </div>
+        <select name="ChuDe" class="form-select dh-sap-xep" style="max-width: 240px;" onchange="this.form.requestSubmit()">
+            <option value="">-- Tất cả chủ đề --</option>
+            @foreach (ChuDeLienHe cd in Enum.GetValues<ChuDeLienHe>())
+            {
+                <option value="@cd" selected="@(bl.ChuDe == cd)">@cd.TenHienThi()</option>
+            }
+        </select>
+        <button class="btn btn-cam px-4">Tìm</button>
+        @if (!string.IsNullOrWhiteSpace(bl.TuKhoa) || bl.ChuDe.HasValue || bl.TrangThai.HasValue)
+        {
+            <a asp-action="Index" class="btn btn-light" title="Xóa bộ lọc"><i class="bi bi-x-lg"></i></a>
+        }
+    </div>
+</form>
+
+@* ---------- Tab trạng thái ---------- *@
+<div class="dh-tab-cuon mb-3">
+    <div class="dh-tab">
+        <a href="@TabUrl(null)" class="@(bl.TrangThai is null ? "active" : "")">
+            Tất cả <span>@tongTatCa</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.ChoPhanHoi)" class="@(bl.TrangThai == TrangThaiLienHe.ChoPhanHoi ? "active" : "")">
+            Chờ phản hồi <span>@Model.TongSoChoPhanHoi</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.DangXuLy)" class="@(bl.TrangThai == TrangThaiLienHe.DangXuLy ? "active" : "")">
+            Đang xử lý <span>@Model.TongSoDangXuLy</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.DaPhanHoi)" class="@(bl.TrangThai == TrangThaiLienHe.DaPhanHoi ? "active" : "")">
+            Đã có phản hồi <span>@Model.TongSoDaPhanHoi</span>
+        </a>
+        <a href="@TabUrl(TrangThaiLienHe.DaDong)" class="@(bl.TrangThai == TrangThaiLienHe.DaDong ? "active" : "")">
+            Đã đóng <span>@Model.TongSoDaDong</span>
+        </a>
+    </div>
+</div>
+
+@* ---------- Danh sách yêu cầu hỗ trợ ---------- *@
+@if (Model.KetQua.TongSoDong > 0)
+{
+    <div class="d-flex flex-column gap-3 mb-4">
+        @foreach (var lh in Model.KetQua.DanhSach)
+        {
+            <div class="the-mem p-3 p-md-4 shadow-sm border rounded-3 bg-white d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                        <span class="badge bg-light text-dark border fw-bold px-2 py-1">@lh.MaHienThi</span>
+                        <span class="tt @lh.TrangThai.LopBadge()">
+                            <i class="bi @lh.TrangThai.BieuTuong() me-1"></i>@lh.TrangThai.TenHienThi()
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis px-2 py-1">
+                            <i class="bi bi-tag me-1"></i>@lh.ChuDe.TenHienThi()
+                        </span>
+                        @if (lh.DonHang != null)
+                        {
+                            <a asp-controller="KhachHangDonHang" asp-action="ChiTiet" asp-route-id="@lh.DonHang.MaDon" class="badge bg-primary-subtle text-primary text-decoration-none px-2 py-1" target="_blank">
+                                <i class="bi bi-box-seam me-1"></i>Đơn: @lh.DonHang.MaHienThi
+                            </a>
+                        }
+                        @if (lh.BuuCuc != null)
+                        {
+                            <span class="badge bg-info-subtle text-info-emphasis px-2 py-1">
+                                <i class="bi bi-building me-1"></i>@lh.BuuCuc.TenBuuCuc
+                            </span>
+                        }
+                    </div>
+
+                    <h5 class="fw-bold mb-2">
+                        <a asp-action="ChiTiet" asp-route-id="@lh.MaLienHe" class="text-decoration-none text-dark hover-cam">
+                            @lh.TieuDe
+                        </a>
+                    </h5>
+
+                    <p class="mo nho text-truncate mb-2" style="max-width: 750px;">
+                        @lh.NoiDung
+                    </p>
+
+                    <div class="d-flex align-items-center gap-3 text-muted nho flex-wrap">
+                        <span><i class="bi bi-clock me-1"></i>Gửi: @DinhDang.NgayGio(lh.NgayGui)</span>
+                        @if (lh.NgayCapNhat.HasValue && lh.NgayCapNhat.Value != lh.NgayGui)
+                        {
+                            <span><i class="bi bi-arrow-repeat me-1"></i>Cập nhật: @DinhDang.NgayGio(lh.NgayCapNhat)</span>
+                        }
+                        <span><i class="bi bi-chat-text me-1"></i>@lh.TinNhans.Count tin nhắn</span>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row flex-md-column gap-2 text-nowrap align-self-stretch align-self-md-center justify-content-end">
+                    <a asp-action="ChiTiet" asp-route-id="@lh.MaLienHe" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                        <i class="bi bi-chat-dots me-1"></i> Xem trao đổi
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <partial name="_PhanTrang" model="Model.KetQua" />
+}
+else
+{
+    <div class="tc-trong">
+        <div class="tc-trong-icon"><i class="bi bi-headset"></i></div>
+        @if (tongTatCa == 0)
+        {
+            <h2 class="h5 fw-bold mb-1">Bạn chưa gửi yêu cầu hỗ trợ nào</h2>
+            <p class="mo mb-3">Nếu có bất kỳ thắc mắc về cước phí, đơn hàng hay góp ý phục vụ, hãy gửi yêu cầu để được hỗ trợ nhanh nhất.</p>
+            <a asp-action="TaoMoi" class="btn btn-cam rounded-pill px-4">
+                <i class="bi bi-plus-circle me-1"></i> Gửi yêu cầu hỗ trợ
+            </a>
+        }
+        else
+        {
+            <h2 class="h5 fw-bold mb-1">Không tìm thấy yêu cầu phù hợp</h2>
+            <p class="mo mb-3">Thử thay đổi từ khóa hoặc bỏ lọc để xem toàn bộ danh sách.</p>
+            <a asp-action="Index" class="btn btn-cam rounded-pill px-4">Xem tất cả yêu cầu</a>
+        }
+    </div>
+}
