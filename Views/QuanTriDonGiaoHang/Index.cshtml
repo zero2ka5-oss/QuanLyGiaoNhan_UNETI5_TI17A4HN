@@ -1,4 +1,4 @@
-﻿@model DanhSachDonVM
+@model DanhSachDonVM
 @{
     var bl = Model.BoLoc;
     ViewData["Title"] = "Đơn giao hàng";
@@ -20,14 +20,81 @@
     };
 }
 
-<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-    <div class="tab-trang-thai flex-grow-1">
-        <a class="@(bl.TrangThai is null ? "active" : "")" href="@TabUrl(null)">Tất cả <span class="so">@Model.SoDonTheoTrangThai.Values.Sum()</span></a>
-        @foreach (var tt in HienThi.TatCaTrangThaiDon.Where(t => Model.SoDonTheoTrangThai.GetValueOrDefault(t) > 0 || bl.TrangThai == t))
+@{
+    var dsTrangThaiCoDon = HienThi.TatCaTrangThaiDon
+        .Where(t => Model.SoDonTheoTrangThai.GetValueOrDefault(t) > 0 || bl.TrangThai == t)
+        .ToList();
+
+    const int SO_LUONG_HIEN_THI = 5; // Hiển thị 5 trạng thái có đơn trên thanh chính, còn lại gom vào '+n khác'
+    List<TrangThaiDon> dsChinh;
+    List<TrangThaiDon> dsConLai;
+
+    if (dsTrangThaiCoDon.Count <= SO_LUONG_HIEN_THI + 1)
+    {
+        dsChinh = dsTrangThaiCoDon;
+        dsConLai = [];
+    }
+    else
+    {
+        // Nếu bộ lọc hiện tại của người dùng nằm ngoài top 5, đưa trạng thái đó vào dsChinh để tab đang chọn luôn hiển thị rõ ràng
+        if (bl.TrangThai.HasValue && dsTrangThaiCoDon.IndexOf(bl.TrangThai.Value) >= SO_LUONG_HIEN_THI)
         {
-            <a class="@(bl.TrangThai == tt ? "active" : "")" href="@TabUrl(tt)">@tt.TenHienThi() <span class="so">@Model.SoDonTheoTrangThai.GetValueOrDefault(tt)</span></a>
+            dsChinh = dsTrangThaiCoDon.Take(SO_LUONG_HIEN_THI - 1).ToList();
+            dsChinh.Add(bl.TrangThai.Value);
+            dsConLai = dsTrangThaiCoDon.Where(t => !dsChinh.Contains(t)).ToList();
         }
-    </div>
+        else
+        {
+            dsChinh = dsTrangThaiCoDon.Take(SO_LUONG_HIEN_THI).ToList();
+            dsConLai = dsTrangThaiCoDon.Skip(SO_LUONG_HIEN_THI).ToList();
+        }
+    }
+    var tongDonConLai = dsConLai.Sum(t => Model.SoDonTheoTrangThai.GetValueOrDefault(t));
+    var dangChonTrongConLai = bl.TrangThai.HasValue && dsConLai.Contains(bl.TrangThai.Value);
+}
+
+<div class="tab-trang-thai align-items-center mb-3">
+    <a class="@(bl.TrangThai is null ? "active" : "")" href="@TabUrl(null)">
+        Tất cả <span class="so">@Model.SoDonTheoTrangThai.Values.Sum()</span>
+    </a>
+    @foreach (var tt in dsChinh)
+    {
+        <a class="@(bl.TrangThai == tt ? "active" : "")" href="@TabUrl(tt)">
+            @tt.TenHienThi() <span class="so">@Model.SoDonTheoTrangThai.GetValueOrDefault(tt)</span>
+        </a>
+    }
+    @if (dsConLai.Count > 0)
+    {
+        <div class="dropdown d-inline-block tab-trang-thai-dropdown">
+            <button type="button" class="tab-nut-them dropdown-toggle @(dangChonTrongConLai ? "active" : "")" data-bs-toggle="dropdown" aria-expanded="false" title="Xem thêm trạng thái khác">
+                <span>+@dsConLai.Count khác</span>
+                <span class="so">@tongDonConLai</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg py-2 border-0 rounded-4 menu-tab-mo-rong">
+                <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2">
+                    <span class="fw-bold text-uppercase nho-x">Trạng thái khác (@dsConLai.Count)</span>
+                    <span class="badge rounded-pill bg-light text-dark fw-bold">@tongDonConLai đơn</span>
+                </li>
+                <li><hr class="dropdown-divider my-1"></li>
+                <div class="khung-cuon-dropdown" style="max-height: 280px; overflow-y: auto;">
+                    @foreach (var tt in dsConLai)
+                    {
+                        var soLuong = Model.SoDonTheoTrangThai.GetValueOrDefault(tt);
+                        var laDangChon = bl.TrangThai == tt;
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center px-3 py-2 @(laDangChon ? "active fw-semibold" : "")" href="@TabUrl(tt)">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi @tt.BieuTuong() opacity-75"></i>
+                                    <span>@tt.TenHienThi()</span>
+                                </div>
+                                <span class="so-badge">@soLuong</span>
+                            </a>
+                        </li>
+                    }
+                </div>
+            </ul>
+        </div>
+    }
 </div>
 
 <form method="get" class="thanh-loc mb-3">
@@ -75,10 +142,13 @@
 </form>
 
 <div class="the-mem">
-    <div class="table-responsive">
-        <table class="table bang">
+    <div class="table-responsive khung-cuon-bang">
+        <table id="bang-don-hang" class="table bang bang-sticky mb-0">
             <thead>
             <tr>
+                <th style="width: 40px;" class="text-center khong-xuat">
+                    <input type="checkbox" class="form-check-input chk-tat-ca" title="Chọn tất cả" />
+                </th>
                 <th>Đơn / Khách gửi</th>
                 <th><a class="text-reset" href="@SortUrl("ten_az", "ten_za")">Người nhận <i class="bi @MuiTen("ten_az", "ten_za")"></i></a></th>
                 <th>Loại hàng / Tuyến</th>
@@ -86,23 +156,26 @@
                 <th class="text-end"><a class="text-reset" href="@SortUrl("phi_tang", "phi_giam")">Phí <i class="bi @MuiTen("phi_tang", "phi_giam")"></i></a></th>
                 <th>Trạng thái</th>
                 <th><a class="text-reset" href="@SortUrl("ngay_cu", "ngay_moi")">Thời gian <i class="bi @MuiTen("ngay_cu", "ngay_moi")"></i></a></th>
-                <th></th>
+                <th class="cot-sticky-phai text-end khong-xuat">Thao tác</th>
             </tr>
             </thead>
             <tbody>
             @foreach (var d in Model.KetQua.DanhSach)
             {
                 <tr>
+                    <td class="text-center khong-xuat">
+                        <input type="checkbox" class="form-check-input chk-dong" value="@d.MaHienThi" data-madon="@d.MaDon" />
+                    </td>
                     <td class="text-nowrap"><a asp-action="ChiTiet" asp-route-id="@d.MaDon" class="fw-bold">@d.MaHienThi</a>
                         @if (d.HinhThucGui == HinhThucGui.LayTanNoi) { <span class="badge bg-light text-secondary border nho ms-1">Lấy tận nơi</span> }
                         <div class="nho"><a asp-controller="QuanTriKhachHang" asp-action="ChiTiet" asp-route-id="@d.MaKhachHang" class="ten fw-normal mo">@d.KhachHang?.HoTen</a></div></td>
                     <td class="text-nowrap">@d.TenNguoiNhan<div class="nho mo">@DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</div></td>
-                    <td class="nho">@d.LoaiHang?.TenLoaiHang<div class="mo text-nowrap">@(d.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") ?? "?") → @(d.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "") ?? "?")</div></td>
+                    <td class="nho">@d.LoaiHang?.TenLoaiHang<div class="mo text-nowrap">@(d.BuuCucGui?.TenBuuCuc != null ? d.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "") : "?") → @(d.BuuCucNhan?.TenBuuCuc != null ? d.BuuCucNhan.TenBuuCuc.Replace("Bưu cục ", "") : "?")</div></td>
                     <td class="text-end text-nowrap">@DinhDang.KhoiLuong(d.KhoiLuong)</td>
                     <td class="text-end fw-semibold text-nowrap">@DinhDang.Tien(d.PhiVanChuyen)@if (d.TienThuHo > 0) { <div class="nho mo fw-normal">Thu hộ @DinhDang.Tien(d.TienThuHo)</div> }</td>
                     <td><span class="tt @d.TrangThai.LopBadge()"><i class="bi @d.TrangThai.BieuTuong()"></i> @d.TrangThai.TenHienThi()</span></td>
                     <td class="nho text-nowrap"><span class="mo">Tạo</span> @d.NgayTao.ToString("dd/MM HH:mm")<div><span class="mo">Giao</span> @DinhDang.Ngay(d.NgayGiaoDuKien)</div></td>
-                    <td class="text-end text-nowrap">
+                    <td class="cot-sticky-phai text-end text-nowrap khong-xuat">
                         <a asp-action="ChiTiet" asp-route-id="@d.MaDon" class="btn btn-sm btn-light" title="Chi tiết"><i class="bi bi-eye"></i></a>
                         @if (DonHangXuLy.CoTheSua(d, false))
                         {
@@ -110,7 +183,14 @@
                         }
                         @if (DonHangXuLy.ChangCanPhanCong(d) is not null)
                         {
-                            <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam" title="Phân công"><i class="bi bi-person-plus"></i></a>
+                            @if (DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh)
+                            {
+                                <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@(d.MaBuuCucHienTai ?? d.MaBuuCucGui)" class="btn btn-sm btn-warning" title="Xếp chuyến xe liên tỉnh"><i class="bi bi-truck"></i></a>
+                            }
+                            else
+                            {
+                                <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam" title="Phân công"><i class="bi bi-person-plus"></i></a>
+                            }
                         }
                     </td>
                 </tr>
@@ -124,3 +204,25 @@
     }
 </div>
 <partial name="_PhanTrang" model="Model.KetQua" />
+
+<!-- Thanh tác vụ nổi hàng loạt (Bulk Actions) -->
+<div id="thanh-bulk-action" class="thanh-thao-tac-nhieu" style="display: none;">
+    <span class="so-luong-badge">Đã chọn: <span class="so-luong-chon">0</span></span>
+    <button type="button" class="nut-thao-tac nut-thao-tac-cam" onclick="inDonHangDaChon('#bang-don-hang')">
+        <i class="bi bi-printer-fill"></i> In nhãn vận đơn
+    </button>
+    <button type="button" class="nut-thao-tac" onclick="xuatCsvBang('#bang-don-hang', 'don-hang-da-chon.csv', true)">
+        <i class="bi bi-file-earmark-excel"></i> Xuất Excel đơn đã chọn
+    </button>
+    <button type="button" class="nut-thao-tac nut-bo-chon">
+        <i class="bi bi-x-circle"></i> Bỏ chọn
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            khoiTaoBangNhieuThaoTac('#bang-don-hang', '#thanh-bulk-action');
+        });
+    </script>
+}

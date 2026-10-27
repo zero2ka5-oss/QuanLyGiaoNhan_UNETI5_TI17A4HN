@@ -57,10 +57,11 @@ public class PhanCongGiaoHang
     public string? NguoiPhanCong { get; set; }
 
     /// <summary>
-    /// Hoa hồng shipper hưởng khi giao thành công = phí vận chuyển × DonHangXuLy.TiLeHoaHongShipper.
-    /// Chốt số tiền tại lúc giao (không tính lại) để đổi tỷ lệ sau này không làm lệch thu nhập / ví cũ. 0 khi chưa giao thành công.
+    /// Thù lao shipper hưởng khi hoàn thành chặng (giao thành công / bàn giao liên tỉnh / hoàn hàng)
+    /// tính theo: số lượng đơn, cự ly km, phụ cấp khối lượng, phụ cấp loại hàng và thưởng đúng hẹn.
+    /// Chốt số tiền tại lúc giao/bàn giao để không làm lệch thu nhập cũ. 0 khi chưa hoàn thành.
     /// </summary>
-    [Display(Name = "Thu nhập shipper")]
+    [Display(Name = "Thù lao shipper")]
     public decimal ThuNhapShipper { get; set; }
 
     public bool DangHieuLuc => TrangThaiHieuLuc.Contains(TrangThai);

@@ -52,6 +52,23 @@
     var ds = (DanhSachTrang<DonGiaoHang>)ViewBag.DsDonCho;
     bool lienTinh = tab == "lientinh";
     bool layHang = tab == "layhang";
+    @if (lienTinh)
+    {
+        <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between p-3 rounded-4 mb-3 border-0 shadow-xs gap-3" style="background-color: #fffbeb; border: 1px solid #fde68a !important;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="p-2 bg-warning bg-opacity-25 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                    <i class="bi bi-truck-front-fill fs-5 text-dark"></i>
+                </div>
+                <div>
+                    <strong class="text-dark d-block">Quy trình điều phối Hub & Spoke:</strong>
+                    <span class="text-muted small">Các kiện hàng liên tỉnh và chuyển hoàn được quản lý và gom theo <strong>Chuyến xe tải liên tỉnh</strong> để kiểm soát đúng tuyến luân chuyển và tải trọng phương tiện.</span>
+                </div>
+            </div>
+            <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@maBc" class="btn btn-warning rounded-pill px-3 py-2 fw-bold text-nowrap shadow-xs">
+                <i class="bi bi-truck-front-fill me-1"></i> Bảng điều phối Chuyến xe liên tỉnh
+            </a>
+        </div>
+    }
     <div class="the-mem">
         <div class="table-responsive">
             <table class="table bang">
@@ -94,7 +111,16 @@
                             }
                             else
                             {
+                            @if (lienTinh)
+                            {
+                                <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@(d.MaBuuCucHienTai ?? d.MaBuuCucGui)" class="btn btn-sm btn-warning text-nowrap fw-semibold">
+                                    <i class="bi bi-truck"></i> Xếp chuyến xe
+                                </a>
+                            }
+                            else
+                            {
                                 <a asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam text-nowrap"><i class="bi bi-person-plus"></i> @(layHang ? "Phân lấy hàng" : "Phân shipper")</a>
+                            }
                             }
                         </td>
                     </tr>
@@ -120,7 +146,7 @@ else
                         <td class="mo">@p.MaPhanCong</td>
                         <td><a href="@DonUrl(p.MaDon)" class="fw-bold">@p.DonGiaoHang?.MaHienThi</a><div class="nho mo">@p.DonGiaoHang?.KhuVuc?.TenKhuVuc</div></td>
                         <td class="nho text-nowrap"><span class="tt @(p.LoaiChang == LoaiShipper.LienTinh ? "tt-dang" : "tt-xuly")">@p.LoaiChang.TenChang().Replace("Chặng ", "")</span>
-                            @if (p.LoaiChang == LoaiShipper.LienTinh) { <div class="mo">@p.DonGiaoHang?.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") → @p.DonGiaoHang?.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")</div> }</td>
+                            @if (p.LoaiChang == LoaiShipper.LienTinh) { <div class="mo">@(p.DonGiaoHang?.BuuCucGui?.TenBuuCuc != null ? p.DonGiaoHang.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "") : "") → @(p.DonGiaoHang?.BuuCucNhan?.TenBuuCuc != null ? p.DonGiaoHang.BuuCucNhan.TenBuuCuc.Replace("Bưu cục ", "") : "")</div> }</td>
                         <td>@if (!laNvBuuCuc) { <a asp-controller="QuanTriNhanVien" asp-action="ChiTiet" asp-route-id="@p.MaNhanVien" class="ten fw-medium">@p.NhanVien?.HoTen</a> } else { <span class="fw-medium">@p.NhanVien?.HoTen</span> }
                             <div class="nho mo">@p.PhuongTien?.MaHienThi · @p.PhuongTien?.BienSo</div></td>
                         <td class="nho">@DinhDang.NgayGio(p.NgayPhanCong)</td>

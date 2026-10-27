@@ -78,6 +78,11 @@ public class QuanTriPhanCongController(QuanLyGiaoNhanDbContext db, DonHangXuLy x
             TempData["Error"] = $"Đơn {vm.Don.MaHienThi} không thuộc bưu cục phụ trách của bạn";
             return RedirectToAction(nameof(Index));
         }
+        if (vm.LoaiChang == LoaiShipper.LienTinh)
+        {
+            TempData["Info"] = $"Kiện hàng {vm.Don.MaHienThi} là chặng liên tỉnh. Vận chuyển liên tỉnh được điều phối theo Chuyến xe tải để kiểm soát tải trọng và phân luồng Hub & Spoke.";
+            return RedirectToAction("Index", "ChuyenXe", new { maBuuCuc = buuCucCuaDon });
+        }
         if (!DonHangXuLy.CoThePhanCong(vm.Don!))
         {
             TempData["Error"] = DonHangXuLy.ChangCanPhanCong(vm.Don!) == LoaiShipper.KhuVuc && vm.Don.TrangThai != TrangThaiDon.ChoLayTanNoi
@@ -91,6 +96,12 @@ public class QuanTriPhanCongController(QuanLyGiaoNhanDbContext db, DonHangXuLy x
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> TaoMoi(PhanCongFormVM vm)
     {
+        if (vm.LoaiChang == LoaiShipper.LienTinh)
+        {
+            TempData["Error"] = "Kiện hàng liên tỉnh bắt buộc phải được điều phối và xếp vào Chuyến xe tải liên tỉnh (Hub & Spoke).";
+            return RedirectToAction("Index", "ChuyenXe", new { maBuuCuc = BuuCucCuaToi });
+        }
+
         if (ModelState.IsValid)
         {
             var kq = await xuLy.PhanCongAsync(vm.MaDon, vm.MaNhanVien, vm.GhiChu, HttpContext.Session.ThaoTac());

@@ -19,27 +19,37 @@ namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
 [YeuCauVaiTro(VaiTroNguoiDung.QuanTri, VaiTroNguoiDung.NhanVien)]
 public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuLy xuLy) : Controller
 {
-    private const int KichThuocTrang = 10;
+    private const int KichThuocTrang = 25;
 
-    // ===================== DANH SÁCH: TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG =====================
+    // ===================== [NHIỆM VỤ: TÌM KIẾM - LỌC - SẮP XẾP - PHÂN TRANG ĐƠN HÀNG] =====================
 
     public async Task<IActionResult> Index(BoLocDonHang boLoc)
     {
-        // 1. Truy vấn gốc  2 + 3. Tìm kiếm, lọc
+        // 1. Khởi tạo IQueryable gốc kèm các bảng liên quan (Khách hàng, Loại hàng, Khu vực, Bưu cục gửi/nhận)
+        // 2 + 3. Áp dụng TÌM KIẾM TỪ KHÓA & BỘ LỌC DANH MỤC/NGÀY THÁNG qua DonHangXuLy.LocDonHang (chạy SQL Where)
         var truyVan = DonHangXuLy.LocDonHang(db.DonGiaoHangs.AsNoTracking()
                         .Include(d => d.KhachHang).Include(d => d.LoaiHang).Include(d => d.KhuVuc)
                         .Include(d => d.BuuCucGui).Include(d => d.BuuCucNhan), boLoc);
 
-        // Số đếm theo trạng thái cho các tab (tính trên bộ lọc hiện tại, trước khi lọc trạng thái)
+        // Phân quyền dữ liệu theo phạm vi: Quản trị viên xem tất cả; Nhân viên bưu cục chỉ xem đơn liên quan bưu cục mình
+        var maBc = HttpContext.Session.MaBuuCuc();
+        if (!HttpContext.Session.LaQuanTri() && maBc.HasValue)
+        {
+            truyVan = truyVan.Where(d => d.MaBuuCucGui == maBc || d.MaBuuCucNhan == maBc || d.MaBuuCucHienTai == maBc);
+        }
+
+        // Đếm số lượng đơn theo từng trạng thái (GroupBy trên SQL Server) để gắn số badge vào các tab bộ lọc
+        // (Lưu ý: Đếm trước khi lọc theo trạng thái để các tab khác vẫn hiện số lượng chính xác)
         var soDon = await truyVan.GroupBy(d => d.TrangThai).Select(g => new { g.Key, SoLuong = g.Count() })
                                  .ToDictionaryAsync(x => x.Key, x => x.SoLuong);
         if (boLoc.TrangThai.HasValue) truyVan = truyVan.Where(d => d.TrangThai == boLoc.TrangThai);
 
-        // 4. Sắp xếp  5. Phân trang (Count + Skip/Take trên SQL Server)
+        // 4. Sắp xếp động (OrderBy/OrderByDescending)
+        // 5. Phân trang tối ưu trực tiếp trên SQL Server thông qua CountAsync() + Skip() + Take()
         var ketQua = await DanhSachTrang<DonGiaoHang>.TaoAsync(DonHangXuLy.SapXepDonHang(truyVan, boLoc.SapXep), boLoc.Trang, KichThuocTrang);
         boLoc.Trang = ketQua.Trang;
         ViewBag.DsLoaiHang = new SelectList(await db.LoaiHangs.OrderBy(l => l.TenLoaiHang).ToListAsync(), "MaLoaiHang", "TenLoaiHang", boLoc.MaLoaiHang);
-        ViewBag.DsKhuVuc = new SelectList(await db.KhuVucs.OrderBy(k => k.PhiCoBan).ToListAsync(), "MaKhuVuc", "TenKhuVuc", boLoc.MaKhuVuc);
+        ViewBag.DsKhuVuc = new SelectList(await db.KhuVucs.Where(k => k.TrangThai == TrangThaiHoatDong.HoatDong).OrderBy(k => k.TenKhuVuc).ToListAsync(), "MaKhuVuc", "TenKhuVuc", boLoc.MaKhuVuc);
         ViewBag.DsBuuCuc = new SelectList(await db.BuuCucs.OrderBy(b => b.TenBuuCuc).ToListAsync(), "MaBuuCuc", "TenBuuCuc", boLoc.MaBuuCuc);
         return View(new DanhSachDonVM { BoLoc = boLoc, KetQua = ketQua, SoDonTheoTrangThai = soDon, LaKhachHang = false });
     }
@@ -50,6 +60,10 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
     {
         var don = await xuLy.LayChiTietDonAsync(id);
         if (don is null) return NotFound();
+
+        var maBc = HttpContext.Session.MaBuuCuc();
+        if (!HttpContext.Session.LaQuanTri() && maBc.HasValue && don.MaBuuCucGui != maBc && don.MaBuuCucNhan != maBc && don.MaBuuCucHienTai != maBc)
+            return Forbid();
 
         var dsPhanCong = don.PhanCongs.OrderByDescending(p => p.NgayPhanCong).ThenByDescending(p => p.MaPhanCong).ToList();
         return View(new ChiTietDonVM
@@ -81,8 +95,6 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
     public async Task<IActionResult> TaoMoi(DonGiaoHangFormVM vm)
     {
         if (vm.MaKhachHang is null or <= 0) ModelState.AddModelError(nameof(vm.MaKhachHang), "Chọn khách hàng");
-        if (vm.NgayGiaoDuKien.Date < DateTime.Today)
-            ModelState.AddModelError(nameof(vm.NgayGiaoDuKien), "Ngày giao dự kiến không được trước ngày tạo đơn");
         if (!ModelState.IsValid) { await NapDanhMucFormAsync(null); return View("BieuMau", vm); }
 
         var kq = await xuLy.TaoDonAsync(vm, vm.MaKhachHang!.Value, HttpContext.Session.NguoiThucHien());
@@ -100,6 +112,11 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
     {
         var don = await db.DonGiaoHangs.AsNoTracking().Include(d => d.PhanCongs).FirstOrDefaultAsync(d => d.MaDon == id);
         if (don is null) return NotFound();
+
+        var maBc = HttpContext.Session.MaBuuCuc();
+        if (!HttpContext.Session.LaQuanTri() && maBc.HasValue && don.MaBuuCucGui != maBc && don.MaBuuCucNhan != maBc && don.MaBuuCucHienTai != maBc)
+            return Forbid();
+
         if (!DonHangXuLy.CoTheSua(don, false))
         {
             TempData["Error"] = $"Đơn {don.MaHienThi} đang '{don.TrangThai.TenHienThi()}' nên không thể sửa";
@@ -113,6 +130,13 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> ChinhSua(int id, DonGiaoHangFormVM vm)
     {
+        var donKiemTra = await db.DonGiaoHangs.AsNoTracking().FirstOrDefaultAsync(d => d.MaDon == id);
+        if (donKiemTra is null) return NotFound();
+
+        var maBc = HttpContext.Session.MaBuuCuc();
+        if (!HttpContext.Session.LaQuanTri() && maBc.HasValue && donKiemTra.MaBuuCucGui != maBc && donKiemTra.MaBuuCucNhan != maBc && donKiemTra.MaBuuCucHienTai != maBc)
+            return Forbid();
+
         var kq = ModelState.IsValid ? await xuLy.CapNhatDonAsync(id, vm, HttpContext.Session.NguoiThucHien(), null) : null;
         if (kq is { ThanhCong: true })
         {
@@ -151,14 +175,26 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
     public async Task<IActionResult> ViTri(int id)
     {
         var don = await xuLy.LayChiTietDonAsync(id);
-        return don is null ? NotFound() : Json(xuLy.XacDinhViTri(don));
+        if (don is null) return NotFound();
+
+        var maBc = HttpContext.Session.MaBuuCuc();
+        if (!HttpContext.Session.LaQuanTri() && maBc.HasValue && don.MaBuuCucGui != maBc && don.MaBuuCucNhan != maBc && don.MaBuuCucHienTai != maBc)
+            return Forbid();
+
+        return Json(xuLy.XacDinhViTri(don));
     }
 
     /// <summary>In nhãn kiện hàng (QR + barcode mã vận đơn).</summary>
     public async Task<IActionResult> InNhan(int id)
     {
         var don = await xuLy.LayChiTietDonAsync(id);
-        return don is null ? NotFound() : View("~/Views/Shared/NhanDon.cshtml", don);
+        if (don is null) return NotFound();
+
+        var maBc = HttpContext.Session.MaBuuCuc();
+        if (!HttpContext.Session.LaQuanTri() && maBc.HasValue && don.MaBuuCucGui != maBc && don.MaBuuCucNhan != maBc && don.MaBuuCucHienTai != maBc)
+            return Forbid();
+
+        return View("~/Views/Shared/NhanDon.cshtml", don);
     }
 
     // ===================== HÀM DÙNG CHUNG =====================
@@ -171,7 +207,7 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
             .OrderBy(l => l.HeSoPhuThu).ToListAsync();
         ViewBag.DsKhuVuc = await db.KhuVucs.AsNoTracking().Include(k => k.BuuCuc)
             .Where(k => k.TrangThai == TrangThaiHoatDong.HoatDong || (donCu != null && k.MaKhuVuc == donCu.MaKhuVuc))
-            .OrderBy(k => k.PhiCoBan).ToListAsync();
+            .OrderBy(k => k.TenKhuVuc).ToListAsync();
         ViewBag.DsBuuCuc = await KhachHangDonHangController.DanhSachBuuCucGuiAsync(db, donCu);
         ViewBag.DsKhachHang = new SelectList(await db.KhachHangs.AsNoTracking()
             .Where(k => k.TrangThai == TrangThaiHoatDong.HoatDong || (donCu != null && k.MaKhachHang == donCu.MaKhachHang))
@@ -185,6 +221,24 @@ public class QuanTriDonGiaoHangController(QuanLyGiaoNhanDbContext db, DonHangXuL
     public async Task<IActionResult> HoanTat(int id, string? quayLai)
     {
         var kq = await xuLy.HoanTatAsync(id, HttpContext.Session.NguoiThucHien());
+        TempData[kq.ThanhCong ? "Success" : "Error"] = kq.ThongBao;
+        if (!string.IsNullOrEmpty(quayLai) && Url.IsLocalUrl(quayLai)) return LocalRedirect(quayLai);
+        return RedirectToAction(nameof(ChiTiet), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> YeuCauChuyenHoan(int id, string? lyDo, string? quayLai)
+    {
+        var kq = await xuLy.YeuCauChuyenHoanAsync(id, lyDo, HttpContext.Session.ThaoTac());
+        TempData[kq.ThanhCong ? "Success" : "Error"] = kq.ThongBao;
+        if (!string.IsNullOrEmpty(quayLai) && Url.IsLocalUrl(quayLai)) return LocalRedirect(quayLai);
+        return RedirectToAction(nameof(ChiTiet), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> HoanHangTaiQuay(int id, bool daThuCuoc, string? quayLai)
+    {
+        var kq = await xuLy.HoanHangTaiQuayAsync(id, daThuCuoc, HttpContext.Session.ThaoTac());
         TempData[kq.ThanhCong ? "Success" : "Error"] = kq.ThongBao;
         if (!string.IsNullOrEmpty(quayLai) && Url.IsLocalUrl(quayLai)) return LocalRedirect(quayLai);
         return RedirectToAction(nameof(ChiTiet), new { id });

@@ -48,10 +48,13 @@ public class DonGiaoHangFormVM
     [Display(Name = "Khối lượng (kg)")]
     public decimal KhoiLuong { get; set; }
 
-    [Required(ErrorMessage = "Chọn ngày giao dự kiến")]
+    [Range(0.0001, 1000, ErrorMessage = "Kích thước từ 0,0001 đến 1.000 m³")]
+    [Display(Name = "Kích thước (m³)")]
+    public decimal KichThuocM3 { get; set; } = 0.005m;
+
     [DataType(DataType.Date)]
     [Display(Name = "Ngày giao dự kiến")]
-    public DateTime NgayGiaoDuKien { get; set; } = DateTime.Today.AddDays(2);
+    public DateTime? NgayGiaoDuKien { get; set; }
 
     [StringLength(500)]
     [Display(Name = "Ghi chú")]
@@ -69,14 +72,15 @@ public class DonGiaoHangFormVM
         MaDon = don.MaDon, MaKhachHang = don.MaKhachHang, MaLoaiHang = don.MaLoaiHang, MaKhuVuc = don.MaKhuVuc, MaBuuCucGui = don.MaBuuCucGui,
         HinhThucGui = don.HinhThucGui, DiaChiLayHang = don.DiaChiLayHang,
         TenNguoiNhan = don.TenNguoiNhan, SoDienThoaiNguoiNhan = don.SoDienThoaiNguoiNhan, DiaChiNhan = don.DiaChiNhan,
-        KhoiLuong = don.KhoiLuong, NgayGiaoDuKien = don.NgayGiaoDuKien, GhiChu = don.GhiChu,
+        KhoiLuong = don.KhoiLuong, KichThuocM3 = don.KichThuocM3, NgayGiaoDuKien = don.NgayGiaoDuKien, GhiChu = don.GhiChu,
         TienThuHo = don.TienThuHo, NguoiTraPhi = don.NguoiTraPhi
     };
 }
 
 /// <summary>Các thành phần phí vận chuyển.</summary>
 public record KetQuaTinhPhi(decimal PhiCoBan, decimal KhoiLuongVuot, decimal PhuPhiKhoiLuong,
-                            decimal HeSoPhuThu, decimal PhuPhiLoaiHang, decimal Tong);
+                            decimal PhuPhiKichThuoc, string MoTaKichThuoc,
+                            decimal HeSoPhuThu, decimal PhuPhiLoaiHang, decimal Tong, int SoNgayGiao = 2);
 
 /// <summary>Tham số tìm kiếm + lọc + sắp xếp + phân trang của danh sách đơn.</summary>
 public class BoLocDonHang

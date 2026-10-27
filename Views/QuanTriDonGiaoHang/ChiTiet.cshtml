@@ -43,8 +43,15 @@
         <div class="d-flex gap-2 flex-wrap ms-auto">
             @if (Model.CoThePhanCong)
             {
-                <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-sm rounded-pill px-3">
-                    <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "lấy hàng" : DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh ? "liên tỉnh" : "khu vực")</a>
+                @if (DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh)
+                {
+                    <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@(d.MaBuuCucHienTai ?? d.MaBuuCucGui)" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold"><i class="bi bi-truck"></i> Xếp chuyến xe liên tỉnh</a>
+                }
+                else
+                {
+                    <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-sm rounded-pill px-3">
+                    <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "lấy hàng" : "khu vực")</a>
+                }
             }
             @if (Model.CoTheDoiPhanCong)
             {
@@ -56,14 +63,14 @@
                     <button class="btn btn-success btn-sm rounded-pill px-3"><i class="bi bi-patch-check"></i> Hoàn tất</button>
                 </form>
             }
-            else if (d.TrangThai == TrangThaiDon.GiaoThanhCong && d.TongThuNguoiNhan > 0)
+            else if ((d.TrangThai == TrangThaiDon.GiaoThanhCong || d.TrangThai == TrangThaiDon.DaHoanHang) && d.TienMatShipperThu > 0)
             {
                 // Đơn có tiền thu: đối soát & hoàn tất khi xác nhận lệnh nộp tiền của shipper
-                var maShipper = Model.DsPhanCong.FirstOrDefault(p => p.KetQua == KetQuaGiao.GiaoThanhCong)?.MaNhanVien;
+                var maShipper = Model.DsPhanCong.FirstOrDefault(p => p.KetQua == KetQuaGiao.GiaoThanhCong || p.KetQua == KetQuaGiao.DaHoanHang)?.MaNhanVien;
                 <a asp-controller="QuanTriViShipper" asp-action="@(d.MaGiaoDichNop.HasValue ? "ChiTiet" : "Index")"
                    asp-route-id="@d.MaGiaoDichNop" asp-route-maNhanVien="@(d.MaGiaoDichNop.HasValue ? null : maShipper)"
                    class="btn btn-outline-success btn-sm rounded-pill px-3"><i class="bi bi-wallet2"></i>
-                    @(d.MaGiaoDichNop.HasValue ? "Lệnh nộp đang chờ xác nhận" : $"Shipper chưa nộp {DinhDang.Tien(d.TongThuNguoiNhan)}")</a>
+                    @(d.MaGiaoDichNop.HasValue ? "Lệnh nộp đang chờ xác nhận" : $"Shipper chưa nộp {DinhDang.Tien(d.TienMatShipperThu)}")</a>
             }
             @{
                 bool coTheYeuCauChuyenHoan = (d.TrangThai is TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.HenGiaoLai or TrangThaiDon.DaHuy)

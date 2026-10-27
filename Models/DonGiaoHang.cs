@@ -47,6 +47,11 @@ public class DonGiaoHang
     public int? MaNhanVienDangGiu { get; set; }
     public NhanVienGiaoHang? NhanVienDangGiu { get; set; }
 
+    /// <summary>Chuyến xe liên tỉnh đang chuyên chở kiện hàng (null khi không trên chuyến xe nào).</summary>
+    [Display(Name = "Chuyến xe liên tỉnh")]
+    public int? MaChuyenXe { get; set; }
+    public ChuyenXe? ChuyenXe { get; set; }
+
     [Required(ErrorMessage = "Nhập tên người nhận")]
     [StringLength(100)]
     [Display(Name = "Người nhận")]
@@ -145,8 +150,14 @@ public class DonGiaoHang
     [NotMapped]
     public decimal TongThuNguoiNhan => TienThuHo + (NguoiTraPhi == NguoiTraPhi.NguoiNhan ? PhiVanChuyen : 0);
 
+    /// <summary>Số tiền mặt shipper thu khi giao hàng (người nhận khi giao thành công, người gửi khi giao hoàn).</summary>
     [NotMapped]
-    public decimal TienTraNguoiGui => Math.Max(0, TienThuHo - (NguoiTraPhi == NguoiTraPhi.NguoiGui ? PhiVanChuyen : 0));
+    public decimal TienMatShipperThu => TrangThai == TrangThaiDon.DaHoanHang
+        ? (NgayThuPhiHoan != null ? (PhiChuyenHoan + (NguoiTraPhi == NguoiTraPhi.NguoiGui && NgayThuPhiNguoiGui == null ? PhiVanChuyen : 0)) : 0)
+        : TongThuNguoiNhan;
+
+    [NotMapped]
+    public decimal TienTraNguoiGui => Math.Max(0, TienThuHo - (NguoiTraPhi == NguoiTraPhi.NguoiGui && NgayThuPhiNguoiGui == null ? PhiVanChuyen : 0));
 
     [NotMapped]
     public bool LaDonHoan => TrangThai is TrangThaiDon.ChoChuyenHoan or TrangThaiDon.DangChuyenHoan
