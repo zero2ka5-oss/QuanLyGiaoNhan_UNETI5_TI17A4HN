@@ -32,6 +32,9 @@ public class NhanVienCongViecController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.KhachHang)
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.BuuCucGui)
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.BuuCucNhan)
+            .Include(p => p.DonGiaoHang!).ThenInclude(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucGui)
+            .Include(p => p.DonGiaoHang!).ThenInclude(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucNhan)
+            .Include(p => p.DonGiaoHang!).ThenInclude(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucTrungGian)
             .Include(p => p.PhuongTien)
             .Where(p => p.MaNhanVien == nv.MaNhanVien)
             .OrderBy(p => p.DonGiaoHang!.NgayGiaoDuKien).ThenBy(p => p.NgayPhanCong).ToListAsync();
@@ -66,6 +69,9 @@ public class NhanVienCongViecController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.KhachHang)
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.BuuCucGui)
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.BuuCucNhan)
+            .Include(p => p.DonGiaoHang!).ThenInclude(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucGui)
+            .Include(p => p.DonGiaoHang!).ThenInclude(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucNhan)
+            .Include(p => p.DonGiaoHang!).ThenInclude(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucTrungGian)
             .Include(p => p.DonGiaoHang!).ThenInclude(d => d.LichSus).ThenInclude(l => l.BuuCuc)
             .Include(p => p.PhuongTien)
             .AsSplitQuery()
@@ -112,9 +118,10 @@ public class NhanVienCongViecController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         return RedirectToAction(nameof(Index));
     }
 
-    // ===================== CHẠY / GIAO / KẾT QUẢ =====================
+    // ===================== [NHIỆM VỤ: GIAO HÀNG - VẬN CHUYỂN, GIAO HÀNG & KẾT QUẢ] =====================
 
     [HttpPost, ValidateAntiForgeryToken]
+    /// <summary>[NHIỆM VỤ: GIAO HÀNG] Bắt đầu xuất phát vận chuyển (liên tỉnh) hoặc đi giao tới khách (khu vực).</summary>
     public async Task<IActionResult> BatDau(int id, double? viDo, double? kinhDo) =>
         KetQuaThaoTac(await xuLy.BatDauAsync(id, MaNhanVienCuaToi, HttpContext.Session.ThaoTac(viDo, kinhDo)), id);
 
@@ -128,6 +135,7 @@ public class NhanVienCongViecController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    /// <summary>[NHIỆM VỤ: GIAO HÀNG] Shipper xác nhận giao thành công, chụp ảnh bằng chứng và chốt công nợ COD/ví.</summary>
     public async Task<IActionResult> GiaoThanhCong(int id, string? ghiChu, IFormFile? anhGiaoHang, double? viDo, double? kinhDo)
     {
         // Ảnh giao hàng không bắt buộc; có chọn ảnh mà ảnh lỗi thì dừng lại để nhân viên chụp lại
@@ -147,6 +155,7 @@ public class NhanVienCongViecController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         return KetQuaThaoTac(kq, id);
     }
 
+    /// <summary>[NHIỆM VỤ: XỬ LÝ GIAO KHÔNG THÀNH CÔNG] Shipper ghi nhận giao thất bại (chọn lý do), đơn chuyển GiaoKhongThanhCong và shipper tạm giữ kiện hàng.</summary>
     public async Task<IActionResult> GiaoKhongThanhCong(int id)
     {
         var pc = await db.PhanCongGiaoHangs.AsNoTracking().Include(p => p.DonGiaoHang).FirstOrDefaultAsync(p => p.MaPhanCong == id);
@@ -180,7 +189,7 @@ public class NhanVienCongViecController(QuanLyGiaoNhanDbContext db, DonHangXuLy 
         return View(vm);
     }
 
-    /// <summary>RESCHEDULED: hẹn ngày giao lại cho đơn vừa giao không thành công (shipper vẫn giữ hàng).</summary>
+    /// <summary>[NHIỆM VỤ: XỬ LÝ GIAO KHÔNG THÀNH CÔNG] Shipper hẹn ngày giao lại (Rescheduled) sau lần giao lỗi; tạo phân công mới để hôm sau đi giao tiếp.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> HenGiaoLai(int maDon, DateTime? ngayHen, string? ghiChu, double? viDo, double? kinhDo)
     {

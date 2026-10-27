@@ -14,7 +14,7 @@
     <div class="d-flex justify-content-center gap-2 flex-wrap">
         <span class="tt @nv.TrangThai.LopBadge()">@nv.TrangThai.TenHienThi()</span>
         @if (nv.LoaiShipper == LoaiShipper.LienTinh) { <span class="tt tt-dang"><i class="bi bi-truck-front"></i> Liên tỉnh · @(nv.BuuCuc?.TenBuuCuc ?? "chưa gán bưu cục")</span> }
-        else { <span class="tt tt-huy"><i class="bi bi-geo-alt"></i> @(nv.KhuVucPhuTrach?.TenKhuVuc ?? "Chưa phân khu vực")</span> }
+        else { <span class="tt @(nv.KhuVucPhuTrach is null ? "tt-huy" : "tt-xuly")"><i class="bi bi-geo-alt"></i> @(nv.KhuVucPhuTrach?.TenKhuVuc ?? "Chưa phân khu vực")</span> }
     </div>
 </div>
 

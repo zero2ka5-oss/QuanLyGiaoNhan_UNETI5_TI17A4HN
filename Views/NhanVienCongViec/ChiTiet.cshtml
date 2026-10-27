@@ -58,7 +58,22 @@ else
 <div class="the-don">
     <div class="fw-bold mb-2">Thông tin đơn</div>
     <div class="nho mb-1"><span class="mo">Người gửi:</span> @d.KhachHang?.HoTen – <a href="tel:@d.KhachHang?.SoDienThoai">@DinhDang.SoDienThoai(d.KhachHang?.SoDienThoai)</a></div>
-    <div class="nho mb-1"><span class="mo">@Model.LoaiChang.TenChang():</span> @d.BuuCucGui?.TenBuuCuc → @d.BuuCucNhan?.TenBuuCuc</div>
+    @if (d.ChuyenXe != null)
+    {
+        <div class="nho mb-1">
+            <span class="mo">Chuyến xe liên tỉnh:</span>
+            <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1">@d.ChuyenXe.MaHienThi</span>
+            <strong>@d.ChuyenXe.BuuCucGui?.TenBuuCuc → @(d.ChuyenXe.BuuCucTrungGian != null ? d.ChuyenXe.BuuCucTrungGian.TenBuuCuc + " (ghé trạm) → " : "")@d.ChuyenXe.BuuCucNhan?.TenBuuCuc</strong>
+        </div>
+        @if (d.MaBuuCucNhan != d.ChuyenXe.MaBuuCucNhan)
+        {
+            <div class="nho mb-1"><span class="mo">Bưu cục phát đích cuối:</span> @d.BuuCucNhan?.TenBuuCuc (@d.BuuCucNhan?.TinhThanh)</div>
+        }
+    }
+    else
+    {
+        <div class="nho mb-1"><span class="mo">@Model.LoaiChang.TenChang():</span> @d.BuuCucGui?.TenBuuCuc → @d.BuuCucNhan?.TenBuuCuc</div>
+    }
     <div class="nho mb-1"><span class="mo">Phương tiện:</span> @Model.PhuongTien?.MaHienThi · @Model.PhuongTien?.BienSo</div>
     <div class="nho mb-1"><span class="mo">Người nhận:</span> @d.TenNguoiNhan – @DinhDang.SoDienThoai(d.SoDienThoaiNguoiNhan)</div>
     <div class="nho mb-1"><span class="mo">Giao đến:</span> @d.DiaChiNhan</div>

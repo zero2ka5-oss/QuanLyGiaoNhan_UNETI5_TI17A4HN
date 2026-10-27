@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Data;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
@@ -35,7 +35,12 @@ public class NhanVienVanHanhController(QuanLyGiaoNhanDbContext db, DonHangXuLy x
         ViewBag.SoChoKhachMangToi = await don.CountAsync(d => d.TrangThai == TrangThaiDon.DaTao && d.MaBuuCucGui == idBc);
         ViewBag.SoChoShipperLayVe = await don.CountAsync(d => d.TrangThai == TrangThaiDon.DaLayTanNoi && d.MaBuuCucGui == idBc);
         ViewBag.SoDangOBuuCuc = await don.CountAsync(d => d.MaBuuCucHienTai == idBc && d.TrangThai != TrangThaiDon.DaHuy);
-        ViewBag.SoDangChuyenDen = await don.CountAsync(d => d.MaBuuCucNhan == idBc && (d.TrangThai == TrangThaiDon.DaLayLienTinh || d.TrangThai == TrangThaiDon.DangTrungChuyen));
+        ViewBag.SoDangChuyenDen = await don.CountAsync(d =>
+            (d.ChuyenXe != null
+                && (d.ChuyenXe.TrangThai == TrangThaiChuyenXe.DangVanChuyen || d.ChuyenXe.TrangThai == TrangThaiChuyenXe.DangXepHang)
+                && (d.ChuyenXe.MaBuuCucNhan == idBc || (d.ChuyenXe.MaBuuCucTrungGian == idBc && !d.ChuyenXe.DaGheTram)))
+            || (d.ChuyenXe == null && d.MaBuuCucNhan == idBc && (d.TrangThai == TrangThaiDon.DaLayLienTinh || d.TrangThai == TrangThaiDon.DangTrungChuyen))
+            || (d.MaBuuCucGui == idBc && d.TrangThai == TrangThaiDon.DangChuyenHoan));
         ViewBag.SoChoHoanHang = await DonHangXuLy.DonChoHoanHang(don).CountAsync(d => d.MaBuuCucHienTai == idBc);
 
         // 2. Nhóm Điều hành & Phân công vận chuyển
@@ -55,11 +60,13 @@ public class NhanVienVanHanhController(QuanLyGiaoNhanDbContext db, DonHangXuLy x
             .Include(d => d.KhuVuc)
             .Include(d => d.BuuCucGui)
             .Include(d => d.BuuCucNhan)
-            .Where(d => (d.MaBuuCucHienTai == idBc || d.MaBuuCucGui == idBc || d.MaBuuCucNhan == idBc) &&
+            .Where(d => (d.MaBuuCucHienTai == idBc || d.MaBuuCucGui == idBc || d.MaBuuCucNhan == idBc ||
+                         (d.ChuyenXe != null && (d.ChuyenXe.MaBuuCucNhan == idBc || d.ChuyenXe.MaBuuCucTrungGian == idBc))) &&
                         (d.TrangThai == TrangThaiDon.ChoLayTanNoi ||
                          d.TrangThai == TrangThaiDon.DaLayTanNoi ||
                          d.TrangThai == TrangThaiDon.DaNhanTaiBuuCucGui ||
                          d.TrangThai == TrangThaiDon.DaDenBuuCucNhan ||
+                         d.TrangThai == TrangThaiDon.DangTrungChuyen ||
                          d.TrangThai == TrangThaiDon.GiaoKhongThanhCong ||
                          d.TrangThai == TrangThaiDon.HenGiaoLai))
             .OrderByDescending(d => d.NgayTao)

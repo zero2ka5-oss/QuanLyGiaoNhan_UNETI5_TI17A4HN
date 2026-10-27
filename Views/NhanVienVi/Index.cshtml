@@ -47,7 +47,7 @@
             <div class="mt-1">
                 @foreach (var d in Model.DonDangGiu)
                 {
-                    <div class="dong-tt nho"><span>@d.MaHienThi · @d.TenNguoiNhan</span><span>@DinhDang.Tien(d.TongThuNguoiNhan)</span></div>
+                    <div class="dong-tt nho"><span>@d.MaHienThi · @d.TenNguoiNhan</span><span>@DinhDang.Tien(d.TienMatShipperThu)</span></div>
                 }
             </div>
         </details>
@@ -154,10 +154,10 @@
                             {
                                 <div class="form-check nho py-1 d-flex justify-content-between align-items-center">
                                     <div>
-                                        <input class="form-check-input o-chon-don" type="checkbox" name="MaDonChon" value="@d.MaDon" id="don_@d.MaDon" data-tien="@d.TongThuNguoiNhan" checked />
+                                        <input class="form-check-input o-chon-don" type="checkbox" name="MaDonChon" value="@d.MaDon" id="don_@d.MaDon" data-tien="@d.TienMatShipperThu" checked />
                                         <label class="form-check-label ms-1" for="don_@d.MaDon">@d.MaHienThi (@d.TenNguoiNhan)</label>
                                     </div>
-                                    <span class="fw-semibold text-cam">@DinhDang.Tien(d.TongThuNguoiNhan)</span>
+                                    <span class="fw-semibold text-cam">@DinhDang.Tien(d.TienMatShipperThu)</span>
                                 </div>
                             }
                         </div>
