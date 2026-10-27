@@ -1,6 +1,6 @@
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
-namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
+namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Helpers;
 
 /*
  * MoRongPhien — extension cho ISession

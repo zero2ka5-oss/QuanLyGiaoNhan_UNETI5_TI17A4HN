@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Data;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
-namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
+namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Filters;
 
 /*
  * [YeuCauVaiTro(VaiTroNguoiDung.QuanTri, VaiTroNguoiDung.DieuPhoi)] — cổng bảo vệ phía server

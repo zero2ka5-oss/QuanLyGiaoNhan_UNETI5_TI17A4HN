@@ -2,7 +2,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Html;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
-namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
+namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Helpers;
 
 public static class HienThi
 {
@@ -27,6 +27,11 @@ public static class HienThi
         TrangThaiDon.DaHuy => "Đã hủy",
         TrangThaiDon.ThatLac => "Thất lạc",
         TrangThaiDon.HuHong => "Hư hỏng",
+        TrangThaiDon.ChoChuyenHoan => "Chờ chuyển hoàn liên tỉnh",
+        TrangThaiDon.DangChuyenHoan => "Đang chuyển hoàn",
+        TrangThaiDon.DaVeBuuCucGui => "Đã về bưu cục gửi",
+        TrangThaiDon.DangGiaoHoan => "Đang giao hoàn trả người gửi",
+        TrangThaiDon.DaHoanHang => "Đã hoàn hàng về người gửi",
         _ => t.ToString()
     };
 
@@ -51,15 +56,20 @@ public static class HienThi
         TrangThaiDon.DaHuy => "CANCELLED",
         TrangThaiDon.ThatLac => "LOST",
         TrangThaiDon.HuHong => "DAMAGED",
+        TrangThaiDon.ChoChuyenHoan => "ASSIGNED_TO_RETURN_INTERPROVINCIAL",
+        TrangThaiDon.DangChuyenHoan => "RETURN_IN_TRANSIT",
+        TrangThaiDon.DaVeBuuCucGui => "ARRIVED_AT_ORIGIN_HUB_RETURN",
+        TrangThaiDon.DangGiaoHoan => "OUT_FOR_RETURN_DELIVERY",
+        TrangThaiDon.DaHoanHang => "RETURNED_TO_SENDER",
         _ => t.ToString()
     };
 
     public static string LopBadge(this TrangThaiDon t) => t switch
     {
         TrangThaiDon.DaTao or TrangThaiDon.ChoLayTanNoi or TrangThaiDon.HenGiaoLai => "tt-cho",
-        TrangThaiDon.DaNhanTaiBuuCucGui or TrangThaiDon.ChoLayLienTinh or TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.ChoLayGiaoHang => "tt-xuly",
-        TrangThaiDon.DaLayTanNoi or TrangThaiDon.DaLayLienTinh or TrangThaiDon.DangTrungChuyen or TrangThaiDon.DaLayGiaoHang or TrangThaiDon.DangGiao => "tt-dang",
-        TrangThaiDon.GiaoThanhCong => "tt-thanhcong",
+        TrangThaiDon.DaNhanTaiBuuCucGui or TrangThaiDon.ChoLayLienTinh or TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.ChoLayGiaoHang or TrangThaiDon.ChoChuyenHoan or TrangThaiDon.DaVeBuuCucGui => "tt-xuly",
+        TrangThaiDon.DaLayTanNoi or TrangThaiDon.DaLayLienTinh or TrangThaiDon.DangTrungChuyen or TrangThaiDon.DaLayGiaoHang or TrangThaiDon.DangGiao or TrangThaiDon.DangChuyenHoan or TrangThaiDon.DangGiaoHoan => "tt-dang",
+        TrangThaiDon.GiaoThanhCong or TrangThaiDon.DaHoanHang => "tt-thanhcong",
         TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.ThatLac or TrangThaiDon.HuHong => "tt-thatbai",
         TrangThaiDon.HoanTat => "tt-hoantat",
         _ => "tt-huy"
@@ -83,6 +93,11 @@ public static class HienThi
         TrangThaiDon.HoanTat => "bi-patch-check-fill",
         TrangThaiDon.ThatLac => "bi-question-octagon",
         TrangThaiDon.HuHong => "bi-heartbreak",
+        TrangThaiDon.ChoChuyenHoan => "bi-arrow-repeat",
+        TrangThaiDon.DangChuyenHoan => "bi-truck",
+        TrangThaiDon.DaVeBuuCucGui => "bi-box-seam",
+        TrangThaiDon.DangGiaoHoan => "bi-person-walking",
+        TrangThaiDon.DaHoanHang => "bi-arrow-return-left",
         _ => "bi-x-circle"
     };
 
@@ -91,12 +106,12 @@ public static class HienThi
     {
         TrangThaiDon.DaTao or TrangThaiDon.ChoLayTanNoi => "#F59E0B",
         TrangThaiDon.DaLayTanNoi => "#3B82F6",
-        TrangThaiDon.DaNhanTaiBuuCucGui or TrangThaiDon.ChoLayLienTinh => "#93C5FD",
-        TrangThaiDon.DaLayLienTinh or TrangThaiDon.DangTrungChuyen => "#6366F1",
-        TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.ChoLayGiaoHang => "#60A5FA",
-        TrangThaiDon.DaLayGiaoHang or TrangThaiDon.DangGiao => "#3B82F6",
+        TrangThaiDon.DaNhanTaiBuuCucGui or TrangThaiDon.ChoLayLienTinh or TrangThaiDon.ChoChuyenHoan => "#93C5FD",
+        TrangThaiDon.DaLayLienTinh or TrangThaiDon.DangTrungChuyen or TrangThaiDon.DangChuyenHoan => "#6366F1",
+        TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.ChoLayGiaoHang or TrangThaiDon.DaVeBuuCucGui => "#60A5FA",
+        TrangThaiDon.DaLayGiaoHang or TrangThaiDon.DangGiao or TrangThaiDon.DangGiaoHoan => "#3B82F6",
         TrangThaiDon.HenGiaoLai => "#FBBF24",
-        TrangThaiDon.GiaoThanhCong => "#22C55E",
+        TrangThaiDon.GiaoThanhCong or TrangThaiDon.DaHoanHang => "#22C55E",
         TrangThaiDon.HoanTat => "#059669",
         TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.ThatLac or TrangThaiDon.HuHong => "#EF4444",
         _ => "#9CA3AF"
@@ -104,17 +119,18 @@ public static class HienThi
 
     /// <summary>Hàng đang nằm ở một bưu cục (chờ xử lý / chờ shipper đến nhận).</summary>
     public static readonly TrangThaiDon[] NhomTaiBuuCuc =
-        [TrangThaiDon.DaNhanTaiBuuCucGui, TrangThaiDon.ChoLayLienTinh, TrangThaiDon.DaDenBuuCucNhan, TrangThaiDon.ChoLayGiaoHang];
-    /// <summary>Hàng đang trong tay shipper (liên tỉnh / khu vực / lấy tận nơi).</summary>
+        [TrangThaiDon.DaNhanTaiBuuCucGui, TrangThaiDon.ChoLayLienTinh, TrangThaiDon.DaDenBuuCucNhan, TrangThaiDon.ChoLayGiaoHang,
+         TrangThaiDon.ChoChuyenHoan, TrangThaiDon.DaVeBuuCucGui];
+    /// <summary>Hàng đang trong tay shipper (liên tỉnh / khu vực / lấy tận nơi / chuyển hoàn).</summary>
     public static readonly TrangThaiDon[] NhomShipperGiu =
         [TrangThaiDon.DaLayTanNoi, TrangThaiDon.DaLayLienTinh, TrangThaiDon.DangTrungChuyen, TrangThaiDon.DaLayGiaoHang, TrangThaiDon.DangGiao,
-         TrangThaiDon.GiaoKhongThanhCong, TrangThaiDon.HenGiaoLai];
-    /// <summary>Đơn còn trong quy trình vận chuyển (chưa giao xong / hủy / sự cố).</summary>
+         TrangThaiDon.GiaoKhongThanhCong, TrangThaiDon.HenGiaoLai, TrangThaiDon.DangChuyenHoan, TrangThaiDon.DangGiaoHoan];
+    /// <summary>Đơn còn trong quy trình vận chuyển (chưa giao xong / hủy / sự cố / hoàn xong).</summary>
     public static readonly TrangThaiDon[] NhomDangXuLy = [TrangThaiDon.DaTao, TrangThaiDon.ChoLayTanNoi, .. NhomTaiBuuCuc, .. NhomShipperGiu];
 
     /// <summary>Trạng thái kết thúc vận chuyển – không còn thao tác quét / bàn giao.</summary>
     public static bool DaKetThuc(this TrangThaiDon t) =>
-        t is TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat or TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong;
+        t is TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat or TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong or TrangThaiDon.DaHoanHang;
 
     public static readonly TrangThaiDon[] TatCaTrangThaiDon = Enum.GetValues<TrangThaiDon>();
 
@@ -176,6 +192,7 @@ public static class HienThi
         KetQuaGiao.TraVeBuuCuc => "Trả hàng về bưu cục",
         KetQuaGiao.SuCo => "Sự cố (thất lạc / hư hỏng)",
         KetQuaGiao.DaLayHang => "Đã lấy hàng về bưu cục",
+        KetQuaGiao.DaHoanHang => "Giao hoàn thành công",
         _ => "Đơn bị hủy"
     };
 
@@ -204,6 +221,30 @@ public static class HienThi
     };
 
     public static string TenHienThi(this LoaiGiaoDich l) => l == LoaiGiaoDich.NopTienThuHo ? "Nộp tiền thu hộ" : "Rút tiền ship";
+
+    public static string TenHienThi(this LoaiGiaoDichKhach l) => l switch
+    {
+        LoaiGiaoDichKhach.CongTienCOD => "Cộng tiền COD",
+        LoaiGiaoDichKhach.RutTien => "Rút tiền về ngân hàng",
+        LoaiGiaoDichKhach.ThanhToanCuoc => "Thanh toán cước vận chuyển",
+        _ => l.ToString()
+    };
+
+    public static string LopBadge(this LoaiGiaoDichKhach l) => l switch
+    {
+        LoaiGiaoDichKhach.CongTienCOD => "tt-thanhcong",
+        LoaiGiaoDichKhach.RutTien => "tt-xuly",
+        LoaiGiaoDichKhach.ThanhToanCuoc => "tt-dang",
+        _ => "tt-cho"
+    };
+
+    public static string BieuTuong(this LoaiGiaoDichKhach l) => l switch
+    {
+        LoaiGiaoDichKhach.CongTienCOD => "bi-plus-circle-fill",
+        LoaiGiaoDichKhach.RutTien => "bi-arrow-up-right-circle-fill",
+        LoaiGiaoDichKhach.ThanhToanCuoc => "bi-credit-card-fill",
+        _ => "bi-cash-coin"
+    };
 
     public static string TenHienThi(this TrangThaiGiaoDich t) => t switch
     {
@@ -273,6 +314,16 @@ public static class HienThi
         ("Bưu cục nhận", "bi-building-down"), ("Đang giao", "bi-truck"), ("Đã giao", "bi-house-check")
     ];
 
+    /// <summary>Các bước hành trình chuyển hoàn: yêu cầu hoàn → chuyển hoàn liên tỉnh → về bưu cục gửi → đang giao hoàn → đã hoàn hàng.</summary>
+    public static readonly (string Ten, string Icon)[] BuocHanhTrinhHoan =
+    [
+        ("Yêu cầu hoàn", "bi-arrow-return-left"),
+        ("Chuyển hoàn", "bi-truck-front"),
+        ("Về bưu cục gửi", "bi-building-check"),
+        ("Giao hoàn", "bi-person-walking"),
+        ("Đã hoàn hàng", "bi-house-check")
+    ];
+
     /// <summary>Bậc hành trình 0–5 theo BuocHanhTrinh (giao lỗi / hẹn giao lại tính ở bước đang giao).</summary>
     public static int BacHanhTrinh(this TrangThaiDon t) => t switch
     {
@@ -281,6 +332,17 @@ public static class HienThi
         TrangThaiDon.DaDenBuuCucNhan or TrangThaiDon.ChoLayGiaoHang => 3,
         TrangThaiDon.DaLayGiaoHang or TrangThaiDon.DangGiao or TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.HenGiaoLai => 4,
         TrangThaiDon.GiaoThanhCong or TrangThaiDon.HoanTat => 5,
+        _ => 0
+    };
+
+    /// <summary>Bậc hành trình chuyển hoàn 0–4 theo BuocHanhTrinhHoan.</summary>
+    public static int BacHanhTrinhHoan(this TrangThaiDon t) => t switch
+    {
+        TrangThaiDon.ChoChuyenHoan => 0,
+        TrangThaiDon.DangChuyenHoan => 1,
+        TrangThaiDon.DaVeBuuCucGui => 2,
+        TrangThaiDon.DangGiaoHoan => 3,
+        TrangThaiDon.DaHoanHang => 4,
         _ => 0
     };
 
@@ -296,4 +358,86 @@ public static class HienThi
     public static int BacHanhTrinh(DonGiaoHang don) => don.TrangThai is TrangThaiDon.DaHuy or TrangThaiDon.ThatLac or TrangThaiDon.HuHong
         ? don.LichSus.Where(l => !l.TrangThaiMoi.DaKetThuc()).Select(l => l.TrangThaiMoi.BacHanhTrinh()).DefaultIfEmpty(0).Max()
         : don.TrangThai.BacHanhTrinh();
+
+    // ----- Thông báo -----
+    public static string Icon(this LoaiThongBao l) => l switch
+    {
+        LoaiThongBao.DonHang => "bi-box-seam", LoaiThongBao.PhanCong => "bi-person-badge", LoaiThongBao.Vi => "bi-wallet2",
+        LoaiThongBao.SuCo => "bi-exclamation-triangle", LoaiThongBao.HoTro => "bi-headset", _ => "bi-bell"
+    };
+    public static string LopIcon(this LoaiThongBao l) => l switch
+    {
+        LoaiThongBao.DonHang => "tb-cam", LoaiThongBao.PhanCong => "tb-xanh", LoaiThongBao.Vi => "tb-luc", LoaiThongBao.SuCo => "tb-do", LoaiThongBao.HoTro => "tb-xanh", _ => "tb-xam"
+    };
+
+    // ----- Liên hệ & Hỗ trợ -----
+    public static string TenHienThi(this ChuDeLienHe c) => c switch
+    {
+        ChuDeLienHe.CuocPhi => "Cước phí & thanh toán",
+        ChuDeLienHe.TienDoDonHang => "Tra cứu & tiến độ đơn",
+        ChuDeLienHe.ThayDoiThongTin => "Đổi thông tin người nhận",
+        ChuDeLienHe.KhieuNaiSuCo => "Khiếu nại hư hỏng / thất lạc",
+        ChuDeLienHe.GopYThaiDo => "Góp ý dịch vụ & shipper",
+        ChuDeLienHe.Khac => "Yêu cầu khác",
+        _ => c.ToString()
+    };
+
+    public static string TenHienThi(this TrangThaiLienHe t) => t switch
+    {
+        TrangThaiLienHe.ChoPhanHoi => "Chờ phản hồi",
+        TrangThaiLienHe.DangXuLy => "Đang xử lý",
+        TrangThaiLienHe.DaPhanHoi => "Đã phản hồi",
+        TrangThaiLienHe.DaDong => "Đã giải quyết & Đóng",
+        _ => t.ToString()
+    };
+
+    public static string LopBadge(this TrangThaiLienHe t) => t switch
+    {
+        TrangThaiLienHe.ChoPhanHoi => "tt-cho",
+        TrangThaiLienHe.DangXuLy => "tt-dang",
+        TrangThaiLienHe.DaPhanHoi => "tt-thanhcong",
+        TrangThaiLienHe.DaDong => "tt-hoantat",
+        _ => "tt-huy"
+    };
+
+    public static string BieuTuong(this TrangThaiLienHe t) => t switch
+    {
+        TrangThaiLienHe.ChoPhanHoi => "bi-hourglass-split",
+        TrangThaiLienHe.DangXuLy => "bi-arrow-repeat",
+        TrangThaiLienHe.DaPhanHoi => "bi-chat-dots-fill",
+        TrangThaiLienHe.DaDong => "bi-check-circle-fill",
+        _ => "bi-dash-circle"
+    };
+
+    // ----- Chuyến xe liên tỉnh -----
+    public static string TenHienThi(this TrangThaiChuyenXe t) => t switch
+    {
+        TrangThaiChuyenXe.DangXepHang => "Đang xếp hàng",
+        TrangThaiChuyenXe.DangVanChuyen => "Đang vận chuyển",
+        TrangThaiChuyenXe.DangGheTram => "Đang ghé trạm",
+        TrangThaiChuyenXe.DaDenNoi => "Đã đến nơi",
+        TrangThaiChuyenXe.DaHuy => "Đã hủy",
+        _ => t.ToString()
+    };
+
+    public static string LopBadge(this TrangThaiChuyenXe t) => t switch
+    {
+        TrangThaiChuyenXe.DangXepHang => "tt-cho",
+        TrangThaiChuyenXe.DangVanChuyen => "tt-dang-giao",
+        TrangThaiChuyenXe.DangGheTram => "tt-dang",
+        TrangThaiChuyenXe.DaDenNoi => "tt-thanhcong",
+        TrangThaiChuyenXe.DaHuy => "tt-thatbai",
+        _ => "tt-mo"
+    };
+
+    public static string BieuTuong(this TrangThaiChuyenXe t) => t switch
+    {
+        TrangThaiChuyenXe.DangXepHang => "bi-box-seam",
+        TrangThaiChuyenXe.DangVanChuyen => "bi-truck",
+        TrangThaiChuyenXe.DangGheTram => "bi-geo-alt-fill",
+        TrangThaiChuyenXe.DaDenNoi => "bi-check2-circle",
+        TrangThaiChuyenXe.DaHuy => "bi-x-circle",
+        _ => "bi-truck"
+    };
 }
+

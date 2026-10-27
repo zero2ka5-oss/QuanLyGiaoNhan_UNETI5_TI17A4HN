@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Data;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
 
-namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
+namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Services;
 
 /*
  * Dòng tiền trên ví shipper (giống các app giao hàng):
@@ -40,11 +40,13 @@ public class ViXuLy(QuanLyGiaoNhanDbContext db, DonHangXuLy donHangXuLy)
 
     private DateTime BayGio() => donHangXuLy.BayGio();
 
-    /// <summary>Đơn shipper đã giao thành công có thu tiền, chưa đối soát, chưa nằm trong lần nộp tiền nào.</summary>
+    /// <summary>Đơn shipper đã giao thành công hoặc hoàn hàng có thu tiền, chưa đối soát, chưa nằm trong lần nộp tiền nào.</summary>
     private IQueryable<DonGiaoHang> DonDangGiuTien(int maNhanVien) =>
-        db.DonGiaoHangs.Where(d => d.TrangThai == TrangThaiDon.GiaoThanhCong && d.MaGiaoDichNop == null
-                                && (d.TienThuHo > 0 || d.NguoiTraPhi == NguoiTraPhi.NguoiNhan)
-                                && d.PhanCongs.Any(p => p.MaNhanVien == maNhanVien && p.KetQua == KetQuaGiao.GiaoThanhCong));
+        db.DonGiaoHangs.Where(d => d.MaGiaoDichNop == null
+                                && ((d.TrangThai == TrangThaiDon.GiaoThanhCong && (d.TienThuHo > 0 || d.NguoiTraPhi == NguoiTraPhi.NguoiNhan)
+                                     && d.PhanCongs.Any(p => p.MaNhanVien == maNhanVien && p.KetQua == KetQuaGiao.GiaoThanhCong))
+                                    || (d.TrangThai == TrangThaiDon.DaHoanHang && d.NgayThuPhiHoan != null
+                                        && d.PhanCongs.Any(p => p.MaNhanVien == maNhanVien && p.KetQua == KetQuaGiao.DaHoanHang && p.LoaiChang == LoaiShipper.KhuVuc))));
 
     public async Task<ViShipperVM?> TinhViAsync(int maNhanVien, bool kemLichSu = true)
     {
@@ -60,7 +62,7 @@ public class ViXuLy(QuanLyGiaoNhanDbContext db, DonHangXuLy donHangXuLy)
         {
             NhanVien = nv,
             DonDangGiu = donGiu,
-            TienDangGiu = donGiu.Sum(d => d.TongThuNguoiNhan),
+            TienDangGiu = donGiu.Sum(d => d.TienMatShipperThu),
             SoDonDangGiu = donGiu.Count,
             TienChoXacNhanNop = await giaoDich.Where(g => g.Loai == LoaiGiaoDich.NopTienThuHo && g.TrangThai == TrangThaiGiaoDich.ChoXacNhan)
                                               .SumAsync(g => (decimal?)g.SoTien) ?? 0,
@@ -81,10 +83,13 @@ public class ViXuLy(QuanLyGiaoNhanDbContext db, DonHangXuLy donHangXuLy)
     public async Task<List<ViShipperVM>> TinhTatCaViAsync()
     {
         var dsNhanVien = await db.NhanVienGiaoHangs.AsNoTracking().Include(n => n.KhuVucPhuTrach).OrderBy(n => n.HoTen).ToListAsync();
-        // Đơn đang giữ tiền: giao thành công, chưa nằm trong lệnh nộp – kèm mã shipper đã giao
+        // Đơn đang giữ tiền: giao thành công hoặc hoàn hàng có thu tiền, chưa nằm trong lệnh nộp – kèm mã shipper đã giao
         var donGiu = await db.PhanCongGiaoHangs.AsNoTracking()
-            .Where(p => p.KetQua == KetQuaGiao.GiaoThanhCong && p.DonGiaoHang!.TrangThai == TrangThaiDon.GiaoThanhCong && p.DonGiaoHang.MaGiaoDichNop == null
-                     && (p.DonGiaoHang.TienThuHo > 0 || p.DonGiaoHang.NguoiTraPhi == NguoiTraPhi.NguoiNhan))
+            .Where(p => p.DonGiaoHang!.MaGiaoDichNop == null
+                     && ((p.KetQua == KetQuaGiao.GiaoThanhCong && p.DonGiaoHang.TrangThai == TrangThaiDon.GiaoThanhCong
+                          && (p.DonGiaoHang.TienThuHo > 0 || p.DonGiaoHang.NguoiTraPhi == NguoiTraPhi.NguoiNhan))
+                         || (p.KetQua == KetQuaGiao.DaHoanHang && p.DonGiaoHang.TrangThai == TrangThaiDon.DaHoanHang
+                             && p.DonGiaoHang.NgayThuPhiHoan != null)))
             .Select(p => new { p.MaNhanVien, Don = p.DonGiaoHang! })
             .ToListAsync();
         var thuNhap = await db.PhanCongGiaoHangs.Where(p => (p.KetQua == KetQuaGiao.GiaoThanhCong || p.KetQua == KetQuaGiao.DaBanGiaoBuuCuc))
@@ -106,7 +111,7 @@ public class ViXuLy(QuanLyGiaoNhanDbContext db, DonHangXuLy donHangXuLy)
             {
                 NhanVien = nv,
                 DonDangGiu = giu,
-                TienDangGiu = giu.Sum(d => d.TongThuNguoiNhan),
+                TienDangGiu = giu.Sum(d => d.TienMatShipperThu),
                 SoDonDangGiu = giu.Count,
                 TienChoXacNhanNop = TongGiaoDich(nv.MaNhanVien, LoaiGiaoDich.NopTienThuHo, TrangThaiGiaoDich.ChoXacNhan),
                 ThuNhap = tn?.Tien ?? 0,
@@ -129,7 +134,7 @@ public class ViXuLy(QuanLyGiaoNhanDbContext db, DonHangXuLy donHangXuLy)
 
         var gd = new GiaoDichVi
         {
-            MaNhanVien = maNhanVien, Loai = LoaiGiaoDich.NopTienThuHo, SoTien = dsDon.Sum(d => d.TongThuNguoiNhan),
+            MaNhanVien = maNhanVien, Loai = LoaiGiaoDich.NopTienThuHo, SoTien = dsDon.Sum(d => d.TienMatShipperThu),
             PhuongThuc = vm.PhuongThuc, ThongTinThanhToan = string.IsNullOrWhiteSpace(vm.MaThamChieu) ? null : vm.MaThamChieu.Trim(),
             NgayTao = BayGio(), GhiChu = $"Nộp tiền {dsDon.Count} đơn"
         };

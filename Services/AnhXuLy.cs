@@ -1,4 +1,4 @@
-namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
+namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Services;
 
 /*
  * AnhXuLy — đăng ký AddScoped trong Program.cs
@@ -8,7 +8,7 @@ namespace QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
  * - Tệp lưu tại wwwroot/uploads/{thuMuc}/, CSDL lưu đường dẫn "/uploads/{thuMuc}/{ten}".
  * - Xoa() chỉ xóa tệp nằm trong /uploads/ – không đụng ảnh mẫu trong /img/.
  */
-public class AnhXuLy(IWebHostEnvironment moiTruong)
+public class AnhXuLy(IWebHostEnvironment moiTruong, ILogger<AnhXuLy>? logger = null)
 {
     public const long DungLuongToiDa = 5 * 1024 * 1024;
     public const string ChapNhan = "image/jpeg,image/png,image/webp,image/gif";
@@ -67,7 +67,14 @@ public class AnhXuLy(IWebHostEnvironment moiTruong)
     {
         if (string.IsNullOrWhiteSpace(duongDan) || !duongDan.StartsWith("/uploads/") || duongDan.Contains("..")) return;
         string tep = Path.Combine(moiTruong.WebRootPath, duongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        try { if (File.Exists(tep)) File.Delete(tep); } catch (IOException) { }
+        try
+        {
+            if (File.Exists(tep)) File.Delete(tep);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "Không thể xóa tệp ảnh {DuongDan}", tep);
+        }
     }
 
     private static string? DoanDuoi(byte[] b)
