@@ -52,7 +52,12 @@ public enum TrangThaiDon : byte
     ThatLac = 14,              // LOST
     HuHong = 15,               // DAMAGED
     ChoLayTanNoi = 16,         // ASSIGNED_FOR_PICKUP – chờ shipper đến lấy hàng tận nơi
-    DaLayTanNoi = 17           // PICKED_UP_FROM_SENDER – shipper đã lấy hàng, đang mang về bưu cục gửi
+    DaLayTanNoi = 17,          // PICKED_UP_FROM_SENDER – shipper đã lấy hàng, đang mang về bưu cục gửi
+    ChoChuyenHoan = 18,        // ASSIGNED_TO_RETURN_INTERPROVINCIAL – chờ shipper xe tải nhận chuyển hoàn
+    DangChuyenHoan = 19,       // RETURN_IN_TRANSIT – xe tải đang vận chuyển hàng hoàn về bưu cục gửi
+    DaVeBuuCucGui = 20,        // ARRIVED_AT_ORIGIN_HUB_FOR_RETURN – hàng hoàn đã về bưu cục gửi, chờ trả người gửi
+    DangGiaoHoan = 21,         // OUT_FOR_RETURN_DELIVERY – shipper khu vực đang đi giao trả hàng cho người gửi
+    DaHoanHang = 22            // RETURNED_TO_SENDER – đã hoàn hàng thành công cho người gửi
 }
 
 /// <summary>Loại shipper / loại chặng: liên tỉnh chạy giữa các bưu cục, khu vực nhận ở bưu cục nhận và giao tới người nhận.</summary>
@@ -74,7 +79,8 @@ public enum KetQuaGiao : byte
     DaBanGiaoBuuCuc = 3,      // chặng liên tỉnh: đã bàn giao cho bưu cục nhận
     TraVeBuuCuc = 4,          // chặng khu vực: shipper trả hàng lại bưu cục (không giao tiếp)
     SuCo = 5,                 // thất lạc / hư hỏng khi đang giữ hàng
-    DaLayHang = 6             // chặng lấy hàng tận nơi: shipper đã lấy và bàn giao lại bưu cục gửi
+    DaLayHang = 6,            // chặng lấy hàng tận nơi: shipper đã lấy và bàn giao lại bưu cục gửi
+    DaHoanHang = 7            // chặng giao hoàn: shipper đã giao hoàn thành công cho người gửi
 }
 
 /// <summary>Lý do giao không thành công – dùng cho thống kê theo lý do.</summary>

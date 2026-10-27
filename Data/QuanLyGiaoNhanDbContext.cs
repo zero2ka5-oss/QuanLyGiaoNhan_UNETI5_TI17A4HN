@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Controllers;
 using QuanLyGiaoNhan_UNETI5_DHTI17A4.Models;
@@ -37,6 +37,7 @@ public class QuanLyGiaoNhanDbContext(DbContextOptions<QuanLyGiaoNhanDbContext> o
     public DbSet<YeuCauLienHe> YeuCauLienHes => Set<YeuCauLienHe>();
     public DbSet<TinNhanLienHe> TinNhanLienHes => Set<TinNhanLienHe>();
     public DbSet<GiaoDichViKhachHang> GiaoDichViKhachHangs => Set<GiaoDichViKhachHang>();
+    public DbSet<ChuyenXe> ChuyenXes => Set<ChuyenXe>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -208,6 +209,20 @@ public class QuanLyGiaoNhanDbContext(DbContextOptions<QuanLyGiaoNhanDbContext> o
         {
             e.HasIndex(x => new { x.MaLienHe, x.NgayGui });
             e.HasOne(x => x.TaiKhoan).WithMany().HasForeignKey(x => x.MaTaiKhoan);
+        });
+
+        mb.Entity<ChuyenXe>(e =>
+        {
+            e.HasKey(x => x.MaChuyen);
+            e.HasIndex(x => x.TrangThai);
+            e.HasIndex(x => x.MaBuuCucGui);
+            e.HasIndex(x => x.MaBuuCucNhan);
+            e.HasOne(x => x.BuuCucGui).WithMany().HasForeignKey(x => x.MaBuuCucGui).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.BuuCucNhan).WithMany().HasForeignKey(x => x.MaBuuCucNhan).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.BuuCucTrungGian).WithMany().HasForeignKey(x => x.MaBuuCucTrungGian).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
+            e.HasOne(x => x.NhanVien).WithMany().HasForeignKey(x => x.MaNhanVien).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.PhuongTien).WithMany().HasForeignKey(x => x.MaPhuongTien).OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(x => x.DonHangs).WithOne(d => d.ChuyenXe).HasForeignKey(d => d.MaChuyenXe).OnDelete(DeleteBehavior.SetNull);
         });
 
         mb.Entity<GiaoDichViKhachHang>(e =>
@@ -741,6 +756,159 @@ public class QuanLyGiaoNhanDbContext(DbContextOptions<QuanLyGiaoNhanDbContext> o
     /// và 68 shipper (mỗi bưu cục có ít nhất 1 xe tải sp.{tinh}01 và 1 xe máy sp.{tinh}02)
     /// khi CSDL đã tồn tại dữ liệu trước đó.
     /// </summary>
+    /// <summary>
+    /// Äáº£m báº£o cÃ¡c báº£ng vÃ  cá»™t bá»• sung luÃ´n tá»“n táº¡i trong CSDL trÆ°á»›c khi thá»±c hiá»‡n báº¥t ká»³ thao tÃ¡c nÃ o,
+    /// trÃ¡nh lá»—i Invalid column name khi khá»Ÿi cháº¡y trÃªn mÃ¡y má»›i / CSDL má»›i khá»Ÿi táº¡o.
+    /// </summary>
+    public static async Task DamBaoCauTrucBangVaCotAsync(QuanLyGiaoNhanDbContext db)
+    {
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(@"
+                SET QUOTED_IDENTIFIER ON;
+                SET ANSI_NULLS ON;
+                IF COL_LENGTH('DonGiaoHangs', 'KichThuocM3') IS NULL 
+                    ALTER TABLE DonGiaoHangs ADD KichThuocM3 decimal(10,4) NOT NULL DEFAULT 0.005;
+                IF COL_LENGTH('DonGiaoHangs', 'PhuPhiKichThuoc') IS NULL 
+                    ALTER TABLE DonGiaoHangs ADD PhuPhiKichThuoc decimal(18,0) NOT NULL DEFAULT 0;
+                IF COL_LENGTH('DonGiaoHangs', 'PhiChuyenHoan') IS NULL 
+                    ALTER TABLE DonGiaoHangs ADD PhiChuyenHoan decimal(18,2) NOT NULL DEFAULT 0;
+                IF COL_LENGTH('DonGiaoHangs', 'NgayThuPhiHoan') IS NULL 
+                    ALTER TABLE DonGiaoHangs ADD NgayThuPhiHoan datetime2 NULL;
+
+                IF OBJECT_ID('YeuCauLienHes', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE YeuCauLienHes (
+                        MaLienHe int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                        MaKhachHang int NOT NULL,
+                        MaDonHang int NULL,
+                        MaBuuCuc int NULL,
+                        TieuDe nvarchar(200) NOT NULL,
+                        ChuDe int NOT NULL DEFAULT 2,
+                        NoiDung nvarchar(2000) NOT NULL,
+                        NgayGui datetime2 NOT NULL DEFAULT GETDATE(),
+                        TrangThai int NOT NULL DEFAULT 0,
+                        NgayCapNhat datetime2 NULL,
+                        CONSTRAINT FK_YeuCauLienHes_KhachHangs FOREIGN KEY (MaKhachHang) REFERENCES KhachHangs(MaKhachHang),
+                        CONSTRAINT FK_YeuCauLienHes_DonGiaoHangs FOREIGN KEY (MaDonHang) REFERENCES DonGiaoHangs(MaDon),
+                        CONSTRAINT FK_YeuCauLienHes_BuuCucs FOREIGN KEY (MaBuuCuc) REFERENCES BuuCucs(MaBuuCuc)
+                    );
+                    CREATE INDEX IX_YeuCauLienHes_KhachHang_NgayGui ON YeuCauLienHes(MaKhachHang, NgayGui);
+                    CREATE INDEX IX_YeuCauLienHes_TrangThai ON YeuCauLienHes(TrangThai);
+                END;
+
+                IF OBJECT_ID('TinNhanLienHes', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE TinNhanLienHes (
+                        MaTinNhan int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                        MaLienHe int NOT NULL,
+                        MaTaiKhoan int NULL,
+                        NguoiGui nvarchar(100) NOT NULL,
+                        LaNhanVien bit NOT NULL DEFAULT 0,
+                        NoiDung nvarchar(2000) NOT NULL,
+                        NgayGui datetime2 NOT NULL DEFAULT GETDATE(),
+                        CONSTRAINT FK_TinNhanLienHes_YeuCauLienHes FOREIGN KEY (MaLienHe) REFERENCES YeuCauLienHes(MaLienHe) ON DELETE CASCADE,
+                        CONSTRAINT FK_TinNhanLienHes_TaiKhoans FOREIGN KEY (MaTaiKhoan) REFERENCES TaiKhoans(MaTaiKhoan)
+                    );
+                    CREATE INDEX IX_TinNhanLienHes_LienHe_NgayGui ON TinNhanLienHes(MaLienHe, NgayGui);
+                END;
+
+                IF COL_LENGTH('KhachHangs', 'SoDuVi') IS NULL 
+                    ALTER TABLE KhachHangs ADD SoDuVi decimal(18,0) NOT NULL DEFAULT 0;
+                IF COL_LENGTH('KhachHangs', 'TenNganHang') IS NULL 
+                    ALTER TABLE KhachHangs ADD TenNganHang nvarchar(100) NULL;
+                IF COL_LENGTH('KhachHangs', 'SoTaiKhoanNganHang') IS NULL 
+                    ALTER TABLE KhachHangs ADD SoTaiKhoanNganHang nvarchar(50) NULL;
+                IF COL_LENGTH('KhachHangs', 'ChuTaiKhoanNganHang') IS NULL 
+                    ALTER TABLE KhachHangs ADD ChuTaiKhoanNganHang nvarchar(100) NULL;
+                IF COL_LENGTH('KhachHangs', 'PhienBan') IS NULL 
+                    ALTER TABLE KhachHangs ADD PhienBan rowversion;
+
+                IF OBJECT_ID('GiaoDichViKhachHangs', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE GiaoDichViKhachHangs (
+                        MaGiaoDich int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                        MaKhachHang int NOT NULL,
+                        Loai tinyint NOT NULL,
+                        SoTien decimal(18,0) NOT NULL,
+                        SoDuSauGiaoDich decimal(18,0) NOT NULL,
+                        MaDonHang int NULL,
+                        TrangThai tinyint NOT NULL DEFAULT 0,
+                        TenNganHang nvarchar(100) NULL,
+                        SoTaiKhoan nvarchar(50) NULL,
+                        ChuTaiKhoan nvarchar(100) NULL,
+                        MaThamChieu nvarchar(100) NULL,
+                        NgayTao datetime2 NOT NULL DEFAULT GETDATE(),
+                        NgayXuLy datetime2 NULL,
+                        NguoiXuLy nvarchar(150) NULL,
+                        GhiChu nvarchar(500) NULL,
+                        CONSTRAINT FK_GiaoDichViKhachHangs_KhachHangs FOREIGN KEY (MaKhachHang) REFERENCES KhachHangs(MaKhachHang),
+                        CONSTRAINT FK_GiaoDichViKhachHangs_DonGiaoHangs FOREIGN KEY (MaDonHang) REFERENCES DonGiaoHangs(MaDon)
+                    );
+                    CREATE INDEX IX_GiaoDichViKhachHangs_KhachHang_NgayTao ON GiaoDichViKhachHangs(MaKhachHang, NgayTao);
+                    CREATE INDEX IX_GiaoDichViKhachHangs_TrangThai ON GiaoDichViKhachHangs(TrangThai);
+                END;
+
+                IF COL_LENGTH('GiaoDichViKhachHangs', 'PhienBan') IS NULL 
+                    ALTER TABLE GiaoDichViKhachHangs ADD PhienBan rowversion;
+
+                IF OBJECT_ID('ChuyenXes', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE ChuyenXes (
+                        MaChuyen int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                        MaBuuCucGui int NOT NULL,
+                        MaBuuCucNhan int NOT NULL,
+                        MaBuuCucTrungGian int NULL,
+                        DaGheTram bit NOT NULL DEFAULT 0,
+                        NgayGheTram datetime2 NULL,
+                        NgayRoiTram datetime2 NULL,
+                        MaNhanVien int NOT NULL,
+                        MaPhuongTien int NULL,
+                        TrangThai tinyint NOT NULL DEFAULT 0,
+                        NgayTao datetime2 NOT NULL DEFAULT GETDATE(),
+                        NgayXuatBen datetime2 NULL,
+                        NgayDenNoi datetime2 NULL,
+                        GhiChu nvarchar(500) NULL,
+                        CONSTRAINT FK_ChuyenXes_BuuCucGui FOREIGN KEY (MaBuuCucGui) REFERENCES BuuCucs(MaBuuCuc),
+                        CONSTRAINT FK_ChuyenXes_BuuCucNhan FOREIGN KEY (MaBuuCucNhan) REFERENCES BuuCucs(MaBuuCuc),
+                        CONSTRAINT FK_ChuyenXes_BuuCucTrungGian FOREIGN KEY (MaBuuCucTrungGian) REFERENCES BuuCucs(MaBuuCuc),
+                        CONSTRAINT FK_ChuyenXes_NhanVien FOREIGN KEY (MaNhanVien) REFERENCES NhanVienGiaoHangs(MaNhanVien),
+                        CONSTRAINT FK_ChuyenXes_PhuongTien FOREIGN KEY (MaPhuongTien) REFERENCES PhuongTiens(MaPhuongTien)
+                    );
+                    CREATE INDEX IX_ChuyenXes_TrangThai ON ChuyenXes(TrangThai);
+                    CREATE INDEX IX_ChuyenXes_BuuCucGui ON ChuyenXes(MaBuuCucGui);
+                    CREATE INDEX IX_ChuyenXes_BuuCucNhan ON ChuyenXes(MaBuuCucNhan);
+                    CREATE INDEX IX_ChuyenXes_BuuCucTrungGian ON ChuyenXes(MaBuuCucTrungGian);
+                END;
+
+                IF COL_LENGTH('ChuyenXes', 'MaBuuCucTrungGian') IS NULL
+                BEGIN
+                    ALTER TABLE ChuyenXes ADD MaBuuCucTrungGian int NULL;
+                    ALTER TABLE ChuyenXes ADD CONSTRAINT FK_ChuyenXes_BuuCucTrungGian FOREIGN KEY (MaBuuCucTrungGian) REFERENCES BuuCucs(MaBuuCuc);
+                END;
+
+                IF COL_LENGTH('ChuyenXes', 'DaGheTram') IS NULL
+                    ALTER TABLE ChuyenXes ADD DaGheTram bit NOT NULL DEFAULT 0;
+
+                IF COL_LENGTH('ChuyenXes', 'NgayGheTram') IS NULL
+                    ALTER TABLE ChuyenXes ADD NgayGheTram datetime2 NULL;
+
+                IF COL_LENGTH('ChuyenXes', 'NgayRoiTram') IS NULL
+                    ALTER TABLE ChuyenXes ADD NgayRoiTram datetime2 NULL;
+
+                IF COL_LENGTH('DonGiaoHangs', 'MaChuyenXe') IS NULL 
+                BEGIN
+                    ALTER TABLE DonGiaoHangs ADD MaChuyenXe int NULL;
+                    ALTER TABLE DonGiaoHangs ADD CONSTRAINT FK_DonGiaoHangs_ChuyenXes FOREIGN KEY (MaChuyenXe) REFERENCES ChuyenXes(MaChuyen);
+                END;
+            ");
+        }
+        catch
+        {
+            // Bá» qua náº¿u cáº¥u trÃºc báº£ng hoáº·c cá»™t Ä‘Ã£ tá»“n táº¡i
+        }
+    }
+
     public static async Task BoSungDuLieuConThieuAsync(QuanLyGiaoNhanDbContext db)
     {
         try
@@ -1156,6 +1324,7 @@ public class QuanLyGiaoNhanDbContext(DbContextOptions<QuanLyGiaoNhanDbContext> o
 
         await NapThongBaoMauAsync(db);
         await NapLienHeMauAsync(db);
+        await TaoChuyenXeMauAsync(db);
     }
 
     /// <summary>Nạp 10 thông báo mẫu khớp 100% hình ảnh yêu cầu thiết kế.</summary>
@@ -1434,5 +1603,61 @@ public class QuanLyGiaoNhanDbContext(DbContextOptions<QuanLyGiaoNhanDbContext> o
         }
         catch { /* Bỏ qua nếu có ngoại lệ đồng bộ */ }
     }
-}
+    /// <summary>Náº¡p 1-2 chuyáº¿n xe liÃªn tá»‰nh máº«u ban Ä‘áº§u náº¿u há»‡ thá»‘ng chÆ°a cÃ³ chuyáº¿n nÃ o.</summary>
+    public static async Task TaoChuyenXeMauAsync(QuanLyGiaoNhanDbContext db)
+    {
+        try
+        {
+            if (await db.ChuyenXes.AnyAsync()) return;
 
+            var bcBn = await db.BuuCucs.FirstOrDefaultAsync(b => b.TinhThanh.Contains("Báº¯c Ninh") || b.TenBuuCuc.Contains("Báº¯c Ninh"))
+                     ?? await db.BuuCucs.FirstOrDefaultAsync(b => b.TinhThanh.Contains("HÃ  Ná»™i") || b.TenBuuCuc.Contains("HÃ  Ná»™i"));
+            var bcDn = await db.BuuCucs.FirstOrDefaultAsync(b => b.TinhThanh.Contains("ÄÃ  Náºµng") || b.TenBuuCuc.Contains("ÄÃ  Náºµng"));
+            var bcHcm = await db.BuuCucs.FirstOrDefaultAsync(b => b.TinhThanh.Contains("Há»“ ChÃ­ Minh") || b.TenBuuCuc.Contains("Há»“ ChÃ­ Minh"));
+            if (bcBn == null || bcDn == null) return;
+
+            var shipperTai = await db.NhanVienGiaoHangs.Include(s => s.PhuongTien)
+                .FirstOrDefaultAsync(s => s.MaBuuCuc == bcBn.MaBuuCuc && s.LoaiShipper == LoaiShipper.LienTinh);
+            if (shipperTai == null) return;
+
+            int maDich = bcHcm?.MaBuuCuc ?? bcDn.MaBuuCuc;
+            int? maTram = bcHcm != null ? bcDn.MaBuuCuc : null;
+
+            var chuyen1 = new ChuyenXe
+            {
+                MaBuuCucGui = bcBn.MaBuuCuc,
+                MaBuuCucNhan = maDich,
+                MaBuuCucTrungGian = maTram,
+                MaNhanVien = shipperTai.MaNhanVien,
+                MaPhuongTien = shipperTai.MaPhuongTien,
+                TrangThai = TrangThaiChuyenXe.DangXepHang,
+                NgayTao = DateTime.Now.AddHours(-2),
+                GhiChu = maTram.HasValue ? "Chuyáº¿n trá»¥c Báº¯c - Nam (Báº¯c Ninh âž” ghÃ© Hub ÄÃ  Náºµng âž” Hub TP.HCM)" : "Chuyáº¿n ghÃ©p liÃªn tá»‰nh Báº¯c Ninh - ÄÃ  Náºµng trong ngÃ y"
+            };
+            db.ChuyenXes.Add(chuyen1);
+            await db.SaveChangesAsync();
+
+            // GÃ¡n cÃ¡c Ä‘Æ¡n liÃªn tá»‰nh náº¿u cÃ³
+            var donLienTinh = await db.DonGiaoHangs
+                .Where(d => d.MaBuuCucGui == bcBn.MaBuuCuc && d.MaChuyenXe == null)
+                .Take(2)
+                .ToListAsync();
+
+            foreach (var d in donLienTinh)
+            {
+                d.MaChuyenXe = chuyen1.MaChuyen;
+                if (d.TrangThai == TrangThaiDon.DaNhanTaiBuuCucGui || d.TrangThai == TrangThaiDon.ChoLayLienTinh)
+                {
+                    d.TrangThai = TrangThaiDon.DaLayLienTinh;
+                    d.MaNhanVienDangGiu = shipperTai.MaNhanVien;
+                }
+            }
+            if (donLienTinh.Count > 0)
+                await db.SaveChangesAsync();
+        }
+        catch
+        {
+            // Bá» qua náº¿u cÃ³ lá»—i náº¡p chuyáº¿n xe máº«u
+        }
+    }
+}
