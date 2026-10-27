@@ -1,4 +1,4 @@
-﻿@model DonGiaoHang
+@model DonGiaoHang
 @{
     var d = Model;
     var lichSu = d.LichSus.OrderByDescending(l => l.ThoiGian).ThenByDescending(l => l.MaLichSu).ToList();
@@ -53,7 +53,7 @@
                 <div class="min-w-0"><div class="fw-semibold text-truncate">@DinhDang.CheTen(d.TenNguoiNhan)</div><div class="nho mo">@DinhDang.CheSoDienThoai(d.SoDienThoaiNguoiNhan)</div></div>
             </div>
             <div class="dong-tt"><span><i class="bi bi-pin-map"></i> Vị trí hiện tại</span><span class="text-end">@viTri</span></div>
-            <div class="dong-tt"><span><i class="bi bi-signpost-split"></i> Tuyến</span><span class="text-end">@d.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") → @d.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")</span></div>
+            <div class="dong-tt"><span><i class="bi bi-signpost-split"></i> Tuyến</span><span class="text-end">@(d.BuuCucGui?.TenBuuCuc != null ? d.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "") : "") → @(d.BuuCucNhan?.TenBuuCuc != null ? d.BuuCucNhan.TenBuuCuc.Replace("Bưu cục ", "") : "")</span></div>
             <div class="dong-tt"><span><i class="bi bi-geo-alt"></i> Khu vực</span><span>@d.KhuVuc?.TenKhuVuc</span></div>
             <div class="dong-tt"><span><i class="bi bi-tag"></i> Loại hàng</span><span>@d.LoaiHang?.TenLoaiHang</span></div>
             <div class="dong-tt"><span><i class="bi bi-box"></i> Khối lượng</span><span>@DinhDang.KhoiLuong(d.KhoiLuong)</span></div>

@@ -1,4 +1,4 @@
-﻿@model DonGiaoHang
+@model DonGiaoHang
 @* Tóm tắt đơn sau khi quét mã (trang quét của bưu cục / shipper). *@
 <div class="the-mem p-3 mb-3">
     <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
@@ -10,7 +10,12 @@
     <div class="nho mb-1"><i class="bi bi-person text-cam"></i> Gửi: @Model.KhachHang?.HoTen · @DinhDang.SoDienThoai(Model.KhachHang?.SoDienThoai)</div>
     <div class="nho mb-1"><i class="bi bi-geo-alt text-cam"></i> Nhận: <b>@Model.TenNguoiNhan</b> · @DinhDang.SoDienThoai(Model.SoDienThoaiNguoiNhan) – @Model.DiaChiNhan</div>
     <div class="nho"><i class="bi bi-box-seam text-cam"></i> @Model.LoaiHang?.TenLoaiHang · <b>@DinhDang.KhoiLuong(Model.KhoiLuong)</b>
-        @if (Model.TongThuNguoiNhan > 0) { <span> · thu người nhận <b class="text-cam">@DinhDang.Tien(Model.TongThuNguoiNhan)</b></span> }</div>
+    @if (Model.ChuyenXe != null)
+    {
+        <div class="nho mb-1 text-primary">
+            <i class="bi bi-truck text-cam"></i> Đang trên Chuyến xe: <b>@Model.ChuyenXe.MaHienThi</b> (@(Model.ChuyenXe.BuuCucGui?.TenBuuCuc?.Replace("Bưu cục ", "") ?? "Bưu cục gửi") ➔ @(Model.ChuyenXe.BuuCucNhan?.TenBuuCuc?.Replace("Bưu cục ", "") ?? "Bưu cục nhận"))
+        </div>
+    }
     @if (Model.NhanVienDangGiu is { } nv) { <div class="nho mt-1"><i class="bi bi-person-walking text-cam"></i> Đang giữ: shipper @nv.HoTen</div> }
     else if (Model.BuuCucHienTai is { } bc) { <div class="nho mt-1"><i class="bi bi-building text-cam"></i> Đang ở: @bc.TenBuuCuc</div> }
 </div>

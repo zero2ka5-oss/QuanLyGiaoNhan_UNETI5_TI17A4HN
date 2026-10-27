@@ -12,7 +12,7 @@
     string nhomMenu = ctrl switch
     {
         "QuanTriBangDieuKhien" or "QuanTriThongKe" => "Tổng quan",
-        "QuanTriDonGiaoHang" or "QuanTriLichSuGiaoNhan" => "Giám sát đơn hàng",
+        "QuanTriPhanCong" or "ChuyenXe" or "QuanTriDonGiaoHang" or "QuanTriLichSuGiaoNhan" => "Điều hành vận chuyển",
         "QuanTriViShipper" or "QuanTriCongNo" or "QuanTriViKhachHang" => "Tài chính & Phê duyệt",
         "QuanTriLienHe" => "Chăm sóc & Hỗ trợ",
         "QuanTriNhanVien" or "QuanTriPhuongTien" or "QuanTriBuuCuc" => "Nguồn lực",
@@ -57,7 +57,13 @@
                     <i class="bi bi-bar-chart-line"></i> Báo cáo & Thống kê
                 </a>
 
-                <div class="nhom">Giám sát đơn hàng</div>
+                <div class="nhom">Điều hành vận chuyển</div>
+                <a class="muc @A("QuanTriPhanCong")" asp-controller="QuanTriPhanCong" asp-action="Index">
+                    <i class="bi bi-diagram-3"></i> Điều phối shipper
+                </a>
+                <a class="muc @A("ChuyenXe")" asp-controller="ChuyenXe" asp-action="Index">
+                    <i class="bi bi-truck text-cam"></i> Chuyến xe liên tỉnh
+                </a>
                 <a class="muc @A("QuanTriDonGiaoHang")" asp-controller="QuanTriDonGiaoHang" asp-action="Index">
                     <i class="bi bi-box-seam"></i> Đơn giao hàng toàn quốc
                 </a>

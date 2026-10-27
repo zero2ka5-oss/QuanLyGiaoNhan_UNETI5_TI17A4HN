@@ -1,0 +1,18 @@
+@{
+    string? ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    string? action = ViewContext.RouteData.Values["action"]?.ToString();
+    object? id = ViewContext.RouteData.Values["id"];
+    string[] coChiTiet = ["QuanTriDonGiaoHang", "QuanTriKhachHang", "QuanTriKhuVuc", "QuanTriLoaiHang", "QuanTriNhanVien", "QuanTriPhuongTien", "KhachHangDonHang", "QuanTriBuuCuc", "QuanTriLienHe"];
+
+    string? dich = ViewData["QuayLai"] as string;
+    if (dich is null && ctrl == "DangNhap") dich = Url.Action("TrangLamViec", "DangNhap");
+    // Trang tiện ích của khách hàng là trang gốc mở từ menu (không có trang Index)
+    else if (dich is null && action != "Index" && ctrl != "KhachHangTienIch")
+        dich = action == "ChinhSua" && id is not null && coChiTiet.Contains(ctrl)
+            ? Url.Action("ChiTiet", ctrl, new { id })
+            : Url.Action("Index", ctrl);
+}
+@if (dich is not null)
+{
+    <a href="@dich" class="nut-quay-lai" title="Quay lại" aria-label="Quay lại"><i class="bi bi-arrow-left"></i></a>
+}

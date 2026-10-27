@@ -2128,6 +2128,44 @@ a.ls-chip:hover { background: var(--cam-nhat); border-color: var(--cam-vien); co
   background: #FFFFFF;
   border-radius: 12px;
 }
+[data-theme="dark"] .popup-hop {
+  background: #161D2C;
+  color: #E5E7EB;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px #28303F;
+}
+[data-theme="dark"] .popup-tieu-de,
+[data-theme="dark"] .popup-cau-hoi {
+  color: #F3F4F6;
+}
+[data-theme="dark"] .popup-noi-dung,
+[data-theme="dark"] .popup-ghi-chu {
+  color: #9CA3AF;
+}
+[data-theme="dark"] .popup-icon-khung.icon-success {
+  background: rgba(22, 163, 74, 0.2);
+  color: #4ADE80;
+  border-color: rgba(22, 163, 74, 0.3);
+}
+[data-theme="dark"] .popup-icon-khung.icon-warning {
+  background: rgba(217, 119, 6, 0.2);
+  color: #FBBF24;
+  border-color: rgba(217, 119, 6, 0.3);
+}
+[data-theme="dark"] .popup-icon-khung.icon-danger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #F87171;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+[data-theme="dark"] .popup-icon-khung.icon-cam {
+  background: rgba(242, 101, 34, 0.2);
+  color: #FF8A4C;
+  border-color: rgba(242, 101, 34, 0.3);
+}
+[data-theme="dark"] .popup-icon-khung.icon-info {
+  background: rgba(2, 132, 199, 0.2);
+  color: #38BDF8;
+  border-color: rgba(2, 132, 199, 0.3);
+}
 
 /* ===================== SKELETON LOADING ===================== */
 .skeleton {

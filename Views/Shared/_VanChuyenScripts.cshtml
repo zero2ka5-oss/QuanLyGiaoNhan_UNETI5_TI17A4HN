@@ -1,0 +1,12 @@
+﻿@* Nạp thư viện cho tính năng vận chuyển: ViewData["ThuVien"] = "quet,ma,bando" (tuỳ trang) + van-chuyen.js *@
+@{
+    var tv = (ViewData["ThuVien"] as string ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+@if (tv.Contains("quet")) { <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script> }
+@if (tv.Contains("ma"))
+{
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+}
+@if (tv.Contains("bando")) { <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script> }
+<script src="~/js/van-chuyen.js" asp-append-version="true"></script>

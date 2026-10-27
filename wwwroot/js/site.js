@@ -30,13 +30,18 @@ function hienPopupXacNhan(options) {
     const opts = typeof options === 'string' ? { noiDung: options } : (options || {});
     const noiDung = (opts.noiDung || '').trim();
 
-    // Tự động phân loại dựa trên nội dung câu hỏi
-    const laDangXuat = /đăng xuất/i.test(noiDung);
-    const laXoa = /xóa/i.test(noiDung);
-    const laKhoa = /khóa/i.test(noiDung);
-    const laHuy = /hủy/i.test(noiDung);
-    const laTuChoi = /từ chối/i.test(noiDung);
-    const laHoanTat = /hoàn tất|nhận lại|xác nhận đã|thành công/i.test(noiDung);
+    // Tự động phân loại dựa trên nội dung câu hỏi (sử dụng unicode boundary (?<!\p{L}) để tránh 'chuyến'/'chuyển' bị trùng với 'hủy')
+    const laXuatBen = /(?<![\p{L}\p{N}])(xuất bến|xuat ben)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laRoiTram = /(?<![\p{L}\p{N}])(rời trạm|roi tram)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laGheTram = /(?<![\p{L}\p{N}])(ghé trạm|ghe tram)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laTiepNhan = /(?<![\p{L}\p{N}])(tiếp nhận|tiep nhan)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laDongYeuCau = /(?<![\p{L}\p{N}])(đóng yêu cầu|dong yeu cau)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laDangXuat = /(?<![\p{L}\p{N}])(đăng xuất|dang xuat)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laXoa = /(?<![\p{L}\p{N}])(xóa|xoa|dỡ kiện hàng|do kien hang)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laKhoa = /(?<![\p{L}\p{N}])(khóa tài khoản|khoa tai khoan|khóa|khoa)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laTuChoi = /(?<![\p{L}\p{N}])(từ chối|tu choi)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laHuy = /(?<![\p{L}\p{N}])(hủy|huy)(?![\p{L}\p{N}])/iu.test(noiDung);
+    const laHoanTat = /(?<![\p{L}\p{N}])(hoàn tất|hoan tat|nhận lại|nhan lai|xác nhận đã|xac nhan da|thành công|thanh cong)(?![\p{L}\p{N}])/iu.test(noiDung);
 
     let kieu = opts.kieu;
     let iconClass = opts.icon;
@@ -44,14 +49,19 @@ function hienPopupXacNhan(options) {
     let nutOkText = opts.nutXacNhan;
 
     if (!kieu) {
-      if (laDangXuat || laXoa || laKhoa || laTuChoi) kieu = 'danger';
-      else if (laHuy) kieu = 'warning';
-      else if (laHoanTat) kieu = 'success';
+      if (laXuatBen || laRoiTram || laHoanTat) kieu = 'success';
+      else if (laDangXuat || laXoa || laKhoa || laTuChoi) kieu = 'danger';
+      else if (laGheTram || laTiepNhan || laHuy) kieu = 'warning';
+      else if (laDongYeuCau) kieu = 'info';
       else kieu = 'cam';
     }
 
     if (!iconClass) {
-      if (laDangXuat) iconClass = 'bi-box-arrow-right';
+      if (laXuatBen) iconClass = 'bi-send-fill';
+      else if (laRoiTram) iconClass = 'bi-truck';
+      else if (laGheTram || laTiepNhan) iconClass = 'bi-box-arrow-in-down';
+      else if (laDangXuat) iconClass = 'bi-box-arrow-right';
+      else if (laDongYeuCau) iconClass = 'bi-check-circle-fill';
       else if (laXoa) iconClass = 'bi-trash3-fill';
       else if (laKhoa) iconClass = 'bi-lock-fill';
       else if (laTuChoi || laHuy) iconClass = 'bi-x-circle-fill';
@@ -60,21 +70,31 @@ function hienPopupXacNhan(options) {
     }
 
     if (!tieuDe) {
-      if (laDangXuat) tieuDe = 'Đăng xuất tài khoản';
+      if (laXuatBen) tieuDe = 'Xác nhận xuất bến';
+      else if (laRoiTram) tieuDe = 'Xác nhận rời trạm';
+      else if (laGheTram) tieuDe = 'Xác nhận ghé trạm';
+      else if (laTiepNhan) tieuDe = 'Xác nhận tiếp nhận';
+      else if (laDongYeuCau) tieuDe = 'Đóng yêu cầu hỗ trợ';
+      else if (laDangXuat) tieuDe = 'Đăng xuất tài khoản';
       else if (laXoa) tieuDe = 'Xác nhận xóa';
       else if (laKhoa) tieuDe = 'Khóa / Mở khóa tài khoản';
-      else if (laHuy) tieuDe = 'Xác nhận hủy';
       else if (laTuChoi) tieuDe = 'Từ chối giao dịch';
+      else if (laHuy) tieuDe = 'Xác nhận hủy';
       else if (laHoanTat) tieuDe = 'Xác nhận hoàn tất';
       else tieuDe = 'Xác nhận thao tác';
     }
 
     if (!nutOkText) {
-      if (laDangXuat) nutOkText = 'Đăng xuất';
+      if (laXuatBen) nutOkText = 'Xuất bến ngay';
+      else if (laRoiTram) nutOkText = 'Rời trạm đi tiếp';
+      else if (laGheTram) nutOkText = 'Ghé trạm & dỡ hàng';
+      else if (laTiepNhan) nutOkText = 'Tiếp nhận';
+      else if (laDongYeuCau) nutOkText = 'Đóng yêu cầu';
+      else if (laDangXuat) nutOkText = 'Đăng xuất';
       else if (laXoa) nutOkText = 'Xóa';
       else if (laKhoa) nutOkText = 'Đồng ý';
-      else if (laHuy) nutOkText = 'Hủy';
       else if (laTuChoi) nutOkText = 'Từ chối';
+      else if (laHuy) nutOkText = 'Hủy';
       else nutOkText = 'Xác nhận';
     }
 
@@ -178,7 +198,13 @@ document.addEventListener('submit', async e => {
   e.stopImmediatePropagation();
 
   const submitter = e.submitter;
-  const dongY = await hienPopupXacNhan(cauHoi);
+  const dongY = await hienPopupXacNhan({
+    noiDung: cauHoi,
+    tieuDe: form.dataset?.tieuDe || submitter?.dataset?.tieuDe,
+    nutXacNhan: form.dataset?.nutXacNhan || submitter?.dataset?.nutXacNhan,
+    kieu: form.dataset?.kieu || submitter?.dataset?.kieu,
+    icon: form.dataset?.icon || submitter?.dataset?.icon
+  });
   if (dongY) {
     form._daXacNhan = true;
     if (typeof form.requestSubmit === 'function') {
@@ -211,7 +237,13 @@ document.addEventListener('click', async e => {
   e.stopImmediatePropagation();
 
   const cauHoi = nut.dataset.xacNhan;
-  const dongY = await hienPopupXacNhan(cauHoi);
+  const dongY = await hienPopupXacNhan({
+    noiDung: cauHoi,
+    tieuDe: nut.dataset?.tieuDe,
+    nutXacNhan: nut.dataset?.nutXacNhan,
+    kieu: nut.dataset?.kieu,
+    icon: nut.dataset?.icon
+  });
   if (dongY) {
     nut._daXacNhan = true;
     if (nut.tagName === 'A' && nut.href && !nut.getAttribute('href').startsWith('#') && !nut.getAttribute('href').startsWith('javascript:')) {
@@ -573,7 +605,7 @@ function inDonHangDaChon(bangSelector = '#bang-don-hang') {
     .nhan-logo { font-size: 20px; font-weight: 800; color: #F26522; }
     .ma-don { font-size: 20px; font-weight: 800; }
     .khung-thong-tin { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; font-size: 14px; }
-    @@media print { .nut-in { display: none; } body { padding: 0; } }
+    @media print { .nut-in { display: none; } body { padding: 0; } }
   </style></head><body>
   <div style="text-align:right; margin-bottom: 16px;"><button class="nut-in" onclick="window.print()" style="padding: 8px 18px; background: #F26522; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">In tất cả (${daChon.length} nhãn)</button></div>
   `;

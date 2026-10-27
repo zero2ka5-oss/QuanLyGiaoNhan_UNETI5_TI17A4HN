@@ -1,0 +1,38 @@
+@model (List<ThongBao> Ds, int SoChuaDoc)
+@* Chuông thông báo: số chưa đọc (tự cập nhật mỗi phút qua /ThongBao/SoChuaDoc) + 6 thông báo mới nhất *@
+@{ bool nen = ViewBag.Nen is true; }
+<div class="dropdown chuong @(nen ? "chuong-nen" : "")" data-url-dem="@Url.Action("SoChuaDoc", "ThongBao")" data-url-bang="@Url.Action("BangChuong", "ThongBao")">
+    <button type="button" class="nut-chuong" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+            aria-label="Thông báo@(Model.SoChuaDoc > 0 ? $", {Model.SoChuaDoc} chưa đọc" : "")">
+        <i class="bi bi-bell"></i>
+        <span class="chuong-dem" @(Model.SoChuaDoc == 0 ? "hidden" : "")>@(Model.SoChuaDoc > 99 ? "99+" : Model.SoChuaDoc)</span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end bang-chuong">
+        <div class="bang-chuong-dau">
+            <b>Thông báo</b>
+            @if (Model.SoChuaDoc > 0)
+            {
+                <form asp-controller="ThongBao" asp-action="DanhDauDaDoc" method="post">
+                    <input type="hidden" name="quayLai" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                    <button class="btn btn-link btn-sm p-0 nho">Đánh dấu đã đọc</button>
+                </form>
+            }
+        </div>
+        @if (Model.Ds.Count == 0)
+        {
+            <div class="bang-chuong-trong"><i class="bi bi-bell-slash"></i> Chưa có thông báo nào</div>
+        }
+        @foreach (var tb in Model.Ds)
+        {
+            <a class="dong-tb @(tb.DaDoc ? "" : "chua-doc")" asp-controller="ThongBao" asp-action="Mo" asp-route-id="@tb.MaThongBao">
+                <span class="tb-icon @tb.Loai.LopIcon()"><i class="bi @tb.Loai.Icon()"></i></span>
+                <span class="min-w-0">
+                    <span class="tb-tieu-de">@tb.TieuDe</span>
+                    <span class="tb-noi-dung">@tb.NoiDung</span>
+                    <span class="tb-gio">@DinhDang.ThoiGianTuongDoi(tb.NgayTao)</span>
+                </span>
+            </a>
+        }
+        <a class="bang-chuong-cuoi" asp-controller="ThongBao" asp-action="Index">Xem tất cả thông báo</a>
+    </div>
+</div>

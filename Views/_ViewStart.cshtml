@@ -1,3 +1,10 @@
 ﻿@{
-    Layout = "_Layout";
+    Layout = Context.Session.VaiTro() switch
+    {
+        VaiTroNguoiDung.QuanTri => "_QuanTriLayout",
+        VaiTroNguoiDung.NhanVien or "DieuPhoi" or "BuuCuc" => "_NhanVienVanHanhLayout",
+        VaiTroNguoiDung.KhachHang => "_KhachHangLayout",
+        VaiTroNguoiDung.GiaoHang => "_NhanVienLayout",
+        _ => "_Layout"
+    };
 }

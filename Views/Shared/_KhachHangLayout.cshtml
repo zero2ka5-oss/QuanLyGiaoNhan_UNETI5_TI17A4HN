@@ -1,4 +1,4 @@
-﻿@{
+@{
     var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     string A(string c, string? a = null) => ctrl == c && (a is null || action == a) ? "active" : "";
@@ -26,6 +26,8 @@
                 <a class="muc @A("KhachHangDonHang", "Index")@A("KhachHangDonHang", "ChiTiet")@A("KhachHangDonHang", "ChinhSua")" asp-controller="KhachHangDonHang" asp-action="Index"><i class="bi bi-box-seam"></i> Đơn hàng của tôi</a>
                 <a class="muc @A("KhachHangDonHang", "TaoMoi")" asp-controller="KhachHangDonHang" asp-action="TaoMoi"><i class="bi bi-pencil-square"></i> Tạo đơn mới</a>
                 <a class="muc @A("KhachHangDonHang", "CongNo")" asp-controller="KhachHangDonHang" asp-action="CongNo"><i class="bi bi-credit-card-2-back"></i> Công nợ cước</a>
+                <a class="muc @A("KhachHangVi")" asp-controller="KhachHangVi" asp-action="Index"><i class="bi bi-wallet2 text-warning"></i> Ví tiền & Thu hộ COD</a>
+                <a class="muc @A("KhachHangLienHe")" asp-controller="KhachHangLienHe" asp-action="Index"><i class="bi bi-chat-left-dots"></i> Hỗ trợ & Liên hệ</a>
                 <div class="nhom">Tài khoản</div>
                 <a class="muc @A("KhachHangHoSo")" asp-controller="KhachHangHoSo" asp-action="Index"><i class="bi bi-person-vcard"></i> Thông tin cá nhân</a>
                 <a class="muc @A("DangNhap", "DoiMatKhau")" asp-controller="DangNhap" asp-action="DoiMatKhau"><i class="bi bi-shield-lock"></i> Mật khẩu & bảo mật</a>
@@ -35,8 +37,9 @@
             </nav>
             <div class="the-ho-tro">
                 <div class="fw-bold mb-1"><i class="bi bi-headset text-cam"></i> Cần hỗ trợ?</div>
-                <div class="nho mo mb-2">Tổng đài CSKH hoạt động 7:00 – 21:00 mỗi ngày.</div>
-                <a href="tel:19001515" class="fw-bold">1900 1515</a>
+                <div class="nho mo mb-2">CSKH hoạt động 7:00 – 21:00 mỗi ngày.</div>
+                <a asp-controller="KhachHangLienHe" asp-action="TaoMoi" class="btn btn-outline-warning btn-sm w-100 rounded-pill mb-2"><i class="bi bi-send me-1"></i> Gửi yêu cầu hỗ trợ</a>
+                <a href="tel:19001515" class="fw-bold text-decoration-none"><i class="bi bi-telephone-fill me-1"></i>1900 1515</a>
             </div>
         </div>
     </aside>
@@ -46,9 +49,11 @@
             <button class="btn btn-light d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuBen" aria-label="Mở menu"><i class="bi bi-list"></i></button>
             <partial name="_NutQuayLai" />
             <div class="flex-grow-1 min-w-0">
-                <div class="duong-dan d-none d-sm-flex">Khách hàng <i class="bi bi-chevron-right"></i> @(ctrl == "KhachHangDonHang" ? "Đơn hàng" : ctrl == "KhachHangTrangChu" ? "Tổng quan" : ctrl == "KhachHangTienIch" ? "Tiện ích" : "Tài khoản")</div>
+                <div class="duong-dan d-none d-sm-flex">Khách hàng <i class="bi bi-chevron-right"></i> @(ctrl == "KhachHangDonHang" ? "Đơn hàng" : ctrl == "KhachHangVi" ? "Ví tiền COD" : ctrl == "KhachHangLienHe" ? "Hỗ trợ & Liên hệ" : ctrl == "KhachHangTrangChu" ? "Tổng quan" : ctrl == "KhachHangTienIch" ? "Tiện ích" : "Tài khoản")</div>
                 <h1 class="tieu-de-trang text-truncate">@ViewData["Title"]</h1>
             </div>
+            <button type="button" class="nut-theme" onclick="doiTheme()" title="Chuyển chế độ Sáng / Tối" aria-label="Đổi giao diện"><i class="bi bi-moon-stars"></i></button>
+            @await Component.InvokeAsync("ChuongThongBao")
             <div class="dropdown">
                 <button class="nut-tai-khoan dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     @HienThi.AnhDaiDien(Context.Session.AnhDaiDien(), Context.Session.HoTen(), "avt avt-sm")
@@ -72,6 +77,7 @@
         </main>
     </div>
 </div>
+<partial name="_ChatBoxTuDong" />
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>

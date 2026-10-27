@@ -38,7 +38,7 @@
 <div class="nhan">
     <div class="dau">
         <span class="logo">GiaoNhanh</span>
-        <span class="tuyen">@d.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "") → @d.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")<br><span style="font-weight:400;font-size:9pt">@d.KhuVuc?.TenKhuVuc</span></span>
+        <span class="tuyen">@(d.BuuCucGui?.TenBuuCuc != null ? d.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "") : "") → @(d.BuuCucNhan?.TenBuuCuc != null ? d.BuuCucNhan.TenBuuCuc.Replace("Bưu cục ", "") : "")<br><span style="font-weight:400;font-size:9pt">@d.KhuVuc?.TenKhuVuc</span></span>
     </div>
     <div class="ma">
         <div class="qr" data-qr="@d.MaHienThi" data-co-o="4"></div>
