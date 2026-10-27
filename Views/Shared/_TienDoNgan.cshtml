@@ -1,0 +1,11 @@
+﻿@model TrangThaiDon
+@* Thanh tiến độ rút gọn 5 đoạn: bưu cục gửi → trung chuyển → bưu cục nhận → đang giao → đã giao *@
+@{ int bac = Model.BacHanhTrinh(); bool loi = Model == TrangThaiDon.GiaoKhongThanhCong; bool daDanhDau = false; }
+<div class="kh-tien-do">
+    @foreach (int moc in new[] { 1, 2, 3, 4, 5 })
+    {
+        string lop = bac >= moc ? "xong" : daDanhDau ? "" : (loi ? "loi" : "hien-tai");
+        if (bac < moc) daDanhDau = true;
+        <span class="@lop"></span>
+    }
+</div>

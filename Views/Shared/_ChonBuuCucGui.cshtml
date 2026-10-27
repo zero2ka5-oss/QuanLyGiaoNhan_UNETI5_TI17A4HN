@@ -1,0 +1,233 @@
+@using System.Text.Encodings.Web
+@model DonGiaoHangFormVM
+@* Ô chọn hình thức gửi & bưu cục gửi – dùng ở form tạo / sửa đơn của khách hàng và quản trị.
+   Hàng đã được bưu cục tiếp nhận hoặc shipper đã lấy thì không đổi hình thức / bưu cục được nữa. *@
+@{
+    var dsBuuCuc = (List<BuuCuc>)ViewBag.DsBuuCuc;
+    var don = ViewBag.Don as DonGiaoHang;
+    var kh = ViewBag.KhachHang as KhachHang;
+    bool khoa = don is not null && don.TrangThai != TrangThaiDon.DaTao && don.TrangThai != TrangThaiDon.ChoLayTanNoi;
+    string lop = ViewData["Lop"] as string ?? "col-12";
+}
+<div class="@lop">
+    <label class="form-label fw-semibold">Hình thức gửi hàng</label>
+    @if (khoa)
+    {
+        <input type="hidden" asp-for="HinhThucGui" />
+        <input type="hidden" asp-for="DiaChiLayHang" />
+        <input type="hidden" asp-for="MaBuuCucGui" />
+        <div class="form-control bg-light mb-2">
+            <span class="badge @Model.HinhThucGui.LopBadge() me-2">@Model.HinhThucGui.TenHienThi()</span>
+            <i class="bi bi-building-check text-cam"></i> @dsBuuCuc.FirstOrDefault(b => b.MaBuuCuc == Model.MaBuuCucGui)?.TenBuuCuc
+            @if (Model.HinhThucGui == HinhThucGui.LayTanNoi && !string.IsNullOrEmpty(Model.DiaChiLayHang))
+            {
+                <div class="nho mo mt-1"><i class="bi bi-geo-alt"></i> Địa chỉ lấy: @Model.DiaChiLayHang</div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row g-2 mb-2">
+            <div class="col-6">
+                <label class="form-check-label border rounded-3 p-2 d-flex align-items-center gap-2 cursor-pointer w-100 the-chon-hinh-thuc" style="cursor:pointer">
+                    <input type="radio" asp-for="HinhThucGui" value="@HinhThucGui.GuiTaiBuuCuc" class="form-check-input mt-0" id="hinhThucGui_BuuCuc" onchange="doiHinhThucGui()" />
+                    <div>
+                        <div class="fw-semibold nho"><i class="bi bi-building text-cam"></i> Gửi tại bưu cục</div>
+                        <div class="text-muted" style="font-size:0.75rem">Mang ra bưu cục gửi</div>
+                    </div>
+                </label>
+            </div>
+            <div class="col-6">
+                <label class="form-check-label border rounded-3 p-2 d-flex align-items-center gap-2 cursor-pointer w-100 the-chon-hinh-thuc" style="cursor:pointer">
+                    <input type="radio" asp-for="HinhThucGui" value="@HinhThucGui.LayTanNoi" class="form-check-input mt-0" id="hinhThucGui_TanNoi" onchange="doiHinhThucGui()" />
+                    <div>
+                        <div class="fw-semibold nho"><i class="bi bi-person-walking text-primary"></i> Lấy tận nơi</div>
+                        <div class="text-muted" style="font-size:0.75rem">Shipper đến lấy hàng</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div id="khungDiaChiLay" class="mb-2" style="@(Model.HinhThucGui == HinhThucGui.LayTanNoi ? "" : "display:none")">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label asp-for="DiaChiLayHang" class="form-label nho mb-0 fw-semibold">Địa chỉ shipper đến lấy hàng</label>
+                @if (kh is not null && !string.IsNullOrWhiteSpace(kh.DiaChi))
+                {
+                    <button type="button" class="btn btn-link btn-sm p-0 nho text-decoration-none" onclick="dungDiaChiNguoiGui('@Html.Raw(JavaScriptEncoder.Default.Encode(kh.DiaChi))')">
+                        <i class="bi bi-geo"></i> Dùng địa chỉ của tôi
+                    </button>
+                }
+            </div>
+            <div class="o-nhap">
+                <i class="bi bi-geo-alt"></i>
+                <input asp-for="DiaChiLayHang" id="DiaChiLayHang" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành..." autocomplete="off" oninput="kiemTraDiaChiLayHangVaBuuCuc(false)" onchange="kiemTraDiaChiLayHangVaBuuCuc(false)" />
+            </div>
+            <span asp-validation-for="DiaChiLayHang" class="text-danger nho"></span>
+        </div>
+
+        <div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label asp-for="MaBuuCucGui" class="form-label nho mb-0 fw-semibold" id="nhanBuuCucGui">
+                    @(Model.HinhThucGui == HinhThucGui.LayTanNoi ? "Bưu cục phụ trách tiếp nhận & lấy hàng" : "Bưu cục gửi (mang hàng tới)")
+                </label>
+            </div>
+            <select asp-for="MaBuuCucGui" class="form-select" id="MaBuuCucGui" onchange="kiemTraDiaChiLayHangVaBuuCuc(true)">
+                <option value="">-- Chọn bưu cục --</option>
+                @foreach (var nhom in dsBuuCuc.GroupBy(b => b.TinhThanh).OrderBy(g => g.Key))
+                {
+                    <optgroup label="@nhom.Key">
+                        @foreach (var bc in nhom)
+                        {
+                            <option value="@bc.MaBuuCuc" data-tinh="@bc.TinhThanh">@bc.TenBuuCuc – @bc.DiaChi</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <div id="canhBaoLoiBuuCuc" class="mt-2" style="display:none"></div>
+            <div class="nho mo mt-1" id="moTaBuuCucGui">
+                @if (Model.HinhThucGui == HinhThucGui.LayTanNoi)
+                {
+                    <span><i class="bi bi-info-circle"></i> Bưu cục này sẽ điều phối shipper khu vực tới địa chỉ của bạn để nhận hàng.</span>
+                }
+                else
+                {
+                    <span><i class="bi bi-info-circle"></i> Mang hàng tới bưu cục này kèm nhãn in mã vận đơn; hàng được chuyển tới bưu cục phụ trách khu vực giao.</span>
+                }
+            </div>
+            <span asp-validation-for="MaBuuCucGui" class="text-danger nho"></span>
+        </div>
+
+        <script>
+            const BANG_TINH_THANH_BC = [
+                { chuan: "Hà Nội", tuKhoa: ["hà nội", "ha noi", "hanoi", "thủ đô hà nội"] },
+                { chuan: "Hải Phòng", tuKhoa: ["hải phòng", "hai phong", "haiphong"] },
+                { chuan: "Quảng Ninh", tuKhoa: ["quảng ninh", "quang ninh", "hạ long", "ha long", "cẩm phả", "uông bí"] },
+                { chuan: "Hải Dương", tuKhoa: ["hải dương", "hai duong"] },
+                { chuan: "Hưng Yên", tuKhoa: ["hưng yên", "hung yen"] },
+                { chuan: "Bắc Ninh", tuKhoa: ["bắc ninh", "bac ninh", "bacninh", "từ sơn"] },
+                { chuan: "Bắc Giang", tuKhoa: ["bắc giang", "bac giang", "việt yên"] },
+                { chuan: "Thái Nguyên", tuKhoa: ["thái nguyên", "thai nguyen", "sông công"] },
+                { chuan: "Vĩnh Phúc", tuKhoa: ["vĩnh phúc", "vinh phuc", "vĩnh yên", "phúc yên"] },
+                { chuan: "Phú Thọ", tuKhoa: ["phú thọ", "phu tho", "việt trì", "viet tri"] },
+                { chuan: "Nam Định", tuKhoa: ["nam định", "nam dinh"] },
+                { chuan: "Thái Bình", tuKhoa: ["thái bình", "thai binh"] },
+                { chuan: "Ninh Bình", tuKhoa: ["ninh bình", "ninh binh", "tam điệp"] },
+                { chuan: "Lạng Sơn", tuKhoa: ["lạng sơn", "lang son"] },
+                { chuan: "Lào Cai", tuKhoa: ["lào cai", "lao cai", "sa pa", "sapa"] },
+                { chuan: "Thanh Hóa", tuKhoa: ["thanh hóa", "thanh hoa", "sầm sơn", "bỉm sơn"] },
+                { chuan: "Nghệ An", tuKhoa: ["nghệ an", "nghe an", "tp. vinh", "tp vinh", "cửa lò"] },
+                { chuan: "Hà Tĩnh", tuKhoa: ["hà tĩnh", "ha tinh", "hồng lĩnh"] },
+                { chuan: "Thừa Thiên Huế", tuKhoa: ["thừa thiên huế", "thừa thiên - huế", "thừa thiên", "tp. huế", "tp huế", "huế", "hue"] },
+                { chuan: "Đà Nẵng", tuKhoa: ["đà nẵng", "da nang", "danang"] },
+                { chuan: "Quảng Nam", tuKhoa: ["quảng nam", "quang nam", "tam kỳ", "tam ky", "hội an", "hoi an"] },
+                { chuan: "Quảng Ngãi", tuKhoa: ["quảng ngãi", "quang ngai"] },
+                { chuan: "Bình Định", tuKhoa: ["bình định", "binh dinh", "quy nhơn", "quy nhon"] },
+                { chuan: "Khánh Hòa", tuKhoa: ["khánh hòa", "khanh hoa", "nha trang", "cam ranh"] },
+                { chuan: "Đắk Lắk", tuKhoa: ["đắk lắk", "đắc lắc", "dak lak", "daklak", "buôn ma thuột", "buon ma thuot"] },
+                { chuan: "Lâm Đồng", tuKhoa: ["lâm đồng", "lam dong", "đà lạt", "da lat", "bảo lộc"] },
+                { chuan: "TP. Hồ Chí Minh", tuKhoa: ["tp. hồ chí minh", "tp.hồ chí minh", "tp hồ chí minh", "tp. hcm", "tp.hcm", "tphcm", "hồ chí minh", "ho chi minh", "sài gòn", "sai gon", "hcmc"] },
+                { chuan: "Bình Dương", tuKhoa: ["bình dương", "binh duong", "thủ dầu một", "thu dau mot", "dĩ an", "thuận an", "bến cát", "tân uyên"] },
+                { chuan: "Đồng Nai", tuKhoa: ["đồng nai", "dong nai", "biên hòa", "bien hoa", "long khánh"] },
+                { chuan: "Bà Rịa - Vũng Tàu", tuKhoa: ["bà rịa - vũng tàu", "bà rịa vũng tàu", "bà rịa", "vũng tàu", "vung tau", "ba ria"] },
+                { chuan: "Long An", tuKhoa: ["long an", "tân an", "tan an", "bến lức", "đức hòa"] },
+                { chuan: "Tiền Giang", tuKhoa: ["tiền giang", "tien giang", "mỹ tho", "my tho", "gò công"] },
+                { chuan: "Cần Thơ", tuKhoa: ["cần thơ", "can tho", "ninh kiều", "cái răng"] },
+                { chuan: "An Giang", tuKhoa: ["an giang", "long xuyên", "long xuyen", "châu đốc"] }
+            ];
+
+            function timTinhThanh(diaChi) {
+                if (!diaChi) return null;
+                const s = diaChi.toLowerCase();
+                for (const item of BANG_TINH_THANH_BC) {
+                    if (item.tuKhoa.some(tk => s.includes(tk))) return item.chuan;
+                }
+                return null;
+            }
+
+            function dungDiaChiNguoiGui(diaChi) {
+                const o = document.getElementById('DiaChiLayHang');
+                if (o) {
+                    o.value = diaChi;
+                    o.dispatchEvent(new Event('input', { bubbles: true }));
+                    o.dispatchEvent(new Event('change', { bubbles: true }));
+                    kiemTraDiaChiLayHangVaBuuCuc(false);
+                }
+            }
+
+            function doiHinhThucGui() {
+                var laTanNoi = document.getElementById('hinhThucGui_TanNoi')?.checked;
+                var khung = document.getElementById('khungDiaChiLay');
+                var nhan = document.getElementById('nhanBuuCucGui');
+                var moTa = document.getElementById('moTaBuuCucGui');
+                if (khung) khung.style.display = laTanNoi ? '' : 'none';
+                if (nhan) nhan.innerText = laTanNoi ? 'Bưu cục phụ trách tiếp nhận & lấy hàng' : 'Bưu cục gửi (mang hàng tới)';
+                if (moTa) moTa.innerHTML = laTanNoi
+                    ? '<i class="bi bi-info-circle"></i> Bưu cục này sẽ điều phối shipper khu vực tới địa chỉ của bạn để nhận hàng.'
+                    : '<i class="bi bi-info-circle"></i> Mang hàng tới bưu cục này kèm nhãn in mã vận đơn; hàng được chuyển tới bưu cục phụ trách khu vực giao.';
+                kiemTraDiaChiLayHangVaBuuCuc(false);
+                if (typeof tinhPhiXemTruoc === 'function') tinhPhiXemTruoc();
+            }
+
+            function kiemTraDiaChiLayHangVaBuuCuc(nguoiDungTuChonBuuCuc = false) {
+                const laTanNoi = document.getElementById('hinhThucGui_TanNoi')?.checked;
+                const khungBao = document.getElementById('canhBaoLoiBuuCuc');
+                const selBc = document.getElementById('MaBuuCucGui');
+                if (!selBc || !khungBao) return true;
+
+                if (!laTanNoi) {
+                    khungBao.style.display = 'none';
+                    khungBao.innerHTML = '';
+                    selBc.classList.remove('is-invalid');
+                    return true;
+                }
+
+                const diaChiLay = document.getElementById('DiaChiLayHang')?.value?.trim() || '';
+                const tinhLay = timTinhThanh(diaChiLay);
+
+                if (!tinhLay) {
+                    khungBao.style.display = 'none';
+                    khungBao.innerHTML = '';
+                    selBc.classList.remove('is-invalid');
+                    return true;
+                }
+
+                // Nếu người dùng không tự chọn dropdown mà đang nhập địa chỉ: Tự động gán bưu cục cùng tỉnh
+                if (!nguoiDungTuChonBuuCuc) {
+                    const optKhop = Array.from(selBc.options).find(opt => opt.getAttribute('data-tinh') === tinhLay);
+                    if (optKhop && selBc.value !== optKhop.value) {
+                        selBc.value = optKhop.value;
+                        if (typeof tinhPhiXemTruoc === 'function') tinhPhiXemTruoc();
+                    }
+                }
+
+                // Kiểm tra bưu cục hiện tại có khớp tỉnh không
+                const optHienTai = selBc.selectedOptions[0];
+                const tinhBc = optHienTai ? (optHienTai.getAttribute('data-tinh') || '') : '';
+
+                if (selBc.value && tinhBc && tinhBc !== tinhLay) {
+                    khungBao.className = 'alert alert-danger py-2 px-3 mb-0 mt-2 nho';
+                    khungBao.innerHTML = `<i class="bi bi-exclamation-octagon-fill me-1"></i><b>Địa chỉ không phù hợp:</b> Địa chỉ lấy hàng tại <b>${tinhLay}</b> không thể do <b>${optHienTai.text.split(' – ')[0]} (${tinhBc})</b> tiếp nhận. Shipper không thể lấy hàng khác tỉnh! Vui lòng chọn bưu cục tại <b>${tinhLay}</b>.`;
+                    khungBao.style.display = 'block';
+                    selBc.classList.add('is-invalid');
+                    return false;
+                } else if (selBc.value && tinhBc && tinhBc === tinhLay) {
+                    khungBao.className = 'badge bg-success-subtle text-success border border-success-subtle p-2 w-100 text-start fw-normal mt-2 d-block';
+                    khungBao.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i>Đã chọn bưu cục phụ trách tại <b>${tinhLay}</b> khớp với địa chỉ lấy hàng của shipper.`;
+                    khungBao.style.display = 'block';
+                    selBc.classList.remove('is-invalid');
+                    return true;
+                } else {
+                    khungBao.style.display = 'none';
+                    khungBao.innerHTML = '';
+                    selBc.classList.remove('is-invalid');
+                    return true;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                kiemTraDiaChiLayHangVaBuuCuc(false);
+            });
+            setTimeout(() => kiemTraDiaChiLayHangVaBuuCuc(false), 200);
+        </script>
+    }
+</div>

@@ -53,7 +53,28 @@
                         <input type="checkbox" class="form-check-input chk-dong" value="@d.MaHienThi" data-madon="@d.MaDon" />
                     </td>
                     <td><a asp-action="Don" asp-route-id="@d.MaDon" class="fw-bold">@d.MaHienThi</a><div class="nho mo">@d.KhachHang?.HoTen</div></td>
-                    <td class="nho text-nowrap">@d.BuuCucGui?.TenBuuCuc.Replace("Bưu cục ", "")<div class="mo"><i class="bi bi-arrow-right"></i> @d.BuuCucNhan?.TenBuuCuc.Replace("Bưu cục ", "")</div></td>
+                    <td class="nho text-nowrap">
+                        @(d.BuuCucGui?.TenBuuCuc != null ? d.BuuCucGui.TenBuuCuc.Replace("Bưu cục ", "") : "")
+                        <div class="mo"><i class="bi bi-arrow-right"></i> @(d.BuuCucNhan?.TenBuuCuc != null ? d.BuuCucNhan.TenBuuCuc.Replace("Bưu cục ", "") : "")</div>
+                        @if (tab == "dangden" && d.ChuyenXe != null)
+                        {
+                            <div class="mt-1">
+                                @if (d.MaBuuCucNhan == bc.MaBuuCuc)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: .72rem;">
+                                        <i class="bi bi-geo-alt-fill"></i> Đích phát cuối
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50" style="font-size: .72rem;">
+                                        <i class="bi bi-diagram-3-fill text-cam"></i> Ghé Hub phân loại
+                                    </span>
+                                }
+                                <span class="badge bg-light text-secondary border" style="font-size: .72rem;">@d.ChuyenXe.MaHienThi</span>
+                            </div>
+                        }
+                    </td>
                     <td class="nho">
                         @if (d.TrangThai == TrangThaiDon.ChoLayTanNoi || d.TrangThai == TrangThaiDon.DaLayTanNoi)
                         {
@@ -69,7 +90,15 @@
                         @if (DonHangXuLy.SoLanThatBai(d) > 0) { <div class="nho text-danger">Giao lỗi @DonHangXuLy.SoLanThatBai(d)/@DonHangXuLy.SoLanGiaoToiDa</div> }</td>
                     <td class="nho">@(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "Người gửi" : d.NhanVienDangGiu?.HoTen ?? (d.MaBuuCucHienTai is not null ? "Bưu cục" : "—"))</td>
                     <td class="cot-sticky-phai text-end text-nowrap khong-xuat">
-                        @if (d.TrangThai == TrangThaiDon.ChoLayTanNoi && d.MaBuuCucGui == bc.MaBuuCuc && DonHangXuLy.CoThePhanCong(d))
+                        @if (tab == "dangden")
+                        {
+                            <a asp-action="Quet" asp-route-maBuuCuc="@bc.MaBuuCuc" asp-route-ma="@d.MaHienThi" class="btn btn-sm btn-outline-info" title="Quét tiếp nhận kiện"><i class="bi bi-box-arrow-in-down"></i> Quét nhận</a>
+                            @if (d.MaChuyenXe != null)
+                            {
+                                <a asp-controller="ChuyenXe" asp-action="ChiTiet" asp-route-id="@d.MaChuyenXe" class="btn btn-sm btn-outline-warning" title="Xem chuyến xe"><i class="bi bi-truck"></i> Xe</a>
+                            }
+                        }
+                        else if (d.TrangThai == TrangThaiDon.ChoLayTanNoi && d.MaBuuCucGui == bc.MaBuuCuc && DonHangXuLy.CoThePhanCong(d))
                         {
                             <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam"><i class="bi bi-person-plus"></i> Phân lấy hàng</a>
                         }
@@ -79,7 +108,14 @@
                         }
                         else if (chang is not null && d.MaBuuCucHienTai == bc.MaBuuCuc && DonHangXuLy.CoThePhanCong(d))
                         {
-                            <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam"><i class="bi bi-person-plus"></i> Phân @(chang == LoaiShipper.LienTinh ? "liên tỉnh" : "khu vực")</a>
+                            @if (chang == LoaiShipper.LienTinh)
+                            {
+                                <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@bc.MaBuuCuc" class="btn btn-sm btn-warning fw-semibold" title="Xếp kiện vào chuyến xe liên tỉnh"><i class="bi bi-truck"></i> Xếp chuyến xe</a>
+                            }
+                            else
+                            {
+                                <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-sm btn-cam"><i class="bi bi-person-plus"></i> Phân khu vực</a>
+                            }
                         }
                         <a asp-action="Don" asp-route-id="@d.MaDon" class="btn btn-sm btn-light" title="Chi tiết"><i class="bi bi-eye"></i></a>
                     </td>

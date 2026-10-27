@@ -52,8 +52,11 @@ public class BuuCucController(QuanLyGiaoNhanDbContext db, DonHangXuLy xuLy) : Co
             ["cho"] = don.Where(d => d.TrangThai == TrangThaiDon.DaTao && d.MaBuuCucGui == ma),
             ["layhang"] = don.Where(d => (d.TrangThai == TrangThaiDon.ChoLayTanNoi || d.TrangThai == TrangThaiDon.DaLayTanNoi) && d.MaBuuCucGui == ma),
             ["taibc"] = don.Where(d => d.MaBuuCucHienTai == ma && d.TrangThai != TrangThaiDon.DaHuy && d.TrangThai != TrangThaiDon.DaHoanHang),
-            ["dangden"] = don.Where(d => (d.MaBuuCucNhan == ma && (d.TrangThai == TrangThaiDon.DaLayLienTinh || d.TrangThai == TrangThaiDon.DangTrungChuyen))
-                                      || (d.MaBuuCucGui == ma && d.TrangThai == TrangThaiDon.DangChuyenHoan)),
+            ["dangden"] = don.Where(d => (d.ChuyenXe != null
+                                            && (d.ChuyenXe.TrangThai == TrangThaiChuyenXe.DangVanChuyen || d.ChuyenXe.TrangThai == TrangThaiChuyenXe.DangXepHang)
+                                            && (d.ChuyenXe.MaBuuCucNhan == ma || (d.ChuyenXe.MaBuuCucTrungGian == ma && !d.ChuyenXe.DaGheTram)))
+                                       || (d.ChuyenXe == null && d.MaBuuCucNhan == ma && (d.TrangThai == TrangThaiDon.DaLayLienTinh || d.TrangThai == TrangThaiDon.DangTrungChuyen))
+                                       || (d.MaBuuCucGui == ma && d.TrangThai == TrangThaiDon.DangChuyenHoan)),
             ["shipper"] = don.Where(d => ((d.MaBuuCucNhan == ma && d.TrangThai != TrangThaiDon.DaLayTanNoi && d.TrangThai != TrangThaiDon.DangGiaoHoan)
                                        || (d.MaBuuCucGui == ma && (d.TrangThai == TrangThaiDon.DaLayTanNoi || d.TrangThai == TrangThaiDon.DangGiaoHoan)))
                                        && d.MaNhanVienDangGiu != null && shipperKhuVucGiu.Contains(d.TrangThai)),
@@ -67,6 +70,9 @@ public class BuuCucController(QuanLyGiaoNhanDbContext db, DonHangXuLy xuLy) : Co
 
         var ds = await nhom[tab].Include(d => d.KhachHang).Include(d => d.KhuVuc).Include(d => d.BuuCucGui).Include(d => d.BuuCucNhan)
                                 .Include(d => d.NhanVienDangGiu).Include(d => d.PhanCongs)
+                                .Include(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucGui)
+                                .Include(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucNhan)
+                                .Include(d => d.ChuyenXe).ThenInclude(c => c!.BuuCucTrungGian)
                                 .OrderBy(d => d.NgayGiaoDuKien).ThenBy(d => d.MaDon).Take(200).ToListAsync();
         return View(ds);
     }
@@ -177,7 +183,8 @@ public class BuuCucController(QuanLyGiaoNhanDbContext db, DonHangXuLy xuLy) : Co
     private bool LienQuan(DonGiaoHang don)
     {
         int? ma = HttpContext.Session.MaBuuCuc();
-        return ma is null || don.MaBuuCucGui == ma || don.MaBuuCucNhan == ma || don.MaBuuCucHienTai == ma || don.NhanVienDangGiu?.MaBuuCuc == ma;
+        return ma is null || don.MaBuuCucGui == ma || don.MaBuuCucNhan == ma || don.MaBuuCucHienTai == ma || don.NhanVienDangGiu?.MaBuuCuc == ma
+               || (don.ChuyenXe != null && (don.ChuyenXe.MaBuuCucNhan == ma || don.ChuyenXe.MaBuuCucTrungGian == ma));
     }
 
     private bool CuaToi(int? maBuuCuc) => HttpContext.Session.MaBuuCuc() is not { } ma || ma == maBuuCuc;

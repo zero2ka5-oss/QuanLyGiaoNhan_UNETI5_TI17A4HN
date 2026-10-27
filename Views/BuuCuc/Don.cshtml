@@ -27,8 +27,15 @@
             <a asp-action="Quet" asp-route-ma="@d.MaHienThi" class="btn btn-cam btn-sm rounded-pill px-3"><i class="bi bi-qr-code-scan"></i> Thao tác quét</a>
             @if (Model.CoThePhanCong)
             {
-                <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-sm rounded-pill px-3">
-                    <i class="bi bi-person-plus"></i> Phân shipper @(DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh ? "liên tỉnh" : (d.TrangThai == TrangThaiDon.DaVeBuuCucGui ? "giao hoàn" : "khu vực"))</a>
+                @if (DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh)
+                {
+                    <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@(d.MaBuuCucHienTai ?? d.MaBuuCucGui)" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold"><i class="bi bi-truck"></i> Xếp chuyến xe liên tỉnh</a>
+                }
+                else
+                {
+                    <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-sm rounded-pill px-3">
+                    <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.DaVeBuuCucGui ? "giao hoàn" : "khu vực")</a>
+                }
             }
             @if (Model.CoTheDoiPhanCong)
             {

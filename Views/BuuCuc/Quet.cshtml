@@ -30,7 +30,12 @@
         {
             <partial name="_TomTatDon" model="d" />
             bool tiepNhan = d.TrangThai == TrangThaiDon.DaTao || (d.TrangThai == TrangThaiDon.DaLayTanNoi && d.MaBuuCucGui == bc.MaBuuCuc);
-            bool nhanDen = (d.TrangThai is TrangThaiDon.DangTrungChuyen or TrangThaiDon.DaLayLienTinh && d.MaBuuCucNhan == bc.MaBuuCuc)
+
+            bool laDichChuyenXe = d.ChuyenXe != null && (d.ChuyenXe.MaBuuCucNhan == bc.MaBuuCuc || d.ChuyenXe.MaBuuCucTrungGian == bc.MaBuuCuc);
+            bool laDichCuoi = d.MaBuuCucNhan == bc.MaBuuCuc;
+            bool laHub = DonHangXuLy.LaHubTrungTam(bc);
+
+            bool nhanDen = (d.TrangThai is TrangThaiDon.DangTrungChuyen or TrangThaiDon.DaLayLienTinh && (d.ChuyenXe != null ? laDichChuyenXe : (laDichCuoi || laHub)))
                            || (d.TrangThai == TrangThaiDon.DangChuyenHoan && d.MaBuuCucGui == bc.MaBuuCuc);
             bool nhanLai = d.TrangThai is TrangThaiDon.GiaoKhongThanhCong or TrangThaiDon.HenGiaoLai or TrangThaiDon.DaLayGiaoHang && d.MaBuuCucNhan == bc.MaBuuCuc;
             bool phanCong = ((d.MaBuuCucHienTai == bc.MaBuuCuc) || (d.TrangThai == TrangThaiDon.ChoLayTanNoi && d.MaBuuCucGui == bc.MaBuuCuc)) && DonHangXuLy.CoThePhanCong(d);
@@ -78,17 +83,32 @@
                 else if (nhanDen)
                 {
                     var pc = d.PhanCongs.FirstOrDefault(p => p.LoaiChang == LoaiShipper.LienTinh && p.DangHieuLuc);
+                    bool laPhatCuoi = laDichCuoi && (d.ChuyenXe == null || d.ChuyenXe.MaBuuCucNhan == d.MaBuuCucNhan);
                     <form asp-action="NhanHangDen" method="post">
                         <input type="hidden" name="maDon" value="@d.MaDon" /><input type="hidden" name="ma" value="@d.MaHienThi" />
                         <input type="hidden" name="maBuuCuc" value="@bc.MaBuuCuc" /><input type="hidden" name="viDo" /><input type="hidden" name="kinhDo" />
-                        <div class="nho mb-2">Shipper liên tỉnh bàn giao: <b>@pc?.NhanVien?.HoTen</b> · @pc?.PhuongTien?.MaHienThi @pc?.PhuongTien?.BienSo</div>
+                        @if (d.ChuyenXe != null)
+                        {
+                            <div class="alert alert-info nho py-2 mb-2">
+                                <i class="bi bi-truck text-cam"></i> Chuyến xe: <b>@d.ChuyenXe.MaHienThi</b> (@d.ChuyenXe.BuuCucGui?.TenBuuCuc ➔ @d.ChuyenXe.BuuCucNhan?.TenBuuCuc)
+                                <div>Tài xế: <b>@(pc?.NhanVien?.HoTen ?? d.NhanVienDangGiu?.HoTen)</b> · @(pc?.PhuongTien?.BienSo ?? d.ChuyenXe.PhuongTien?.BienSo)</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="nho mb-2">Shipper liên tỉnh bàn giao: <b>@pc?.NhanVien?.HoTen</b> · @pc?.PhuongTien?.MaHienThi @pc?.PhuongTien?.BienSo</div>
+                        }
                         @if (d.TrangThai == TrangThaiDon.DangChuyenHoan)
                         {
                             <button class="btn btn-warning btn-lg w-100"><i class="bi bi-box-arrow-in-down"></i> Nhận hàng chuyển hoàn về bưu cục gửi</button>
                         }
+                        else if (!laPhatCuoi)
+                        {
+                            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-diagram-3-fill"></i> Quét nhận kiện vào Hub phân loại (Lưu kho trung chuyển)</button>
+                        }
                         else
                         {
-                            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-building-down"></i> Nhận hàng đến bưu cục</button>
+                            <button class="btn btn-cam btn-lg w-100"><i class="bi bi-building-down"></i> Nhận hàng đến bưu cục phát</button>
                         }
                     </form>
                 }
@@ -124,8 +144,17 @@
                 }
                 else if (phanCong)
                 {
-                    <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-lg w-100 mb-2">
-                        <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "lấy hàng" : (d.TrangThai == TrangThaiDon.ChoChuyenHoan ? "xe tải chuyển hoàn" : (DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh ? "liên tỉnh" : "khu vực")))</a>
+                    @if (DonHangXuLy.ChangCanPhanCong(d) == LoaiShipper.LienTinh)
+                    {
+                        <a asp-controller="ChuyenXe" asp-action="Index" asp-route-maBuuCuc="@bc.MaBuuCuc" class="btn btn-warning btn-lg w-100 mb-2 fw-semibold">
+                            <i class="bi bi-truck"></i> Xếp vào Chuyến xe liên tỉnh
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="QuanTriPhanCong" asp-action="TaoMoi" asp-route-maDon="@d.MaDon" class="btn btn-cam btn-lg w-100 mb-2">
+                        <i class="bi bi-person-plus"></i> Phân shipper @(d.TrangThai == TrangThaiDon.ChoLayTanNoi ? "lấy hàng" : "khu vực")</a>
+                    }
                     @if (coTheYeuCauHoan)
                     {
                         <form asp-action="YeuCauChuyenHoan" method="post" data-xac-nhan="Yêu cầu chuyển hoàn đơn @d.MaHienThi về bưu cục gửi? (Cước chuyển hoàn: @DinhDang.Tien(Math.Ceiling((d.PhiVanChuyen * 0.5m) / 1000m) * 1000m))">
@@ -138,14 +167,22 @@
                 else
                 {
                     <div class="nho mo"><i class="bi bi-info-circle"></i>
-                        @(d.TrangThai switch
+                        @if (d.ChuyenXe != null && d.ChuyenXe.MaBuuCucNhan != bc.MaBuuCuc && d.ChuyenXe.MaBuuCucTrungGian != bc.MaBuuCuc)
                         {
-                            TrangThaiDon.ChoLayTanNoi => "Đơn chờ phân shipper khu vực đến nhà khách lấy hàng.",
-                            TrangThaiDon.ChoLayLienTinh or TrangThaiDon.ChoLayGiaoHang => "Đã phân shipper – chờ shipper tới quét mã nhận hàng.",
-                            TrangThaiDon.DangGiao => "Shipper đang đi giao.",
-                            _ when d.TrangThai.DaKetThuc() => "Đơn đã kết thúc vận chuyển.",
-                            _ => "Không có thao tác nào cho đơn này tại bưu cục của bạn."
-                        })</div>
+                            <span>Kiện hàng đang trên Chuyến xe <b>@d.ChuyenXe.MaHienThi</b> di chuyển đến <b>@d.ChuyenXe.BuuCucNhan?.TenBuuCuc</b>. @bc.TenBuuCuc sẽ tiếp nhận khi hàng được vận chuyển tới.</span>
+                        }
+                        else
+                        {
+                            @(d.TrangThai switch
+                            {
+                                TrangThaiDon.ChoLayTanNoi => "Đơn chờ phân shipper khu vực đến nhà khách lấy hàng.",
+                                TrangThaiDon.ChoLayLienTinh or TrangThaiDon.ChoLayGiaoHang => "Đã phân shipper – chờ shipper tới quét mã nhận hàng.",
+                                TrangThaiDon.DangGiao => "Shipper đang đi giao.",
+                                _ when d.TrangThai.DaKetThuc() => "Đơn đã kết thúc vận chuyển.",
+                                _ => "Không có thao tác nào cho đơn này tại bưu cục của bạn."
+                            })
+                        }
+                    </div>
                 }
                 <a asp-action="Don" asp-route-id="@d.MaDon" class="btn btn-light w-100 mt-2"><i class="bi bi-eye"></i> Xem chi tiết & tracking</a>
             </div>
